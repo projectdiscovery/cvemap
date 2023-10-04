@@ -20,6 +20,19 @@ Navigate the CVE jungle with ease.
 ╰────────────────┴─────────┴──────┴──────────┴────────────────┴─────────────┴──────────┴───────────╯
 ```
 
+### JSON Output
+```console
+✗ go run .  -p papercut_mf -nt -kev -j
+[
+  {
+    "cve_id": "CVE-2023-27350",
+    "severity": "critical",
+    "cvss_score": 9.8,
+    ...
+  }
+]
+```
+
 ## Usage
 ```
 OPTIONS:
