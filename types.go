@@ -5,16 +5,28 @@ import (
 )
 
 type Options struct {
-	cveIds         goflags.StringSlice
-	cweIds         goflags.StringSlice
-	vendor         goflags.StringSlice
-	product        goflags.StringSlice
-	severity       goflags.StringSlice
-	includeColumns goflags.StringSlice
-	excludeColumns goflags.StringSlice
-	assignees      goflags.StringSlice
-	cpe            string
-	limit          int
+	cveIds            goflags.StringSlice
+	cweIds            goflags.StringSlice
+	vendor            goflags.StringSlice
+	product           goflags.StringSlice
+	severity          goflags.StringSlice
+	cvssScore         goflags.StringSlice
+	cvssMetrics       goflags.StringSlice
+	epssScore         goflags.StringSlice
+	epssPercentile    goflags.StringSlice
+	year              goflags.StringSlice
+	includeColumns    goflags.StringSlice
+	excludeColumns    goflags.StringSlice
+	assignees         goflags.StringSlice
+	reference         goflags.StringSlice
+	vulnType          goflags.StringSlice
+	cpe               string
+	vulnStatus        string
+	kev               bool
+	trending          bool
+	hasNucleiTemplate bool
+	json              bool
+	limit             int
 }
 
 type CVEBulkData struct {

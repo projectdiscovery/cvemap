@@ -15,6 +15,7 @@ import (
 )
 
 var (
+	cveURL         = "https://cve-dev.nuclei.sh/cves"
 	defaultHeaders = []string{"CVE-ID", "EPSS", "CVSS", "Severity", "CWE", "Application", "Vendor", "Status"}
 	maxLimit       = 300
 )
@@ -26,17 +27,28 @@ func main() {
 	flagset.SetDescription(`Navigate the CVE jungle with ease.`)
 
 	flagset.CreateGroup("Options", "options",
-		// flagset.StringSliceVarP(&options.cveIds, "cve-id", "id", nil, "cve to list for given id", goflags.StringSliceOptions),
-		// flagset.StringSliceVarP(&options.cweIds, "cwe-id", "cwe", nil, "cve to list for given cwe id", goflags.StringSliceOptions),
-		// flagset.StringSliceVarP(&options.vendor, "vendor", "v", nil, "cve to list for given vendor", goflags.StringSliceOptions),
-		// flagset.StringSliceVarP(&options.product, "product", "p", nil, "cve to list for given product", goflags.StringSliceOptions),
-		// flagset.StringSliceVarP(&options.severity, "severity", "s", nil, "cve to list for given severity", goflags.StringSliceOptions),
-		// flagset.StringSliceVarP(&options.assignees, "assignee", "a", nil, "cve to list for given assignee", goflags.StringSliceOptions),
-		// flagset.StringVarP(&options.cpe, "cpe", "c", "", "cve to list for given cpe"),
-
-		flagset.StringSliceVarP(&options.includeColumns, "field", "f", defaultHeaders, "field to display in cli output (supported: product)", goflags.StringSliceOptions),
-		flagset.StringSliceVarP(&options.excludeColumns, "exclude", "e", nil, "field to exclude from cli output", goflags.StringSliceOptions),
+		flagset.StringSliceVarP(&options.cveIds, "cve-id", "id", nil, "cve to list for given id", goflags.CommaSeparatedStringSliceOptions),
+		// flagset.StringSliceVarP(&options.cweIds, "cwe-id", "cwe", nil, "cve to list for given cwe id", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringSliceVarP(&options.vendor, "vendor", "v", nil, "cve to list for given vendor", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringSliceVarP(&options.product, "product", "p", nil, "cve to list for given product", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringSliceVarP(&options.severity, "severity", "s", nil, "cve to list for given severity", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringSliceVarP(&options.cvssScore, "cvss-score", "cs", nil, "cve to list for given cvss score", goflags.CommaSeparatedStringSliceOptions),
+		// flagset.StringSliceVarP(&options.cvssMetrics, "cvss-metrics", "cm", nil, "cve to list for given cvss metrics", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringVarP(&options.cpe, "cpe", "c", "", "cve to list for given cpe"),
+		flagset.StringSliceVarP(&options.epssScore, "epss-score", "es", nil, "cve to list for given epss score", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringSliceVarP(&options.epssPercentile, "epss-percentile", "ep", nil, "cve to list for given epss percentile", goflags.CommaSeparatedStringSliceOptions),
+		//flagset.StringSliceVarP(&options.year, "year", "y", nil, "cve to list for given year", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringSliceVarP(&options.assignees, "assignee", "a", nil, " cve to list for given publisher assignee", goflags.CommaSeparatedStringSliceOptions),
+		//flagset.StringSliceVarP(&options.vulnType, "type", "t", nil, "cve to list for given vulnerability type", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringVarP(&options.vulnStatus, "status", "st", "", "cve to list for given vulnerability status in cli output"),
+		flagset.StringSliceVarP(&options.reference, "reference", "r", nil, "cve to list for given reference", goflags.CommaSeparatedStringSliceOptions),
+		flagset.BoolVarP(&options.kev, "kev", "k", false, "display cve for known exploitable vulnerabilities by cisa"),
+		//flagset.BoolVarP(&options.trending, "trending", "tr", false, "display trending cve by hackerone cve discovery"),
+		flagset.BoolVarP(&options.hasNucleiTemplate, "nuclei-template", "nt", false, "display cve having nuclei templates"),
+		flagset.StringSliceVarP(&options.includeColumns, "field", "f", defaultHeaders, "field to display in cli output (supported: product)", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringSliceVarP(&options.excludeColumns, "exclude", "e", nil, "field to exclude from cli output", goflags.CommaSeparatedStringSliceOptions),
 		flagset.IntVarP(&options.limit, "limit", "l", 100, "limit the number of results to display"),
+		flagset.BoolVarP(&options.json, "json", "j", false, "return output in json format"),
 	)
 
 	if err := flagset.Parse(); err != nil {
@@ -45,6 +57,7 @@ func main() {
 	if options.limit > maxLimit {
 		options.limit = maxLimit
 	}
+
 	// construct headers
 	headers := make([]string, 0)
 	options.includeColumns = append(defaultHeaders, options.includeColumns...)
@@ -59,20 +72,24 @@ func main() {
 	}
 	headers = sliceutil.Dedupe(headers)
 
-	// Example usage of getCvesByAssignee
-	assignee := "zdi-disclosures@trendmicro.com"
-	cvesByAssignee, err := getCvesByAssignee(assignee)
+	// Get all CVEs for the given filters
+	cvesResp, err := getCves(constructQueryParams(options))
 	if err != nil {
 		fmt.Println("Error getting CVEs by assignee:", err)
 		return
 	}
-	fmt.Println("Found", len(cvesByAssignee.Cves), "CVEs by assignee", assignee)
-	headers, rows := generateTableData(cvesByAssignee.Cves, headers)
+
+	if options.json {
+		outputJson(cvesResp.Cves)
+		return
+	}
+
+	//fmt.Printf("Found %d, loaded %d CVEs\n", cvesResp.ResultCount, len(cvesResp.Cves))
+	headers, rows := generateTableData(cvesResp.Cves, headers)
 	if options.limit > len(rows) {
 		options.limit = len(rows)
 	}
-	fmt.Println("Showing", options.limit, "CVEs")
-	// Render the table
+	//fmt.Println("Showing", options.limit, "CVEs")
 	renderTable(headers, rows[:options.limit])
 }
 
@@ -125,13 +142,21 @@ func getRow(headers []string, cve CVEData) []interface{} {
 			}
 		case "application":
 			row[i] = ""
-			if application, err := extractApplicationFromCPE(*cve.Cpe.Cpe); err == nil {
-				row[i] = application
+			if cve.Cpe != nil {
+				if application, err := extractApplicationFromCPE(*cve.Cpe.Cpe); err == nil {
+					row[i] = application
+				}
 			}
 		case "vendor":
-			row[i] = *cve.Cpe.Vendor
+			row[i] = ""
+			if cve.Cpe != nil {
+				row[i] = *cve.Cpe.Vendor
+			}
 		case "product":
-			row[i] = *cve.Cpe.Product
+			row[i] = ""
+			if cve.Cpe != nil {
+				row[i] = *cve.Cpe.Product
+			}
 		case "status":
 			row[i] = strings.ToUpper(cve.VulnStatus)
 		default:
@@ -141,42 +166,11 @@ func getRow(headers []string, cve CVEData) []interface{} {
 	return row
 }
 
-func getCveData(cveID string) (*CVEData, error) {
-	// Define the URL for the CVE API
-	cveURL := fmt.Sprintf("https://cve-dev.nuclei.sh/cves/%s", cveID)
-
+func getCves(encodedParams string) (*CVEBulkData, error) {
+	url := fmt.Sprintf("%s?%s", cveURL, encodedParams)
+	//fmt.Println("URL:", url)
 	// Send an HTTP GET request
-	response, err := http.Get(cveURL)
-	if err != nil {
-		return nil, err
-	}
-	defer response.Body.Close()
-
-	// Check the response status code
-	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
-	}
-
-	// Create a variable to store the response data
-	var cve CVEData
-
-	// Decode the JSON response into the CVEData struct
-	err = json.NewDecoder(response.Body).Decode(&cve)
-	if err != nil {
-		return nil, err
-	}
-
-	return &cve, nil
-}
-
-func getCvesByAssignee(assignee string) (*CVEBulkData, error) {
-	// Define the URL for the CVE API with the assignee query parameter
-	cveURL := "https://cve-dev.nuclei.sh/cves"
-	queryParams := url.Values{}
-	queryParams.Add("assignee", assignee)
-	cveURL += "?" + queryParams.Encode()
-	// Send an HTTP GET request
-	response, err := http.Get(cveURL)
+	response, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
@@ -192,6 +186,81 @@ func getCvesByAssignee(assignee string) (*CVEBulkData, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return &cvesInBulk, nil
+}
+
+func outputJson(cve []CVEData) {
+	json, err := json.MarshalIndent(cve, "", "  ")
+	if err != nil {
+		fmt.Println("Error marshalling json:", err)
+		return
+	}
+	fmt.Println(string(json))
+}
+
+func constructQueryParams(opts Options) string {
+	queryParams := &url.Values{}
+	if len(opts.cveIds) > 0 {
+		addQueryParams(queryParams, "cve_id", opts.cveIds)
+	}
+	if len(opts.severity) > 0 {
+		addQueryParams(queryParams, "severity", opts.severity)
+	}
+	if len(opts.assignees) > 0 {
+		addQueryParams(queryParams, "assignee", opts.assignees)
+	}
+	if len(opts.cvssScore) > 0 {
+		cvsKey := "cvss_score"
+		for _, cvssScore := range opts.cvssScore {
+			if cvssScore[0] == '>' {
+				cvsKey = "cvss_score_gte"
+			}
+			if cvssScore[0] == '<' {
+				cvsKey = "cvss_score_lte"
+			}
+			queryParams.Add(cvsKey, cvssScore[1:])
+		}
+	}
+	if opts.kev {
+		queryParams.Add("is_exploited", "true")
+	}
+	// if opts.trending {
+	// }
+	if opts.hasNucleiTemplate {
+		queryParams.Add("is_template", "true")
+	}
+	if len(opts.vulnStatus) > 0 {
+		queryParams.Add("vuln_status", strings.ToLower(opts.vulnStatus))
+	}
+	if len(opts.reference) > 0 {
+		addQueryParams(queryParams, "reference", opts.reference)
+	}
+	if len(opts.epssScore) > 0 {
+		addQueryParams(queryParams, "epss.epss_score", opts.epssScore)
+	}
+	if len(opts.epssPercentile) > 0 {
+		addQueryParams(queryParams, "epss.epss_percentile", opts.epssPercentile)
+	}
+	if len(opts.cweIds) > 0 {
+		addQueryParams(queryParams, "cwe_id", opts.cweIds)
+	}
+	if len(opts.cpe) > 0 {
+		queryParams.Add("cpe.cpe", opts.cpe)
+	}
+	if len(opts.product) > 0 {
+		addQueryParams(queryParams, "cpe.product", opts.product)
+	}
+	if len(opts.vendor) > 0 {
+		addQueryParams(queryParams, "cpe.vendor", opts.vendor)
+	}
+	return queryParams.Encode()
+}
+
+func addQueryParams(queryParams *url.Values, key string, values []string) *url.Values {
+	if len(values) > 0 {
+		for _, value := range values {
+			queryParams.Add(key, value)
+		}
+	}
+	return queryParams
 }
