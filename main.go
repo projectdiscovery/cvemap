@@ -138,13 +138,6 @@ func getRow(headers []string, cve CVEData) []interface{} {
 			if len(cve.Weaknesses) > 0 {
 				row[i] = cve.Weaknesses[0].CWEID
 			}
-		case "application":
-			row[i] = ""
-			if cve.Cpe != nil {
-				if application, err := extractApplicationFromCPE(*cve.Cpe.Cpe); err == nil {
-					row[i] = application
-				}
-			}
 		case "vendor":
 			row[i] = ""
 			if cve.Cpe != nil {

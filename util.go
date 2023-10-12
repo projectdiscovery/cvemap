@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -19,17 +17,6 @@ func getLatestVersionCVSSScore(cvss CvssMetrics) float64 {
 		highestScore = cvss.Cvss31.Score
 	}
 	return highestScore
-}
-
-func extractApplicationFromCPE(cpe string) (string, error) {
-	// Split the CPE string using ":" as the separator
-	cpeParts := strings.Split(cpe, ":")
-
-	// The application part is typically in the 5th position (index 4) in the CPE string
-	if len(cpeParts) >= 5 {
-		return cpeParts[4], nil
-	}
-	return "", fmt.Errorf("invalid CPE string format")
 }
 
 func yearToDatetime(year string) string {
