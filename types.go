@@ -22,9 +22,11 @@ type Options struct {
 	vulnType          goflags.StringSlice
 	cpe               string
 	vulnStatus        string
+	age               string
 	kev               bool
 	trending          bool
 	hasNucleiTemplate bool
+	hasPoc            bool
 	json              bool
 	limit             int
 }

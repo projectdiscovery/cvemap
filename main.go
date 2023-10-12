@@ -3,20 +3,22 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/projectdiscovery/goflags"
-	sliceutil "github.com/projectdiscovery/utils/slice"
+	fileutil "github.com/projectdiscovery/utils/file"
 )
 
 var (
 	cveURL         = "https://cve-dev.nuclei.sh/cves"
-	defaultHeaders = []string{"CVE-ID", "EPSS", "CVSS", "Severity", "CWE", "Application", "Vendor", "Status"}
+	defaultHeaders = []string{"CVE-ID", "EPSS", "CVSS", "Severity", "CWE", "Product", "Vendor", "Status"}
 	maxLimit       = 300
 )
 
@@ -38,14 +40,16 @@ func main() {
 		flagset.StringSliceVarP(&options.epssScore, "epss-score", "es", nil, "cve to list for given epss score", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringSliceVarP(&options.epssPercentile, "epss-percentile", "ep", nil, "cve to list for given epss percentile", goflags.CommaSeparatedStringSliceOptions),
 		//flagset.StringSliceVarP(&options.year, "year", "y", nil, "cve to list for given year", goflags.CommaSeparatedStringSliceOptions),
-		flagset.StringSliceVarP(&options.assignees, "assignee", "a", nil, " cve to list for given publisher assignee", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringVar(&options.age, "age", "", "cve to list published by given age in days"),
+		flagset.StringSliceVarP(&options.assignees, "assignee", "a", nil, "cve to list for given publisher assignee", goflags.CommaSeparatedStringSliceOptions),
 		//flagset.StringSliceVarP(&options.vulnType, "type", "t", nil, "cve to list for given vulnerability type", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringVarP(&options.vulnStatus, "status", "st", "", "cve to list for given vulnerability status in cli output"),
 		flagset.StringSliceVarP(&options.reference, "reference", "r", nil, "cve to list for given reference", goflags.CommaSeparatedStringSliceOptions),
 		flagset.BoolVarP(&options.kev, "kev", "k", false, "display cve for known exploitable vulnerabilities by cisa"),
 		//flagset.BoolVarP(&options.trending, "trending", "tr", false, "display trending cve by hackerone cve discovery"),
 		flagset.BoolVarP(&options.hasNucleiTemplate, "nuclei-template", "nt", false, "display cve having nuclei templates"),
-		flagset.StringSliceVarP(&options.includeColumns, "field", "f", defaultHeaders, "field to display in cli output (supported: product)", goflags.CommaSeparatedStringSliceOptions),
+		flagset.BoolVar(&options.hasPoc, "poc", false, "display cve having poc"),
+		flagset.StringSliceVarP(&options.includeColumns, "field", "f", nil, "field to display in cli output (supported: assignee, age, kev, template, poc)", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringSliceVarP(&options.excludeColumns, "exclude", "e", nil, "field to exclude from cli output", goflags.CommaSeparatedStringSliceOptions),
 		flagset.IntVarP(&options.limit, "limit", "l", 100, "limit the number of results to display"),
 		flagset.BoolVarP(&options.json, "json", "j", false, "return output in json format"),
@@ -58,20 +62,37 @@ func main() {
 		options.limit = maxLimit
 	}
 
+	if fileutil.HasStdin() {
+		// Read from stdin
+		bin, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			log.Fatalf("couldn't read stdin: %s\n", err)
+		}
+		options.cveIds = append(options.cveIds, strings.Split(strings.TrimSpace(string(bin)), "\n")...)
+	}
+
 	// construct headers
 	headers := make([]string, 0)
 	options.includeColumns = append(defaultHeaders, options.includeColumns...)
-	// convert all headers to lowercase
-	for i, eh := range options.excludeColumns {
-		options.excludeColumns[i] = strings.ToLower(eh)
+	// case insensitive contains check
+	contains := func(array []string, element string) bool {
+		for _, e := range array {
+			if strings.EqualFold(e, element) {
+				return true
+			}
+		}
+		return false
 	}
+	// add headers to display
 	for _, header := range options.includeColumns {
-		if !sliceutil.Contains(options.excludeColumns, strings.ToLower(header)) {
+		if !contains(options.excludeColumns, header) && !contains(headers, header) {
 			headers = append(headers, header)
 		}
 	}
-	headers = sliceutil.Dedupe(headers)
-
+	// limit headers to 10, otherwise it will be too wide
+	if len(headers) > 10 {
+		headers = headers[:10]
+	}
 	// Get all CVEs for the given filters
 	cvesResp, err := getCves(constructQueryParams(options))
 	if err != nil {
@@ -150,6 +171,23 @@ func getRow(headers []string, cve CVEData) []interface{} {
 			}
 		case "status":
 			row[i] = strings.ToUpper(cve.VulnStatus)
+		case "assignee":
+			row[i] = ""
+			if len(cve.Assignee) > 0 {
+				row[i] = cve.Assignee
+			}
+		case "age":
+			row[i] = ""
+			if cve.AgeInDays > 0 {
+				row[i] = cve.AgeInDays
+			}
+		case "kev":
+			row[i] = strings.ToUpper(strconv.FormatBool(cve.IsKev))
+		case "template":
+			row[i] = strings.ToUpper(strconv.FormatBool(cve.IsTemplate))
+		case "poc":
+			row[i] = strings.ToUpper(strconv.FormatBool(cve.IsPoc))
+
 		default:
 			row[i] = ""
 		}
@@ -205,20 +243,29 @@ func constructQueryParams(opts Options) string {
 		for _, cvssScore := range opts.cvssScore {
 			if cvssScore[0] == '>' {
 				cvsKey = "cvss_score_gte"
-			}
-			if cvssScore[0] == '<' {
+			} else if cvssScore[0] == '<' {
 				cvsKey = "cvss_score_lte"
 			}
 			queryParams.Add(cvsKey, cvssScore[1:])
 		}
 	}
+	if len(opts.age) > 0 {
+		ageKey := "age_in_days"
+		if opts.age[0] == '>' {
+			ageKey = "age_in_days_gte"
+		} else if opts.age[0] == '<' {
+			ageKey = "age_in_days_lte"
+		}
+		queryParams.Add(ageKey, opts.age[1:])
+	}
 	if opts.kev {
 		queryParams.Add("is_exploited", "true")
 	}
-	// if opts.trending {
-	// }
 	if opts.hasNucleiTemplate {
 		queryParams.Add("is_template", "true")
+	}
+	if opts.hasPoc {
+		queryParams.Add("is_poc", "true")
 	}
 	if len(opts.vulnStatus) > 0 {
 		queryParams.Add("vuln_status", strings.ToLower(opts.vulnStatus))
