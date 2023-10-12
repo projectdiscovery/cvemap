@@ -104,12 +104,10 @@ func renderTable(headers []string, rows [][]interface{}) {
 		headerRow[i] = header
 	}
 	t.AppendHeader(headerRow)
-
 	// Loop through the retrieved CVE data and add rows to the table
 	for _, row := range rows {
 		t.AppendRow(row)
 	}
-
 	// Set table options and render it
 	t.SetStyle(table.StyleRounded)
 	t.Render()

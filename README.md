@@ -44,7 +44,7 @@ OPTIONS:
    -c, -cpe string                 cve to list for given cpe
    -es, -epss-score string[]       cve to list for given epss score
    -ep, -epss-percentile string[]  cve to list for given epss percentile
-   -a, -assignee string[]           cve to list for given publisher assignee
+   -a, -assignee string[]          cve to list for given publisher assignee
    -st, -status string             cve to list for given vulnerability status in cli output
    -r, -reference string[]         cve to list for given reference
    -k, -kev                        display cve for known exploitable vulnerabilities by cisa

@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 )
 
 func getLatestVersionCVSSScore(cvss CvssMetrics) float64 {
@@ -28,4 +30,16 @@ func extractApplicationFromCPE(cpe string) (string, error) {
 		return cpeParts[4], nil
 	}
 	return "", fmt.Errorf("invalid CPE string format")
+}
+
+func yearToDatetime(year string) string {
+	var y int64
+	y, err := strconv.ParseInt(year, 10, 64)
+	if err != nil {
+		return ""
+	}
+	// Create a time object representing the start of the year
+	startOfYear := time.Date(int(y), 1, 1, 0, 0, 0, 0, time.UTC)
+	// Format the time as a string
+	return startOfYear.Format("2006-01-02T15:04:05Z")
 }
