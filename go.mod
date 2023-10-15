@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/jedib0t/go-pretty/v6 v6.4.7
 	github.com/projectdiscovery/goflags v0.1.22
+	github.com/projectdiscovery/utils v0.0.56
 )
 
 require (
@@ -17,7 +18,6 @@ require (
 	github.com/miekg/dns v1.1.55 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/projectdiscovery/blackrock v0.0.1 // indirect
-	github.com/projectdiscovery/utils v0.0.56 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/saintfish/chardet v0.0.0-20120816061221-3af4cd4741ca // indirect
 	golang.org/x/exp v0.0.0-20221019170559-20944726eadf // indirect
