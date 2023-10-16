@@ -78,8 +78,7 @@ func main() {
 	headers := make([]string, 0)
 
 	if options.hackerone {
-		elementsToInsert := []string{"Rank", "Reports"}
-		defaultHeaders = append(defaultHeaders[:1], append(elementsToInsert, defaultHeaders[2:]...)...)
+		defaultHeaders = []string{"ID", "CVSS", "Severity", "Rank", "Reports"}
 	}
 
 	options.includeColumns = append(defaultHeaders, options.includeColumns...)
