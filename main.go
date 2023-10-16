@@ -48,6 +48,7 @@ func main() {
 		flagset.BoolVarP(&options.kev, "kev", "k", false, "display cve for known exploitable vulnerabilities by cisa"),
 		//flagset.BoolVarP(&options.trending, "trending", "tr", false, "display trending cve by hackerone cve discovery"),
 		flagset.BoolVarP(&options.hasNucleiTemplate, "nuclei-template", "nt", false, "display cve having nuclei templates"),
+		flagset.BoolVarP(&options.hackerone, "hackerone", "h1", false, "display cves reported on hackerone"),
 		flagset.BoolVar(&options.hasPoc, "poc", false, "display cve having poc"),
 		flagset.StringSliceVarP(&options.includeColumns, "field", "f", nil, "field to display in cli output (supported: assignee, age, kev, template, poc)", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringSliceVarP(&options.excludeColumns, "exclude", "e", nil, "field to exclude from cli output", goflags.CommaSeparatedStringSliceOptions),
@@ -73,6 +74,12 @@ func main() {
 
 	// construct headers
 	headers := make([]string, 0)
+
+	if options.hackerone {
+		elementsToInsert := []string{"Rank", "Reports"}
+		defaultHeaders = append(defaultHeaders[:1], append(elementsToInsert, defaultHeaders[2:]...)...)
+	}
+
 	options.includeColumns = append(defaultHeaders, options.includeColumns...)
 	// case insensitive contains check
 	contains := func(array []string, element string) bool {
@@ -187,6 +194,13 @@ func getRow(headers []string, cve CVEData) []interface{} {
 			row[i] = strings.ToUpper(strconv.FormatBool(cve.IsTemplate))
 		case "poc":
 			row[i] = strings.ToUpper(strconv.FormatBool(cve.IsPoc))
+		case "rank":
+			row[i] = ""
+			if cve.Hackerone.Rank > 0 {
+				row[i] = cve.Hackerone.Rank
+			}
+		case "reports":
+			row[i] = cve.Hackerone.Count
 
 		default:
 			row[i] = ""
@@ -290,6 +304,10 @@ func constructQueryParams(opts Options) string {
 	}
 	if len(opts.vendor) > 0 {
 		addQueryParams(queryParams, "cpe.vendor", opts.vendor)
+	}
+	if opts.hackerone {
+		queryParams.Add("hackerone.rank_gte", "1")
+		queryParams.Add("_sort", "hackerone.rank")
 	}
 	return queryParams.Encode()
 }
