@@ -17,8 +17,8 @@ import (
 )
 
 var (
-	cveURL         = "https://cve-dev.nuclei.sh/cves"
-	defaultHeaders = []string{"CVE-ID", "EPSS", "CVSS", "Severity", "CWE", "Product", "Vendor", "Status"}
+	cveURL         = "https://cve-dev.nuclei.sh/cves/"
+	defaultHeaders = []string{"ID", "CVSS", "Severity", "CWE", "EPSS", "Product", "Vendor", "Status"}
 	maxLimit       = 300
 )
 
@@ -29,30 +29,32 @@ func main() {
 	flagset.SetDescription(`Navigate the CVE jungle with ease.`)
 
 	flagset.CreateGroup("Options", "options",
-		flagset.StringSliceVarP(&options.cveIds, "cve-id", "id", nil, "cve to list for given id", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringSliceVar(&options.cveIds, "id", nil, "cve to list for given id", goflags.CommaSeparatedStringSliceOptions),
 		// flagset.StringSliceVarP(&options.cweIds, "cwe-id", "cwe", nil, "cve to list for given cwe id", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringSliceVarP(&options.vendor, "vendor", "v", nil, "cve to list for given vendor", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringSliceVarP(&options.product, "product", "p", nil, "cve to list for given product", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringSliceVarP(&options.severity, "severity", "s", nil, "cve to list for given severity", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringSliceVarP(&options.cvssScore, "cvss-score", "cs", nil, "cve to list for given cvss score", goflags.CommaSeparatedStringSliceOptions),
-		// flagset.StringSliceVarP(&options.cvssMetrics, "cvss-metrics", "cm", nil, "cve to list for given cvss metrics", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringVarP(&options.cpe, "cpe", "c", "", "cve to list for given cpe"),
 		flagset.StringSliceVarP(&options.epssScore, "epss-score", "es", nil, "cve to list for given epss score", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringSliceVarP(&options.epssPercentile, "epss-percentile", "ep", nil, "cve to list for given epss percentile", goflags.CommaSeparatedStringSliceOptions),
-		//flagset.StringSliceVarP(&options.year, "year", "y", nil, "cve to list for given year", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringVar(&options.age, "age", "", "cve to list published by given age in days"),
 		flagset.StringSliceVarP(&options.assignees, "assignee", "a", nil, "cve to list for given publisher assignee", goflags.CommaSeparatedStringSliceOptions),
-		//flagset.StringSliceVarP(&options.vulnType, "type", "t", nil, "cve to list for given vulnerability type", goflags.CommaSeparatedStringSliceOptions),
-		flagset.StringVarP(&options.vulnStatus, "status", "st", "", "cve to list for given vulnerability status in cli output"),
-		flagset.StringSliceVarP(&options.reference, "reference", "r", nil, "cve to list for given reference", goflags.CommaSeparatedStringSliceOptions),
-		flagset.BoolVarP(&options.kev, "kev", "k", false, "display cve for known exploitable vulnerabilities by cisa"),
-		//flagset.BoolVarP(&options.trending, "trending", "tr", false, "display trending cve by hackerone cve discovery"),
-		flagset.BoolVarP(&options.hasNucleiTemplate, "nuclei-template", "nt", false, "display cve having nuclei templates"),
+		//flagset.StringSliceVarP(&options.vulnType, "type", "vt", nil, "cve to list for given vulnerability type", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringVarP(&options.vulnStatus, "vstatus", "vs", "", "cve to list for given vulnerability status in cli output"),
+	)
+
+	flagset.CreateGroup("FILTER", "filter",
+		flagset.BoolVarP(&options.kev, "kev", "k", false, "display cves marked as exploitable vulnerabilities by cisa"),
+		flagset.BoolVarP(&options.hasNucleiTemplate, "template", "nt", false, "display cves that has public nuclei templates"),
+		flagset.BoolVar(&options.hasPoc, "poc", false, "display cves that has public published poc"),
 		flagset.BoolVarP(&options.hackerone, "hackerone", "h1", false, "display cves reported on hackerone"),
-		flagset.BoolVar(&options.hasPoc, "poc", false, "display cve having poc"),
-		flagset.StringSliceVarP(&options.includeColumns, "field", "f", nil, "field to display in cli output (supported: assignee, age, kev, template, poc)", goflags.CommaSeparatedStringSliceOptions),
-		flagset.StringSliceVarP(&options.excludeColumns, "exclude", "e", nil, "field to exclude from cli output", goflags.CommaSeparatedStringSliceOptions),
-		flagset.IntVarP(&options.limit, "limit", "l", 100, "limit the number of results to display"),
+	)
+
+	flagset.CreateGroup("OUTPUT", "output",
+		flagset.StringSliceVarP(&options.includeColumns, "field", "f", nil, "fields to display in cli output (supported: assignee, age, kev, template, poc)", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringSliceVarP(&options.excludeColumns, "exclude", "fe", nil, "fields to exclude from cli output", goflags.CommaSeparatedStringSliceOptions),
+		flagset.IntVarP(&options.limit, "limit", "l", 50, "limit the number of results to display"),
 		flagset.BoolVarP(&options.json, "json", "j", false, "return output in json format"),
 	)
 
@@ -103,7 +105,7 @@ func main() {
 	// Get all CVEs for the given filters
 	cvesResp, err := getCves(constructQueryParams(options))
 	if err != nil {
-		fmt.Println("Error getting CVEs by assignee:", err)
+		fmt.Println("Error getting CVEs info:", err)
 		return
 	}
 
@@ -153,7 +155,7 @@ func getRow(headers []string, cve CVEData) []interface{} {
 	row := make([]interface{}, len(headers))
 	for i, header := range headers {
 		switch strings.ToLower(header) {
-		case "cve-id":
+		case "id":
 			row[i] = cve.CveID
 		case "epss":
 			row[i] = cve.Epss.Score
@@ -263,6 +265,7 @@ func constructQueryParams(opts Options) string {
 			queryParams.Add(cvsKey, cvssScore[1:])
 		}
 	}
+
 	if len(opts.age) > 0 {
 		ageKey := "age_in_days"
 		if opts.age[0] == '>' {
