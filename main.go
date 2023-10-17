@@ -18,7 +18,7 @@ import (
 
 var (
 	cveURL         = "https://cve-dev.nuclei.sh/cves/"
-	defaultHeaders = []string{"ID", "CVSS", "Severity", "CWE", "EPSS", "Product", "Vendor", "Status"}
+	defaultHeaders = []string{"ID", "CVSS", "Severity", "EPSS", "Product", "Template"}
 	maxLimit       = 300
 )
 
@@ -78,7 +78,7 @@ func main() {
 	headers := make([]string, 0)
 
 	if options.hackerone {
-		defaultHeaders = []string{"ID", "CVSS", "Severity", "Rank", "Reports"}
+		defaultHeaders = []string{"ID", "CVSS", "Severity", "Rank", "Reports", "Product", "Template"}
 	}
 
 	options.includeColumns = append(defaultHeaders, options.includeColumns...)
@@ -192,7 +192,11 @@ func getRow(headers []string, cve CVEData) []interface{} {
 		case "kev":
 			row[i] = strings.ToUpper(strconv.FormatBool(cve.IsKev))
 		case "template":
-			row[i] = strings.ToUpper(strconv.FormatBool(cve.IsTemplate))
+			if cve.IsTemplate {
+				row[i] = "✅"
+			} else {
+				row[i] = "❌"
+			}
 		case "poc":
 			row[i] = strings.ToUpper(strconv.FormatBool(cve.IsPoc))
 		case "rank":
@@ -310,6 +314,9 @@ func constructQueryParams(opts Options) string {
 	if opts.hackerone {
 		queryParams.Add("hackerone.rank_gte", "1")
 		queryParams.Add("_sort", "hackerone.rank")
+	} else {
+		queryParams.Add("_sort", "cve_id")
+		queryParams.Add("_order", "desc")
 	}
 	return queryParams.Encode()
 }
