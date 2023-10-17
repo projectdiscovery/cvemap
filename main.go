@@ -13,13 +13,70 @@ import (
 
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/projectdiscovery/goflags"
+	"github.com/projectdiscovery/gologger"
+	"github.com/projectdiscovery/gologger/levels"
 	fileutil "github.com/projectdiscovery/utils/file"
+	updateutils "github.com/projectdiscovery/utils/update"
 )
 
 var (
 	cveURL         = "https://cve-dev.nuclei.sh/cves/"
 	defaultHeaders = []string{"ID", "CVSS", "Severity", "EPSS", "Product", "Template"}
-	maxLimit       = 300
+
+	headerMap = map[string]string{
+		"id":       "id",
+		"cwe":      "cwe",
+		"epss":     "epss",
+		"cvss":     "cvss",
+		"severity": "severity",
+		"vendor":   "vendor",
+		"v":        "vendor",
+		"product":  "product",
+		"p":        "product",
+		"vstatus":  "vstatus",
+		"assignee": "assignee",
+		"a":        "assignee",
+		"age":      "age",
+		"kev":      "kev",
+		"template": "template",
+		"t":        "template",
+		"nt":       "template",
+		"poc":      "poc",
+		"rank":     "rank",
+		"reports":  "reports",
+	}
+
+	allowedHeader = goflags.AllowdTypes{
+		"":         goflags.EnumVariable(-1),
+		"cwe":      goflags.EnumVariable(0),
+		"epss":     goflags.EnumVariable(1),
+		"product":  goflags.EnumVariable(2),
+		"p":        goflags.EnumVariable(3),
+		"vendor":   goflags.EnumVariable(4),
+		"v":        goflags.EnumVariable(5),
+		"vstatus":  goflags.EnumVariable(6),
+		"vs":       goflags.EnumVariable(7),
+		"assignee": goflags.EnumVariable(8),
+		"a":        goflags.EnumVariable(9),
+		"age":      goflags.EnumVariable(10),
+		"kev":      goflags.EnumVariable(11),
+		"template": goflags.EnumVariable(12),
+		"t":        goflags.EnumVariable(13),
+		"nt":       goflags.EnumVariable(14),
+		"poc":      goflags.EnumVariable(15),
+	}
+
+	allowedVstatus = goflags.AllowdTypes{
+		"":            goflags.EnumVariable(-1),
+		"new":         goflags.EnumVariable(0),
+		"confirmed":   goflags.EnumVariable(1),
+		"unconfirmed": goflags.EnumVariable(2),
+		"modified":    goflags.EnumVariable(3),
+		"rejected":    goflags.EnumVariable(4),
+		"unknown":     goflags.EnumVariable(5),
+	}
+
+	maxLimit = 300
 )
 
 func main() {
@@ -28,7 +85,7 @@ func main() {
 	flagset := goflags.NewFlagSet()
 	flagset.SetDescription(`Navigate the CVE jungle with ease.`)
 
-	flagset.CreateGroup("Options", "options",
+	flagset.CreateGroup("OPTIONS", "options",
 		flagset.StringSliceVar(&options.cveIds, "id", nil, "cve to list for given id", goflags.CommaSeparatedStringSliceOptions),
 		// flagset.StringSliceVarP(&options.cweIds, "cwe-id", "cwe", nil, "cve to list for given cwe id", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringSliceVarP(&options.vendor, "vendor", "v", nil, "cve to list for given vendor", goflags.CommaSeparatedStringSliceOptions),
@@ -36,12 +93,17 @@ func main() {
 		flagset.StringSliceVarP(&options.severity, "severity", "s", nil, "cve to list for given severity", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringSliceVarP(&options.cvssScore, "cvss-score", "cs", nil, "cve to list for given cvss score", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringVarP(&options.cpe, "cpe", "c", "", "cve to list for given cpe"),
-		flagset.StringSliceVarP(&options.epssScore, "epss-score", "es", nil, "cve to list for given epss score", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringVarP(&options.epssScore, "epss-score", "es", "", "cve to list for given epss score"),
 		flagset.StringSliceVarP(&options.epssPercentile, "epss-percentile", "ep", nil, "cve to list for given epss percentile", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringVar(&options.age, "age", "", "cve to list published by given age in days"),
 		flagset.StringSliceVarP(&options.assignees, "assignee", "a", nil, "cve to list for given publisher assignee", goflags.CommaSeparatedStringSliceOptions),
 		//flagset.StringSliceVarP(&options.vulnType, "type", "vt", nil, "cve to list for given vulnerability type", goflags.CommaSeparatedStringSliceOptions),
-		flagset.StringVarP(&options.vulnStatus, "vstatus", "vs", "", "cve to list for given vulnerability status in cli output"),
+		flagset.EnumVarP(&options.vulnStatus, "vstatus", "vs", goflags.EnumVariable(-1), "cve to list for given vulnerability status in cli output", allowedVstatus),
+	)
+
+	flagset.CreateGroup("update", "Update",
+		flagset.CallbackVarP(GetUpdateCallback(), "update", "up", "update cvemap to latest version"),
+		flagset.BoolVarP(&options.disableUpdateCheck, "disable-update-check", "duc", false, "disable automatic cvemap update check"),
 	)
 
 	flagset.CreateGroup("FILTER", "filter",
@@ -52,15 +114,47 @@ func main() {
 	)
 
 	flagset.CreateGroup("OUTPUT", "output",
-		flagset.StringSliceVarP(&options.includeColumns, "field", "f", nil, "fields to display in cli output (supported: assignee, age, kev, template, poc)", goflags.CommaSeparatedStringSliceOptions),
-		flagset.StringSliceVarP(&options.excludeColumns, "exclude", "fe", nil, "fields to exclude from cli output", goflags.CommaSeparatedStringSliceOptions),
+		flagset.EnumSliceVarP(&options.includeColumns, "field", "f", []goflags.EnumVariable{goflags.EnumVariable(-1)}, "fields to display in cli output", allowedHeader),
+		flagset.EnumSliceVarP(&options.excludeColumns, "exclude", "fe", []goflags.EnumVariable{goflags.EnumVariable(-1)}, "fields to exclude from cli output", allowedHeader),
 		flagset.IntVarP(&options.limit, "limit", "l", 50, "limit the number of results to display"),
 		flagset.BoolVarP(&options.json, "json", "j", false, "return output in json format"),
+	)
+
+	flagset.CreateGroup("DEBUG", "debug",
+		flagset.BoolVar(&options.version, "version", false, "Version"),
+		flagset.BoolVar(&options.silent, "silent", false, "Silent"),
+		flagset.BoolVar(&options.verbose, "verbose", false, "Verbose"),
 	)
 
 	if err := flagset.Parse(); err != nil {
 		log.Fatal(err)
 	}
+
+	if options.version {
+		gologger.Info().Msgf("Current Version: %s\n", version)
+		os.Exit(0)
+	}
+
+	if options.silent {
+		gologger.DefaultLogger.SetMaxLevel(levels.LevelSilent)
+	} else if options.verbose {
+		gologger.DefaultLogger.SetMaxLevel(levels.LevelVerbose)
+	}
+
+	// Show the user the banner
+	showBanner()
+
+	if !options.disableUpdateCheck {
+		latestVersion, err := updateutils.GetToolVersionCallback("cvemap", version)()
+		if err != nil {
+			if options.verbose {
+				gologger.Error().Msgf("cvemap version check failed: %v", err.Error())
+			}
+		} else {
+			gologger.Info().Msgf("Current cvemap version %v %v", version, updateutils.GetVersionDescription(version, latestVersion))
+		}
+	}
+
 	if options.limit > maxLimit {
 		options.limit = maxLimit
 	}
@@ -69,7 +163,7 @@ func main() {
 		// Read from stdin
 		bin, err := io.ReadAll(os.Stdin)
 		if err != nil {
-			log.Fatalf("couldn't read stdin: %s\n", err)
+			gologger.Fatal().Msgf("couldn't read stdin: %s\n", err)
 		}
 		options.cveIds = append(options.cveIds, strings.Split(strings.TrimSpace(string(bin)), "\n")...)
 	}
@@ -80,6 +174,9 @@ func main() {
 	if options.hackerone {
 		defaultHeaders = []string{"ID", "CVSS", "Severity", "Rank", "Reports", "Product", "Template"}
 	}
+
+	options.includeColumns = getValidHeaders(options.includeColumns)
+	options.excludeColumns = getValidHeaders(options.excludeColumns)
 
 	options.includeColumns = append(defaultHeaders, options.includeColumns...)
 	// case insensitive contains check
@@ -177,7 +274,7 @@ func getRow(headers []string, cve CVEData) []interface{} {
 			if cve.Cpe != nil {
 				row[i] = *cve.Cpe.Product
 			}
-		case "status":
+		case "vstatus":
 			row[i] = strings.ToUpper(cve.VulnStatus)
 		case "assignee":
 			row[i] = ""
@@ -262,10 +359,12 @@ func constructQueryParams(opts Options) string {
 		for _, cvssScore := range opts.cvssScore {
 			if cvssScore[0] == '>' {
 				cvsKey = "cvss_score_gte"
+				cvssScore = cvssScore[1:]
 			} else if cvssScore[0] == '<' {
 				cvsKey = "cvss_score_lte"
+				cvssScore = cvssScore[1:]
 			}
-			queryParams.Add(cvsKey, cvssScore[1:])
+			queryParams.Add(cvsKey, cvssScore)
 		}
 	}
 
@@ -273,10 +372,12 @@ func constructQueryParams(opts Options) string {
 		ageKey := "age_in_days"
 		if opts.age[0] == '>' {
 			ageKey = "age_in_days_gte"
+			opts.age = opts.age[1:]
 		} else if opts.age[0] == '<' {
 			ageKey = "age_in_days_lte"
+			opts.age = opts.age[1:]
 		}
-		queryParams.Add(ageKey, opts.age[1:])
+		queryParams.Add(ageKey, opts.age)
 	}
 	if opts.kev {
 		queryParams.Add("is_exploited", "true")
@@ -294,7 +395,15 @@ func constructQueryParams(opts Options) string {
 		addQueryParams(queryParams, "reference", opts.reference)
 	}
 	if len(opts.epssScore) > 0 {
-		addQueryParams(queryParams, "epss.epss_score", opts.epssScore)
+		epssKey := "epss.epss_score"
+		if opts.epssScore[0] == '>' {
+			epssKey = "epss.epss_score_gte"
+			opts.epssScore = opts.epssScore[1:]
+		} else if opts.epssScore[0] == '<' {
+			epssKey = "epss.epss_score_lte"
+			opts.epssScore = opts.epssScore[1:]
+		}
+		queryParams.Add(epssKey, opts.epssScore)
 	}
 	if len(opts.epssPercentile) > 0 {
 		addQueryParams(queryParams, "epss.epss_percentile", opts.epssPercentile)
@@ -328,4 +437,14 @@ func addQueryParams(queryParams *url.Values, key string, values []string) *url.V
 		}
 	}
 	return queryParams
+}
+
+func getValidHeaders(keys []string) []string {
+	headers := []string{}
+	for _, hk := range keys {
+		if v, ok := headerMap[hk]; ok {
+			headers = append(headers, v)
+		}
+	}
+	return headers
 }

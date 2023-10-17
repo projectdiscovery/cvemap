@@ -1,0 +1,33 @@
+package main
+
+import (
+	"github.com/projectdiscovery/gologger"
+	updateutils "github.com/projectdiscovery/utils/update"
+)
+
+const banner = `
+
+   ______   _____  ____ ___  ____  ____
+  / ___/ | / / _ \/ __ \__ \/ __ \/ __ \
+ / /__ | |/ /  __/ / / / / / /_/ / /_/ /
+ \___/ |___/\___/_/ /_/ /_/\__,_/ .___/ 
+                               /_/
+					  
+`
+
+// Version is the current version
+const version = `v0.0.1`
+
+// showBanner is used to show the banner to the user
+func showBanner() {
+	gologger.Print().Msgf("%s\n", banner)
+	gologger.Print().Msgf("\t\tprojectdiscovery.io\n\n")
+}
+
+// GetUpdateCallback returns a callback function that updates proxify
+func GetUpdateCallback() func() {
+	return func() {
+		showBanner()
+		updateutils.GetUpdateToolCallback("cvemap", version)()
+	}
+}
