@@ -18,7 +18,7 @@ import (
 
 var (
 	cveURL         = "https://cve-dev.nuclei.sh/cves/"
-	defaultHeaders = []string{"ID", "CVSS", "Severity", "CWE", "EPSS", "Product", "Vendor", "Status"}
+	defaultHeaders = []string{"ID", "CVSS", "Severity", "EPSS", "Product", "Template"}
 	maxLimit       = 300
 )
 
@@ -48,6 +48,7 @@ func main() {
 		flagset.BoolVarP(&options.kev, "kev", "k", false, "display cves marked as exploitable vulnerabilities by cisa"),
 		flagset.BoolVarP(&options.hasNucleiTemplate, "template", "nt", false, "display cves that has public nuclei templates"),
 		flagset.BoolVar(&options.hasPoc, "poc", false, "display cves that has public published poc"),
+		flagset.BoolVarP(&options.hackerone, "hackerone", "h1", false, "display cves reported on hackerone"),
 	)
 
 	flagset.CreateGroup("OUTPUT", "output",
@@ -75,6 +76,11 @@ func main() {
 
 	// construct headers
 	headers := make([]string, 0)
+
+	if options.hackerone {
+		defaultHeaders = []string{"ID", "CVSS", "Severity", "Rank", "Reports", "Product", "Template"}
+	}
+
 	options.includeColumns = append(defaultHeaders, options.includeColumns...)
 	// case insensitive contains check
 	contains := func(array []string, element string) bool {
@@ -186,9 +192,20 @@ func getRow(headers []string, cve CVEData) []interface{} {
 		case "kev":
 			row[i] = strings.ToUpper(strconv.FormatBool(cve.IsKev))
 		case "template":
-			row[i] = strings.ToUpper(strconv.FormatBool(cve.IsTemplate))
+			if cve.IsTemplate {
+				row[i] = "✅"
+			} else {
+				row[i] = "❌"
+			}
 		case "poc":
 			row[i] = strings.ToUpper(strconv.FormatBool(cve.IsPoc))
+		case "rank":
+			row[i] = ""
+			if cve.Hackerone.Rank > 0 {
+				row[i] = cve.Hackerone.Rank
+			}
+		case "reports":
+			row[i] = cve.Hackerone.Count
 
 		default:
 			row[i] = ""
@@ -293,6 +310,13 @@ func constructQueryParams(opts Options) string {
 	}
 	if len(opts.vendor) > 0 {
 		addQueryParams(queryParams, "cpe.vendor", opts.vendor)
+	}
+	if opts.hackerone {
+		queryParams.Add("hackerone.rank_gte", "1")
+		queryParams.Add("_sort", "hackerone.rank")
+	} else {
+		queryParams.Add("_sort", "cve_id")
+		queryParams.Add("_order", "desc")
 	}
 	return queryParams.Encode()
 }
