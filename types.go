@@ -11,20 +11,21 @@ type Options struct {
 	product           goflags.StringSlice
 	severity          goflags.StringSlice
 	cvssScore         goflags.StringSlice
-	cvssMetrics       goflags.StringSlice
+	//cvssMetrics       goflags.StringSlice
 	epssScore         goflags.StringSlice
 	epssPercentile    goflags.StringSlice
-	year              goflags.StringSlice
+	//year              goflags.StringSlice
 	includeColumns    goflags.StringSlice
 	excludeColumns    goflags.StringSlice
 	assignees         goflags.StringSlice
 	reference         goflags.StringSlice
-	vulnType          goflags.StringSlice
+	//vulnType          goflags.StringSlice
 	cpe               string
 	vulnStatus        string
 	age               string
 	kev               bool
-	trending          bool
+	//trending          bool
+	hackerone         bool
 	hasNucleiTemplate bool
 	hasPoc            bool
 	json              bool
@@ -70,6 +71,10 @@ type CVEData struct {
 		Rank  int `json:"rank"`
 		Count int `json:"count"`
 	} `json:"activity"`
+	Hackerone struct {
+		Rank  int `json:"rank"`
+		Count int `json:"count"`
+	} `json:"hackerone"`
 	AgeInDays     int               `json:"age_in_days"`
 	VulnStatus    string            `json:"vuln_status"`
 	IsPoc         bool              `json:"is_poc"`
