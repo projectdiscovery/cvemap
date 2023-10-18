@@ -3,7 +3,7 @@ name: Build cvemap for Windows 386
 on:
   push:
     branches:
-      - gh_workflows_test
+      - gh_workflow_test
 jobs:
   build:
     runs-on: windows-latest  # Use a Windows runner for 386 builds
