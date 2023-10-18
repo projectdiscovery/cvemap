@@ -1,9 +1,6 @@
 package main
 
-import (
-	"strconv"
-	"time"
-)
+import fileutil "github.com/projectdiscovery/utils/file"
 
 func getLatestVersionCVSSScore(cvss CvssMetrics) float64 {
 	var highestScore float64
@@ -19,14 +16,8 @@ func getLatestVersionCVSSScore(cvss CvssMetrics) float64 {
 	return highestScore
 }
 
-func yearToDatetime(year string) string {
-	var y int64
-	y, err := strconv.ParseInt(year, 10, 64)
-	if err != nil {
-		return ""
-	}
-	// Create a time object representing the start of the year
-	startOfYear := time.Date(int(y), 1, 1, 0, 0, 0, 0, time.UTC)
-	// Format the time as a string
-	return startOfYear.Format("2006-01-02T15:04:05Z")
+func isDefaultRun(opts Options) bool {
+	options := len(opts.cveIds) == 0 && len(opts.cweIds) == 0 && len(opts.vendor) == 0 && len(opts.product) == 0 && len(opts.severity) == 0 && len(opts.cvssScore) == 0 && len(opts.epssPercentile) == 0 && len(opts.assignees) == 0 && len(opts.reference) == 0 && opts.epssScore == "" && opts.cpe == "" && opts.vulnStatus == "" && opts.age == ""
+	filters := !opts.kev && !opts.hackerone && !opts.hasNucleiTemplate && !opts.hasPoc
+	return options && filters && !fileutil.HasStdin()
 }

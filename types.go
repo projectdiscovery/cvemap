@@ -5,31 +5,35 @@ import (
 )
 
 type Options struct {
-	cveIds            goflags.StringSlice
-	cweIds            goflags.StringSlice
-	vendor            goflags.StringSlice
-	product           goflags.StringSlice
-	severity          goflags.StringSlice
-	cvssScore         goflags.StringSlice
-	//cvssMetrics       goflags.StringSlice
-	epssScore         goflags.StringSlice
-	epssPercentile    goflags.StringSlice
-	//year              goflags.StringSlice
-	includeColumns    goflags.StringSlice
-	excludeColumns    goflags.StringSlice
-	assignees         goflags.StringSlice
-	reference         goflags.StringSlice
-	//vulnType          goflags.StringSlice
-	cpe               string
-	vulnStatus        string
-	age               string
-	kev               bool
-	//trending          bool
-	hackerone         bool
-	hasNucleiTemplate bool
-	hasPoc            bool
-	json              bool
-	limit             int
+	cveIds             goflags.StringSlice
+	cweIds             goflags.StringSlice
+	vendor             goflags.StringSlice
+	product            goflags.StringSlice
+	severity           goflags.StringSlice
+	cvssScore          goflags.StringSlice
+	//cvssMetrics        goflags.StringSlice
+	epssPercentile     goflags.StringSlice
+	//year               goflags.StringSlice
+	assignees          goflags.StringSlice
+	reference          goflags.StringSlice
+	//vulnType           goflags.StringSlice
+	includeColumns     []string
+	excludeColumns     []string
+	epssScore          string
+	cpe                string
+	vulnStatus         string
+	age                string
+	kev                bool
+	//trending           bool
+	hackerone          bool
+	hasNucleiTemplate  bool
+	hasPoc             bool
+	json               bool
+	limit              int
+	version            bool
+	disableUpdateCheck bool
+	silent             bool
+	verbose            bool
 }
 
 type CVEBulkData struct {
