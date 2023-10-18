@@ -208,16 +208,18 @@ func main() {
 	}
 
 	if options.json {
-		outputJson(cvesResp.Cves)
+		if options.limit > len(cvesResp.Cves) {
+			options.limit = len(cvesResp.Cves)
+		}
+		outputJson(cvesResp.Cves[:options.limit])
 		return
 	}
 
-	//fmt.Printf("Found %d, loaded %d CVEs\n", cvesResp.ResultCount, len(cvesResp.Cves))
 	headers, rows := generateTableData(cvesResp.Cves, headers)
 	if options.limit > len(rows) {
 		options.limit = len(rows)
 	}
-	//fmt.Println("Showing", options.limit, "CVEs")
+
 	renderTable(headers, rows[:options.limit])
 }
 
@@ -342,7 +344,7 @@ func outputJson(cve []CVEData) {
 		gologger.Error().Msgf("Error marshalling json: %s\n", err)
 		return
 	}
-	gologger.Print().Msgf("%s\n", string(json))
+	fmt.Println(string(json))
 }
 
 func constructQueryParams(opts Options) string {
