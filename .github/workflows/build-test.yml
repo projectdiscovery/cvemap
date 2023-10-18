@@ -17,11 +17,11 @@ jobs:
         with:
           go-version: 1.20.x  # Use the desired Go version
     
-      - name: Debug with tmate session
-        uses: mxschmitt/action-tmate@v3
+    #   - name: Debug with tmate session
+    #     uses: mxschmitt/action-tmate@v3
 
       - name: Build cvemap
-        run: go build -o cvemap.exe main.go
+        run: go build -o cvemap.exe .
         working-directory: ${{ github.workspace }}
 
       - name: Upload Artifact
