@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -15,6 +14,7 @@ import (
 	"github.com/projectdiscovery/goflags"
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/gologger/levels"
+	errorutil "github.com/projectdiscovery/utils/errors"
 	fileutil "github.com/projectdiscovery/utils/file"
 	updateutils "github.com/projectdiscovery/utils/update"
 )
@@ -124,7 +124,7 @@ func main() {
 	)
 
 	if err := flagset.Parse(); err != nil {
-		log.Fatal(err)
+		gologger.Fatal().Msgf("Error parsing flags: %s\n", err)
 	}
 
 	if options.version {
@@ -203,7 +203,7 @@ func main() {
 	// Get all CVEs for the given filters
 	cvesResp, err := getCves(constructQueryParams(options))
 	if err != nil {
-		fmt.Println("Error getting CVEs info:", err)
+		gologger.Fatal().Msgf("Error getting CVEs: %s\n", err)
 		return
 	}
 
@@ -324,7 +324,7 @@ func getCves(encodedParams string) (*CVEBulkData, error) {
 	defer response.Body.Close()
 	// Check the response status code
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d", response.StatusCode)
+		return nil, errorutil.New("unexpected status code: %d", response.StatusCode)
 	}
 	// Create a variable to store the response data
 	var cvesInBulk CVEBulkData
@@ -339,10 +339,10 @@ func getCves(encodedParams string) (*CVEBulkData, error) {
 func outputJson(cve []CVEData) {
 	json, err := json.MarshalIndent(cve, "", "  ")
 	if err != nil {
-		fmt.Println("Error marshalling json:", err)
+		gologger.Error().Msgf("Error marshalling json: %s\n", err)
 		return
 	}
-	fmt.Println(string(json))
+	gologger.Print().Msgf("%s\n", string(json))
 }
 
 func constructQueryParams(opts Options) string {
