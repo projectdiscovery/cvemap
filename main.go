@@ -27,21 +27,20 @@ var (
 		"id":       "id",
 		"cwe":      "cwe",
 		"epss":     "epss",
+		"es":       "epss",
 		"cvss":     "cvss",
 		"severity": "severity",
 		"vendor":   "vendor",
-		"v":        "vendor",
 		"product":  "product",
-		"p":        "product",
 		"vstatus":  "vstatus",
 		"assignee": "assignee",
-		"a":        "assignee",
 		"age":      "age",
 		"kev":      "kev",
+		"k":        "kev",
 		"template": "template",
 		"t":        "template",
-		"nt":       "template",
 		"poc":      "poc",
+		"p":        "poc",
 		"rank":     "rank",
 		"reports":  "reports",
 	}
@@ -50,20 +49,18 @@ var (
 		"":         goflags.EnumVariable(-1),
 		"cwe":      goflags.EnumVariable(0),
 		"epss":     goflags.EnumVariable(1),
+		"es":       goflags.EnumVariable(2),
 		"product":  goflags.EnumVariable(2),
-		"p":        goflags.EnumVariable(3),
 		"vendor":   goflags.EnumVariable(4),
-		"v":        goflags.EnumVariable(5),
 		"vstatus":  goflags.EnumVariable(6),
-		"vs":       goflags.EnumVariable(7),
 		"assignee": goflags.EnumVariable(8),
-		"a":        goflags.EnumVariable(9),
 		"age":      goflags.EnumVariable(10),
 		"kev":      goflags.EnumVariable(11),
+		"k":        goflags.EnumVariable(12),
 		"template": goflags.EnumVariable(12),
 		"t":        goflags.EnumVariable(13),
-		"nt":       goflags.EnumVariable(14),
 		"poc":      goflags.EnumVariable(15),
+		"p":        goflags.EnumVariable(16),
 	}
 
 	allowedVstatus = goflags.AllowdTypes{
@@ -166,6 +163,11 @@ func main() {
 			gologger.Fatal().Msgf("couldn't read stdin: %s\n", err)
 		}
 		options.cveIds = append(options.cveIds, strings.Split(strings.TrimSpace(string(bin)), "\n")...)
+	}
+
+	// on default, enable kev
+	if isDefaultRun(options) {
+		options.kev = true
 	}
 
 	// construct headers
