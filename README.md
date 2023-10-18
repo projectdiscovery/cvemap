@@ -36,23 +36,36 @@ Navigate the CVE jungle with ease.
 ## Usage
 ```
 OPTIONS:
-   -id, -cve-id string[]           cve to list for given id
+   -id string[]                    cve to list for given id
    -v, -vendor string[]            cve to list for given vendor
    -p, -product string[]           cve to list for given product
    -s, -severity string[]          cve to list for given severity
    -cs, -cvss-score string[]       cve to list for given cvss score
    -c, -cpe string                 cve to list for given cpe
-   -es, -epss-score string[]       cve to list for given epss score
+   -es, -epss-score string         cve to list for given epss score
    -ep, -epss-percentile string[]  cve to list for given epss percentile
    -age string                     cve to list published by given age in days
    -a, -assignee string[]          cve to list for given publisher assignee
-   -st, -status string             cve to list for given vulnerability status in cli output
-   -r, -reference string[]         cve to list for given reference
-   -k, -kev                        display cve for known exploitable vulnerabilities by cisa
-   -nt, -nuclei-template           display cve having nuclei templates
-   -poc                            display cve having poc
-   -f, -field string[]             field to display in cli output (supported: assignee, age, kev, template, poc)
-   -e, -exclude string[]           field to exclude from cli output
-   -l, -limit int                  limit the number of results to display (default 100)
-   -j, -json                       return output in json format
+   -vs, -vstatus value             cve to list for given vulnerability status in cli output. supported: confirmed, unconfirmed, modified, rejected, unknown, new
+
+UPDATE:
+   -up, -update                 update cvemap to latest version
+   -duc, -disable-update-check  disable automatic cvemap update check
+
+FILTER:
+   -k, -kev         display cves marked as exploitable vulnerabilities by cisa
+   -nt, -template   display cves that has public nuclei templates
+   -poc             display cves that has public published poc
+   -h1, -hackerone  display cves reported on hackerone
+
+OUTPUT:
+   -f, -field value     fields to display in cli output. supported: kev, template, poc, product, vendor, vstatus, age, cwe, epss, assignee
+   -fe, -exclude value  fields to exclude from cli output. supported: kev, template, poc, product, vendor, vstatus, age, cwe, epss, assignee
+   -l, -limit int       limit the number of results to display (default 50)
+   -j, -json            return output in json format
+
+DEBUG:
+   -version  Version
+   -silent   Silent
+   -verbose  Verbose
 ```
