@@ -27,7 +27,6 @@ var (
 		"id":       "id",
 		"cwe":      "cwe",
 		"epss":     "epss",
-		"es":       "epss",
 		"cvss":     "cvss",
 		"severity": "severity",
 		"vendor":   "vendor",
@@ -36,11 +35,8 @@ var (
 		"assignee": "assignee",
 		"age":      "age",
 		"kev":      "kev",
-		"k":        "kev",
 		"template": "template",
-		"t":        "template",
 		"poc":      "poc",
-		"p":        "poc",
 		"rank":     "rank",
 		"reports":  "reports",
 	}
@@ -49,19 +45,16 @@ var (
 		"":         goflags.EnumVariable(-1),
 		"cwe":      goflags.EnumVariable(0),
 		"epss":     goflags.EnumVariable(1),
-		"es":       goflags.EnumVariable(2),
 		"product":  goflags.EnumVariable(2),
-		"vendor":   goflags.EnumVariable(4),
-		"vstatus":  goflags.EnumVariable(6),
-		"assignee": goflags.EnumVariable(8),
-		"age":      goflags.EnumVariable(10),
-		"kev":      goflags.EnumVariable(11),
-		"k":        goflags.EnumVariable(12),
-		"template": goflags.EnumVariable(12),
-		"t":        goflags.EnumVariable(13),
-		"poc":      goflags.EnumVariable(15),
-		"p":        goflags.EnumVariable(16),
+		"vendor":   goflags.EnumVariable(3),
+		"vstatus":  goflags.EnumVariable(4),
+		"assignee": goflags.EnumVariable(5),
+		"age":      goflags.EnumVariable(6),
+		"kev":      goflags.EnumVariable(7),
+		"template": goflags.EnumVariable(8),
+		"poc":      goflags.EnumVariable(9),
 	}
+	allowedHeaderString = allowedHeader.String()
 
 	allowedVstatus = goflags.AllowdTypes{
 		"":            goflags.EnumVariable(-1),
@@ -95,7 +88,7 @@ func main() {
 		flagset.StringVar(&options.age, "age", "", "cve to list published by given age in days"),
 		flagset.StringSliceVarP(&options.assignees, "assignee", "a", nil, "cve to list for given publisher assignee", goflags.CommaSeparatedStringSliceOptions),
 		//flagset.StringSliceVarP(&options.vulnType, "type", "vt", nil, "cve to list for given vulnerability type", goflags.CommaSeparatedStringSliceOptions),
-		flagset.EnumVarP(&options.vulnStatus, "vstatus", "vs", goflags.EnumVariable(-1), "cve to list for given vulnerability status in cli output", allowedVstatus),
+		flagset.EnumVarP(&options.vulnStatus, "vstatus", "vs", goflags.EnumVariable(-1), strings.Replace(fmt.Sprintf("cve to list for given vulnerability status in cli output. supported: %s", allowedVstatus.String()), " ,", "", -1), allowedVstatus),
 	)
 
 	flagset.CreateGroup("update", "Update",
@@ -111,8 +104,8 @@ func main() {
 	)
 
 	flagset.CreateGroup("OUTPUT", "output",
-		flagset.EnumSliceVarP(&options.includeColumns, "field", "f", []goflags.EnumVariable{goflags.EnumVariable(-1)}, "fields to display in cli output", allowedHeader),
-		flagset.EnumSliceVarP(&options.excludeColumns, "exclude", "fe", []goflags.EnumVariable{goflags.EnumVariable(-1)}, "fields to exclude from cli output", allowedHeader),
+		flagset.EnumSliceVarP(&options.includeColumns, "field", "f", []goflags.EnumVariable{goflags.EnumVariable(-1)}, strings.Replace(fmt.Sprintf("fields to display in cli output. supported: %s", allowedHeaderString), " ,", "", -1), allowedHeader),
+		flagset.EnumSliceVarP(&options.excludeColumns, "exclude", "fe", []goflags.EnumVariable{goflags.EnumVariable(-1)}, strings.Replace(fmt.Sprintf("fields to exclude from cli output. supported: %s", allowedHeaderString), " ,", "", -1), allowedHeader),
 		flagset.IntVarP(&options.limit, "limit", "l", 50, "limit the number of results to display"),
 		flagset.BoolVarP(&options.json, "json", "j", false, "return output in json format"),
 	)
