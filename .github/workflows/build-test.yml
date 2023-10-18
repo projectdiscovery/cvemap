@@ -1,0 +1,28 @@
+name: Build cvemap for Windows 386
+
+on:
+  push:
+    branches:
+      - gh_workflows_test
+jobs:
+  build:
+    runs-on: windows-latest  # Use a Windows runner for 386 builds
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.x  # Use the desired Go version
+
+      - name: Build cvemap
+        run: go build -o cvemap.exe main.go
+        working-directory: ${{ github.workspace }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: cvemap
+          path: ./cvemap.exe
