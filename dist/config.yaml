@@ -38,7 +38,7 @@ builds:
       - goos: windows
         goarch: arm64
     dir: .
-    main: .
+    main: cvemap.go
     binary: '{{ .ProjectName }}'
     builder: go
     gobinary: go
@@ -72,6 +72,7 @@ env_files:
 before:
   hooks:
     - go mod tidy
+    - go build -o cvemap
 source:
   name_template: '{{ .ProjectName }}-{{ .Version }}'
   format: tar.gz
