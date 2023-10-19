@@ -29,6 +29,6 @@ jobs:
           DEBUG: true
         uses: goreleaser/goreleaser-action@v4
         with:
-          args: "release --clean --snapshot"
+          args: "release --clean --snapshot --verbose --debug"
           version: latest
           workdir: .
