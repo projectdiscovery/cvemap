@@ -6,6 +6,7 @@ on:
       - '**.go'
       - '**.mod'
       - '**.yml'
+      - '**.yaml'
   workflow_dispatch:
 
 jobs:

@@ -45,7 +45,7 @@ builds:
     gobinary: go
     command: build
     ldflags:
-      - -s -w -X main.version={{.Version}}  -X main.builtBy=goreleaser
+      - -s -w  -X main.commit={{.Commit}} -X main.date={{.Date}} -X main.builtBy=goreleaser
     env:
       - CGO_ENABLED=0
 
