@@ -38,7 +38,7 @@ builds:
       - goos: windows
         goarch: arm64
     dir: .
-    main: main.go ./
+    main: .
     binary: '{{ .ProjectName }}'
     builder: go
     gobinary: go
