@@ -4,9 +4,9 @@ go 1.20
 
 require (
 	github.com/jedib0t/go-pretty/v6 v6.4.7
-	github.com/projectdiscovery/goflags v0.1.22
+	github.com/projectdiscovery/goflags v0.1.24
 	github.com/projectdiscovery/gologger v1.1.11
-	github.com/projectdiscovery/utils v0.0.56
+	github.com/projectdiscovery/utils v0.0.57
 )
 
 require (
