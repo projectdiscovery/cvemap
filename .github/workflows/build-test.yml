@@ -1,0 +1,43 @@
+name: 🔨 Build Test
+
+on:
+  pull_request:
+    paths:
+      - '**.go'
+      - '**.mod'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Test Builds
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        go-version: [1.20.x]
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Build
+        run: go build .
+#        working-directory: cmd/cvemap/
+
+      - name: Test
+        run: go test ./...
+        working-directory: .
+        
+      - name: Race Condition Tests
+        run: go run -race . -id CVE-1999-0027
+#        working-directory: cmd/cvemap/
+      
+      - name: Test Example Code
+        run: go run .
+#        working-directory: examples/
+
+      
