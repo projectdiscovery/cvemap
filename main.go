@@ -98,7 +98,7 @@ func main() {
 
 	flagset.CreateGroup("FILTER", "filter",
 		flagset.DynamicVarP(&options.kev, "kev", "k", "true", "display cves marked as exploitable vulnerabilities by cisa"),
-		flagset.DynamicVarP(&options.hasNucleiTemplate, "template", "nt", "true", "display cves that has public nuclei templates"),
+		flagset.DynamicVarP(&options.hasNucleiTemplate, "template", "t", "true", "display cves that has public nuclei templates"),
 		flagset.DynamicVar(&options.hasPoc, "poc", "true", "display cves that has public published poc"),
 		flagset.DynamicVarP(&options.hackerone, "hackerone", "h1", "true", "display cves reported on hackerone"),
 	)
