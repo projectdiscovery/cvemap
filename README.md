@@ -54,7 +54,7 @@ UPDATE:
 
 FILTER:
    -k, -kev         display cves marked as exploitable vulnerabilities by cisa
-   -nt, -template   display cves that has public nuclei templates
+   -t, -template    display cves that has public nuclei templates
    -poc             display cves that has public published poc
    -h1, -hackerone  display cves reported on hackerone
 
