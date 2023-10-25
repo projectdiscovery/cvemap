@@ -23,11 +23,11 @@ type Options struct {
 	cpe                string
 	vulnStatus         string
 	age                string
-	kev                bool
+	kev                string
 	//trending           bool
-	hackerone          bool
-	hasNucleiTemplate  bool
-	hasPoc             bool
+	hackerone          string
+	hasNucleiTemplate  string
+	hasPoc             string
 	json               bool
 	limit              int
 	version            bool

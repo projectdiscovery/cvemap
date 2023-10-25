@@ -97,10 +97,10 @@ func main() {
 	)
 
 	flagset.CreateGroup("FILTER", "filter",
-		flagset.BoolVarP(&options.kev, "kev", "k", false, "display cves marked as exploitable vulnerabilities by cisa"),
-		flagset.BoolVarP(&options.hasNucleiTemplate, "template", "nt", false, "display cves that has public nuclei templates"),
-		flagset.BoolVar(&options.hasPoc, "poc", false, "display cves that has public published poc"),
-		flagset.BoolVarP(&options.hackerone, "hackerone", "h1", false, "display cves reported on hackerone"),
+		flagset.DynamicVarP(&options.kev, "kev", "k", "true", "display cves marked as exploitable vulnerabilities by cisa"),
+		flagset.DynamicVarP(&options.hasNucleiTemplate, "template", "nt", "true", "display cves that has public nuclei templates"),
+		flagset.DynamicVar(&options.hasPoc, "poc", "true", "display cves that has public published poc"),
+		flagset.DynamicVarP(&options.hackerone, "hackerone", "h1", "true", "display cves reported on hackerone"),
 	)
 
 	flagset.CreateGroup("OUTPUT", "output",
@@ -160,13 +160,13 @@ func main() {
 
 	// on default, enable kev
 	if isDefaultRun(options) {
-		options.kev = true
+		options.kev = "true"
 	}
 
 	// construct headers
 	headers := make([]string, 0)
 
-	if options.hackerone {
+	if options.hackerone == "true" {
 		defaultHeaders = []string{"ID", "CVSS", "Severity", "Rank", "Reports", "Product", "Template"}
 	}
 
@@ -376,14 +376,20 @@ func constructQueryParams(opts Options) string {
 		}
 		queryParams.Add(ageKey, opts.age)
 	}
-	if opts.kev {
+	if opts.kev == "true" {
 		queryParams.Add("is_exploited", "true")
+	} else if opts.kev == "false" {
+		queryParams.Add("is_exploited", "false")
 	}
-	if opts.hasNucleiTemplate {
+	if opts.hasNucleiTemplate == "true" {
 		queryParams.Add("is_template", "true")
+	} else if opts.hasNucleiTemplate == "false" {
+		queryParams.Add("is_template", "false")
 	}
-	if opts.hasPoc {
+	if opts.hasPoc == "true" {
 		queryParams.Add("is_poc", "true")
+	} else if opts.hasPoc == "false" {
+		queryParams.Add("is_poc", "false")
 	}
 	if len(opts.vulnStatus) > 0 {
 		queryParams.Add("vuln_status", strings.ToLower(opts.vulnStatus))
@@ -417,7 +423,7 @@ func constructQueryParams(opts Options) string {
 	if len(opts.vendor) > 0 {
 		addQueryParams(queryParams, "cpe.vendor", opts.vendor)
 	}
-	if opts.hackerone {
+	if opts.hackerone == "true" {
 		queryParams.Add("hackerone.rank_gte", "1")
 		queryParams.Add("_sort", "hackerone.rank")
 	} else {
