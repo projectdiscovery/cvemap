@@ -6,7 +6,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.4.7
 	github.com/projectdiscovery/goflags v0.1.26-0.20231025105607-d6e933a48cc3
 	github.com/projectdiscovery/gologger v1.1.11
-	github.com/projectdiscovery/utils v0.0.59
+	github.com/projectdiscovery/utils v0.0.60
 )
 
 require (
