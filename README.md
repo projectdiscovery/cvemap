@@ -203,16 +203,16 @@ $ cvemap -silent -cs '> 7' -es '> 0.00053' -l 5
 To filter cves to match with specifc conditions like, cves has public poc or template and in the list of kev, belows options can beused:
 
 ```console
-$ cvemap -silent -template=true -poc=false -kev=true -l 5 -f poc,kev
-╭────────────────┬──────┬──────────┬─────────┬─────────────────┬──────────┬───────┬──────╮
-│ ID             │ CVSS │ SEVERITY │    EPSS │ PRODUCT         │ TEMPLATE │ POC   │ KEV  │
-├────────────────┼──────┼──────────┼─────────┼─────────────────┼──────────┼───────┼──────┤
-│ CVE-2023-38205 │  7.5 │ HIGH     │ 0.83516 │ coldfusion      │ ✅       │ FALSE │ TRUE │
-│ CVE-2023-37580 │  6.1 │ MEDIUM   │   0.209 │ zimbra          │ ✅       │ FALSE │ TRUE │
-│ CVE-2023-29298 │  7.5 │ HIGH     │ 0.75542 │ coldfusion      │ ✅       │ FALSE │ TRUE │
-│ CVE-2022-29499 │  9.8 │ CRITICAL │ 0.03494 │ mivoice_connect │ ✅       │ FALSE │ TRUE │
-│ CVE-2022-27926 │  6.1 │ MEDIUM   │ 0.91058 │ collaboration   │ ✅       │ FALSE │ TRUE │
-╰────────────────┴──────┴──────────┴─────────┴─────────────────┴──────────┴───────┴──────╯
+$ cvemap -silent -template=false -poc=true -kev=true -l 5 -f poc,kev
+╭────────────────┬──────┬──────────┬─────────┬─────────┬──────────┬──────┬──────╮
+│ ID             │ CVSS │ SEVERITY │    EPSS │ PRODUCT │ TEMPLATE │ POC  │ KEV  │
+├────────────────┼──────┼──────────┼─────────┼─────────┼──────────┼──────┼──────┤
+│ CVE-2023-5631  │  5.4 │ MEDIUM   │ 0.00986 │ webmail │ ❌       │ TRUE │ TRUE │
+│ CVE-2023-5217  │  8.8 │ HIGH     │ 0.26047 │ libvpx  │ ❌       │ TRUE │ TRUE │
+│ CVE-2023-4863  │  8.8 │ HIGH     │  0.4101 │ chrome  │ ❌       │ TRUE │ TRUE │
+│ CVE-2023-44487 │  7.5 │ HIGH     │ 0.52748 │ http    │ ❌       │ TRUE │ TRUE │
+│ CVE-2023-41993 │  9.8 │ CRITICAL │ 0.00617 │ safari  │ ❌       │ TRUE │ TRUE │
+╰────────────────┴──────┴──────────┴─────────┴─────────┴──────────┴──────┴──────╯
 ```
 
 ### JSON Output
