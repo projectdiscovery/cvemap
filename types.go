@@ -19,6 +19,7 @@ type Options struct {
 	//vulnType           goflags.StringSlice
 	includeColumns     []string
 	excludeColumns     []string
+	listId			   bool
 	epssScore          string
 	cpe                string
 	vulnStatus         string

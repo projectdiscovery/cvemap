@@ -106,6 +106,7 @@ func main() {
 	flagset.CreateGroup("OUTPUT", "output",
 		flagset.EnumSliceVarP(&options.includeColumns, "field", "f", []goflags.EnumVariable{goflags.EnumVariable(-1)}, strings.Replace(fmt.Sprintf("fields to display in cli output. supported: %s", allowedHeaderString), " ,", "", -1), allowedHeader),
 		flagset.EnumSliceVarP(&options.excludeColumns, "exclude", "fe", []goflags.EnumVariable{goflags.EnumVariable(-1)}, strings.Replace(fmt.Sprintf("fields to exclude from cli output. supported: %s", allowedHeaderString), " ,", "", -1), allowedHeader),
+		flagset.BoolVarP(&options.listId, "list-id", "lid", false, "list only the cve ids in the output"),
 		flagset.IntVarP(&options.limit, "limit", "l", 50, "limit the number of results to display"),
 		flagset.BoolVarP(&options.json, "json", "j", false, "return output in json format"),
 	)
@@ -200,10 +201,18 @@ func main() {
 		return
 	}
 
-	if options.json {
-		if options.limit > len(cvesResp.Cves) {
-			options.limit = len(cvesResp.Cves)
+	if options.limit > len(cvesResp.Cves) {
+		options.limit = len(cvesResp.Cves)
+	}
+
+	if options.listId {
+		for _, cve := range cvesResp.Cves[:options.limit] {
+			fmt.Println(cve.CveID)
 		}
+		return
+	}
+
+	if options.json {
 		outputJson(cvesResp.Cves[:options.limit])
 		return
 	}
