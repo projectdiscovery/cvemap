@@ -80,6 +80,7 @@ func main() {
 		// flagset.StringSliceVarP(&options.cweIds, "cwe-id", "cwe", nil, "cve to list for given cwe id", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringSliceVarP(&options.vendor, "vendor", "v", nil, "cve to list for given vendor", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringSliceVarP(&options.product, "product", "p", nil, "cve to list for given product", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringSliceVar(&options.eproduct, "eproduct", nil, "cves to exclude based on products", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringSliceVarP(&options.severity, "severity", "s", nil, "cve to list for given severity", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringSliceVarP(&options.cvssScore, "cvss-score", "cs", nil, "cve to list for given cvss score", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringVarP(&options.cpe, "cpe", "c", "", "cve to list for given cpe"),
@@ -419,6 +420,9 @@ func constructQueryParams(opts Options) string {
 	}
 	if len(opts.product) > 0 {
 		addQueryParams(queryParams, "cpe.product", opts.product)
+	}
+	if len(opts.eproduct) > 0 {
+		addQueryParams(queryParams, "cpe.product_ne", opts.eproduct)
 	}
 	if len(opts.vendor) > 0 {
 		addQueryParams(queryParams, "cpe.vendor", opts.vendor)
