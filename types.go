@@ -9,6 +9,7 @@ type Options struct {
 	cweIds             goflags.StringSlice
 	vendor             goflags.StringSlice
 	product            goflags.StringSlice
+	eproduct           goflags.StringSlice
 	severity           goflags.StringSlice
 	cvssScore          goflags.StringSlice
 	//cvssMetrics        goflags.StringSlice
