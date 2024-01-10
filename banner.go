@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/projectdiscovery/gologger"
+	"github.com/projectdiscovery/utils/auth/pdcp"
 	updateutils "github.com/projectdiscovery/utils/update"
 )
 
@@ -30,4 +31,10 @@ func GetUpdateCallback() func() {
 		showBanner()
 		updateutils.GetUpdateToolCallback("cvemap", version)()
 	}
+}
+
+// AuthWithPDCP is used to authenticate with PDCP
+func AuthWithPDCP() {
+	showBanner()
+	pdcp.CheckNValidateCredentials("cvemap")
 }

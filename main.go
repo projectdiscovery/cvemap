@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"os"
 	"strconv"
@@ -14,13 +15,28 @@ import (
 	"github.com/projectdiscovery/goflags"
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/gologger/levels"
+	"github.com/projectdiscovery/utils/auth/pdcp"
 	errorutil "github.com/projectdiscovery/utils/errors"
 	fileutil "github.com/projectdiscovery/utils/file"
 	updateutils "github.com/projectdiscovery/utils/update"
 )
 
+const xPDCPKeyHeader = "X-PDCP-Key"
+
 var (
-	cveURL         = "https://cve-dev.nuclei.sh/cves/"
+	baseUrl    = "https://cve.projectdiscovery.io/api/v1"
+	httpCleint = &http.Client{}
+	pdcpApiKey = ""
+)
+
+func init() {
+	pch := pdcp.PDCPCredHandler{}
+	if creds, err := pch.GetCreds(); err == nil {
+		pdcpApiKey = creds.APIKey
+	}
+}
+
+var (
 	defaultHeaders = []string{"ID", "CVSS", "Severity", "EPSS", "Product", "Template"}
 
 	headerMap = map[string]string{
@@ -71,9 +87,14 @@ var (
 
 func main() {
 	var options Options
+	var pdcpauth bool
 
 	flagset := goflags.NewFlagSet()
 	flagset.SetDescription(`Navigate the CVE jungle with ease.`)
+
+	flagset.CreateGroup("config", "Config",
+		flagset.BoolVar(&pdcpauth, "auth", false, "configure projectdiscovery cloud (pdcp) api key"),
+	)
 
 	flagset.CreateGroup("OPTIONS", "options",
 		flagset.StringSliceVar(&options.cveIds, "id", nil, "cve to list for given id", goflags.CommaSeparatedStringSliceOptions),
@@ -98,6 +119,7 @@ func main() {
 	)
 
 	flagset.CreateGroup("FILTER", "filter",
+		flagset.StringVarP(&options.search, "search", "q", "", "search in cve data"),
 		flagset.DynamicVarP(&options.kev, "kev", "k", "true", "display cves marked as exploitable vulnerabilities by cisa"),
 		flagset.DynamicVarP(&options.hasNucleiTemplate, "template", "t", "true", "display cves that has public nuclei templates"),
 		flagset.DynamicVar(&options.hasPoc, "poc", "true", "display cves that has public published poc"),
@@ -109,6 +131,7 @@ func main() {
 		flagset.EnumSliceVarP(&options.excludeColumns, "exclude", "fe", []goflags.EnumVariable{goflags.EnumVariable(-1)}, strings.Replace(fmt.Sprintf("fields to exclude from cli output. supported: %s", allowedHeaderString), " ,", "", -1), allowedHeader),
 		flagset.BoolVarP(&options.listId, "list-id", "lid", false, "list only the cve ids in the output"),
 		flagset.IntVarP(&options.limit, "limit", "l", 50, "limit the number of results to display"),
+		flagset.IntVar(&options.offset, "offset", 0, "offset the results to display"),
 		flagset.BoolVarP(&options.json, "json", "j", false, "return output in json format"),
 	)
 
@@ -131,6 +154,10 @@ func main() {
 		gologger.DefaultLogger.SetMaxLevel(levels.LevelSilent)
 	} else if options.verbose {
 		gologger.DefaultLogger.SetMaxLevel(levels.LevelVerbose)
+	}
+
+	if pdcpauth {
+		AuthWithPDCP()
 	}
 
 	// Show the user the banner
@@ -195,26 +222,37 @@ func main() {
 	if len(headers) > 10 {
 		headers = headers[:10]
 	}
-	// Get all CVEs for the given filters
-	cvesResp, err := getCves(constructQueryParams(options))
-	if err != nil {
-		gologger.Fatal().Msgf("Error getting CVEs: %s\n", err)
-		return
-	}
-
-	if options.limit > len(cvesResp.Cves) {
-		options.limit = len(cvesResp.Cves)
-	}
+	var cvesResp *CVEBulkData
+	var err error
 
 	if options.listId {
-		for _, cve := range cvesResp.Cves[:options.limit] {
+		cvesResp, err = getCvesForSpecificFields([]string{"cve_id"}, options.limit, options.offset)
+		if err != nil {
+			gologger.Fatal().Msgf("Error getting CVEs: %s\n", err)
+			return
+		}
+		for _, cve := range cvesResp.Cves {
 			fmt.Println(cve.CveID)
 		}
 		return
 	}
 
+	if options.search != "" {
+		cvesResp, err = getCvesBySearchString(options.search, options.limit, options.offset)
+	} else {
+		cvesResp, err = getCvesByFilters(constructQueryParams(options))
+	}
+	if err != nil {
+		gologger.Fatal().Msgf("Error getting CVEs: %s\n", err)
+		return
+	}
+
+	if options.verbose {
+		gologger.Print().Msgf("\n Limit: %v Offset: %v ResultCount: %v TotalResults: %v\n", options.limit, options.offset, cvesResp.ResultCount, cvesResp.TotalResults)
+	}
+
 	if options.json {
-		outputJson(cvesResp.Cves[:options.limit])
+		outputJson(cvesResp.Cves)
 		return
 	}
 
@@ -223,7 +261,7 @@ func main() {
 		options.limit = len(rows)
 	}
 
-	renderTable(headers, rows[:options.limit])
+	renderTable(headers, rows)
 }
 
 func renderTable(headers []string, rows [][]interface{}) {
@@ -318,11 +356,10 @@ func getRow(headers []string, cve CVEData) []interface{} {
 	return row
 }
 
-func getCves(encodedParams string) (*CVEBulkData, error) {
-	url := fmt.Sprintf("%s?%s", cveURL, encodedParams)
-	//fmt.Println("URL:", url)
+func getCvesByFilters(encodedParams string) (*CVEBulkData, error) {
+	url := fmt.Sprintf("%s/cves?%s", baseUrl, encodedParams)
 	// Send an HTTP GET request
-	response, err := http.Get(url)
+	response, err := makeRequest(url)
 	if err != nil {
 		return nil, err
 	}
@@ -339,6 +376,68 @@ func getCves(encodedParams string) (*CVEBulkData, error) {
 		return nil, err
 	}
 	return &cvesInBulk, nil
+}
+
+func getCvesBySearchString(query string, limit, offset int) (*CVEBulkData, error) {
+	url := fmt.Sprintf("%s/cves/search?q=%s&limit=%v&offset=%v", baseUrl, query, limit, offset)
+	// Send an HTTP GET request
+	response, err := makeRequest(url)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+	// Check the response status code
+	if response.StatusCode != http.StatusOK {
+		return nil, errorutil.New("unexpected status code: %d", response.StatusCode)
+	}
+	// Create a variable to store the response data
+	var cvesInBulk CVEBulkData
+	// Decode the JSON response into an array of CVEData structs
+	err = json.NewDecoder(response.Body).Decode(&cvesInBulk)
+	if err != nil {
+		return nil, err
+	}
+	return &cvesInBulk, nil
+}
+
+// all the root level fields are supported
+func getCvesForSpecificFields(fields []string, limit, offset int) (*CVEBulkData, error) {
+	url := fmt.Sprintf("%s/cves?fields=%s&limit=%v&offset=%v", baseUrl, strings.Join(fields, ","), limit, offset)
+	// Send an HTTP GET request
+	response, err := makeRequest(url)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+	// Check the response status code
+	if response.StatusCode != http.StatusOK {
+		return nil, errorutil.New("unexpected status code: %d", response.StatusCode)
+	}
+	// Create a variable to store the response data
+	var cvesInBulk CVEBulkData
+	// Decode the JSON response into an array of CVEData structs
+	err = json.NewDecoder(response.Body).Decode(&cvesInBulk)
+	if err != nil {
+		return nil, err
+	}
+	return &cvesInBulk, nil
+}
+
+func makeRequest(url string) (*http.Response, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		gologger.Fatal().Msgf("Error creating request: %s\n", err)
+	}
+	req.Header.Set(xPDCPKeyHeader, pdcpApiKey)
+	if os.Getenv("DEBUG") == "true" {
+		// dump request
+		dump, err := httputil.DumpRequest(req, true)
+		if err != nil {
+			gologger.Fatal().Msgf("Error dumping request: %s\n", err)
+		}
+		fmt.Println(string(dump))
+	}
+	return httpCleint.Do(req)
 }
 
 func outputJson(cve []CVEData) {
@@ -438,10 +537,15 @@ func constructQueryParams(opts Options) string {
 	}
 	if opts.hackerone == "true" {
 		queryParams.Add("hackerone.rank_gte", "1")
-		queryParams.Add("_sort", "hackerone.rank")
+		queryParams.Add("sort_asc", "hackerone.rank")
 	} else {
-		queryParams.Add("_sort", "cve_id")
-		queryParams.Add("_order", "desc")
+		queryParams.Add("sort_desc", "cve_id")
+	}
+	if opts.limit > 0 {
+		queryParams.Add("limit", strconv.Itoa(opts.limit))
+	}
+	if opts.offset >= 0 {
+		queryParams.Add("offset", strconv.Itoa(opts.offset))
 	}
 	return queryParams.Encode()
 }

@@ -5,33 +5,35 @@ import (
 )
 
 type Options struct {
-	cveIds             goflags.StringSlice
-	cweIds             goflags.StringSlice
-	vendor             goflags.StringSlice
-	product            goflags.StringSlice
-	eproduct           goflags.StringSlice
-	severity           goflags.StringSlice
-	cvssScore          goflags.StringSlice
+	cveIds    goflags.StringSlice
+	cweIds    goflags.StringSlice
+	vendor    goflags.StringSlice
+	product   goflags.StringSlice
+	eproduct  goflags.StringSlice
+	severity  goflags.StringSlice
+	cvssScore goflags.StringSlice
 	//cvssMetrics        goflags.StringSlice
-	epssPercentile     goflags.StringSlice
+	epssPercentile goflags.StringSlice
 	//year               goflags.StringSlice
-	assignees          goflags.StringSlice
-	reference          goflags.StringSlice
+	assignees goflags.StringSlice
+	reference goflags.StringSlice
 	//vulnType           goflags.StringSlice
-	includeColumns     []string
-	excludeColumns     []string
-	listId			   bool
-	epssScore          string
-	cpe                string
-	vulnStatus         string
-	age                string
-	kev                string
+	includeColumns []string
+	excludeColumns []string
+	listId         bool
+	epssScore      string
+	cpe            string
+	vulnStatus     string
+	age            string
+	kev            string
 	//trending           bool
 	hackerone          string
 	hasNucleiTemplate  string
 	hasPoc             string
+	search             string
 	json               bool
 	limit              int
+	offset             int
 	version            bool
 	disableUpdateCheck bool
 	silent             bool
@@ -39,26 +41,27 @@ type Options struct {
 }
 
 type CVEBulkData struct {
-	ResultCount int       `json:"result_count"`
-	Cves        []CVEData `json:"cves"`
+	ResultCount  int       `json:"result_count"`
+	TotalResults int       `json:"total_results"`
+	Cves         []CVEData `json:"cves"`
 }
 
 type CVEData struct {
-	CveID          string       `json:"cve_id"`
-	CveDescription string       `json:"cve_description"`
-	Severity       string       `json:"severity"`
-	CvssScore      float64      `json:"cvss_score"`
-	CvssMetrics    *CvssMetrics `json:"cvss_metrics"`
+	CveID          string       `json:"cve_id,omitempty"`
+	CveDescription string       `json:"cve_description,omitempty"`
+	Severity       string       `json:"severity,omitempty"`
+	CvssScore      float64      `json:"cvss_score,omitempty"`
+	CvssMetrics    *CvssMetrics `json:"cvss_metrics,omitempty"`
 	Weaknesses     []struct {
 		CWEID   string `json:"cwe_id"`
 		CWEName string `json:"cwe_name,omitempty"`
-	} `json:"weaknesses"`
+	} `json:"weaknesses,omitempty"`
 	Epss struct {
 		Score      float64 `json:"epss_score"`
 		Percentile float64 `json:"epss_percentile"`
-	} `json:"epss"`
+	} `json:"epss,omitempty"`
 	Cpe       *OutputCpe `json:"cpe,omitempty"`
-	Reference []string   `json:"reference"`
+	Reference []string   `json:"reference,omitempty"`
 	Poc       []struct {
 		URL     string `json:"url"`
 		Source  string `json:"source"`
@@ -66,25 +69,25 @@ type CVEData struct {
 	} `json:"poc,omitempty"`
 	VendorAdvisory  *string          `json:"vendor_advisory,omitempty"`
 	Patch           []string         `json:"patch_url,omitempty"`
-	IsTemplate      bool             `json:"is_template"`
+	IsTemplate      bool             `json:"is_template,omitempty"`
 	NucleiTemplates *NucleiTemplates `json:"nuclei_templates,omitempty"`
-	IsKev           bool             `json:"is_exploited"`
+	IsKev           bool             `json:"is_exploited,omitempty"`
 	Kev             *KevObject       `json:"kev,omitempty"`
-	Assignee        string           `json:"assignee"`
-	PublishedAt     string           `json:"published_at"`
-	UpdatedAt       string           `json:"updated_at"`
+	Assignee        string           `json:"assignee,omitempty"`
+	PublishedAt     string           `json:"published_at,omitempty"`
+	UpdatedAt       string           `json:"updated_at,omitempty"`
 	Activity        struct {
 		Rank  int `json:"rank"`
 		Count int `json:"count"`
-	} `json:"activity"`
+	} `json:"activity,omitempty"`
 	Hackerone struct {
 		Rank  int `json:"rank"`
 		Count int `json:"count"`
-	} `json:"hackerone"`
-	AgeInDays     int               `json:"age_in_days"`
-	VulnStatus    string            `json:"vuln_status"`
-	IsPoc         bool              `json:"is_poc"`
-	IsRemote      bool              `json:"is_remote"`
+	} `json:"hackerone,omitempty"`
+	AgeInDays     int               `json:"age_in_days,omitempty"`
+	VulnStatus    string            `json:"vuln_status,omitempty"`
+	IsPoc         bool              `json:"is_poc,omitempty"`
+	IsRemote      bool              `json:"is_remote,omitempty"`
 	VulnerableCPE []string          `json:"vulnerable_cpe,omitempty"`
 	Shodan        *OutputShodanData `json:"shodan,omitempty"`
 }
@@ -134,4 +137,8 @@ type KevObject struct {
 type OutputShodanData struct {
 	Count int      `json:"count"`
 	Query []string `json:"query"`
+}
+
+type ErrorMessage struct {
+	Message string `json:"message"`
 }
