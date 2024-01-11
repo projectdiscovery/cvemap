@@ -102,6 +102,7 @@ func ParseOptions() *Options {
 	)
 
 	flagset.CreateGroup("OPTIONS", "options",
+	    // currently only one cve id is supported
 		flagset.StringSliceVar(&options.CveIds, "id", nil, "cve to list for given id", goflags.CommaSeparatedStringSliceOptions),
 		// flagset.StringSliceVarP(&options.cweIds, "cwe-id", "cwe", nil, "cve to list for given cwe id", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringSliceVarP(&options.Vendor, "vendor", "v", nil, "cve to list for given vendor", goflags.CommaSeparatedStringSliceOptions),
@@ -565,7 +566,8 @@ func outputJson(cve []CVEData) {
 func constructQueryParams(opts Options) string {
 	queryParams := &url.Values{}
 	if len(opts.CveIds) > 0 {
-		addQueryParams(queryParams, "cve_id", opts.CveIds)
+		// TODO: support for multiple cve ids
+		addQueryParams(queryParams, "cve_id", []string{opts.CveIds[0]})
 	}
 	if len(opts.Severity) > 0 {
 		addQueryParams(queryParams, "severity", opts.Severity)
