@@ -26,9 +26,10 @@ import (
 const xPDCPKeyHeader = "X-PDCP-Key"
 
 var (
-	baseUrl    = "https://cve.projectdiscovery.io/api/v1"
-	httpCleint = &http.Client{}
-	pdcpApiKey = ""
+	baseUrl                  = "https://cve.projectdiscovery.io/api/v1"
+	httpCleint               = &http.Client{}
+	pdcpApiKey               = ""
+	DEFAULT_FEILD_CHAR_LIMIT = 20
 )
 
 func init() {
@@ -36,10 +37,13 @@ func init() {
 	if creds, err := pch.GetCreds(); err == nil {
 		pdcpApiKey = creds.APIKey
 	}
+	if os.Getenv("DEFAULT_FEILD_CHAR_LIMIT") != "" {
+		DEFAULT_FEILD_CHAR_LIMIT, _ = strconv.Atoi(os.Getenv("DEFAULT_FEILD_CHAR_LIMIT"))
+	}
 }
 
 var (
-	defaultHeaders = []string{"ID", "CVSS", "Severity", "EPSS", "Product", "Template"}
+	defaultHeaders = []string{"ID", "CVSS", "Severity", "EPSS", "Product", "Age", "Template"}
 
 	headerMap = map[string]string{
 		"id":       "id",
@@ -298,7 +302,7 @@ func processHeaders(options *Options) {
 	headers := make([]string, 0)
 
 	if options.hackerone == "true" {
-		defaultHeaders = []string{"ID", "CVSS", "Severity", "Rank", "Reports", "Product", "Template"}
+		defaultHeaders = []string{"ID", "CVSS", "Severity", "Rank", "Reports", "Product", "Age", "Template"}
 	}
 
 	options.includeColumns = getValidHeaders(options.includeColumns)
@@ -338,6 +342,9 @@ func renderTable(headers []string, rows [][]interface{}) {
 	for _, row := range rows {
 		t.AppendRow(row)
 	}
+	// t.SetColumnConfigs([]table.ColumnConfig{
+	// 	{Number: 5, WidthMax: 20},
+	// })
 	// Set table options and render it
 	t.SetStyle(table.StyleRounded)
 	t.Render()
@@ -356,42 +363,42 @@ func getRow(headers []string, cve CVEData) []interface{} {
 	for i, header := range headers {
 		switch strings.ToLower(header) {
 		case "id":
-			row[i] = cve.CveID
+			row[i] = getCellValueByLimit(cve.CveID)
 		case "epss":
-			row[i] = cve.Epss.Score
+			row[i] = getCellValueByLimit(cve.Epss.Score)
 		case "cvss":
-			row[i] = getLatestVersionCVSSScore(*cve.CvssMetrics)
+			row[i] = getCellValueByLimit(getLatestVersionCVSSScore(*cve.CvssMetrics))
 		case "severity":
-			row[i] = strings.ToTitle(cve.Severity)
+			row[i] = getCellValueByLimit(strings.ToTitle(cve.Severity))
 		case "cwe":
 			row[i] = ""
 			if len(cve.Weaknesses) > 0 {
-				row[i] = cve.Weaknesses[0].CWEID
+				row[i] = getCellValueByLimit(cve.Weaknesses[0].CWEID)
 			}
 		case "vendor":
 			row[i] = ""
 			if cve.Cpe != nil {
-				row[i] = *cve.Cpe.Vendor
+				row[i] = getCellValueByLimit(*cve.Cpe.Vendor)
 			}
 		case "product":
 			row[i] = ""
 			if cve.Cpe != nil {
-				row[i] = *cve.Cpe.Product
+				row[i] = getCellValueByLimit(*cve.Cpe.Product)
 			}
 		case "vstatus":
-			row[i] = strings.ToUpper(cve.VulnStatus)
+			row[i] = getCellValueByLimit(strings.ToUpper(cve.VulnStatus))
 		case "assignee":
 			row[i] = ""
 			if len(cve.Assignee) > 0 {
-				row[i] = cve.Assignee
+				row[i] = getCellValueByLimit(cve.Assignee)
 			}
 		case "age":
 			row[i] = ""
 			if cve.AgeInDays > 0 {
-				row[i] = cve.AgeInDays
+				row[i] = getCellValueByLimit(cve.AgeInDays)
 			}
 		case "kev":
-			row[i] = strings.ToUpper(strconv.FormatBool(cve.IsKev))
+			row[i] = getCellValueByLimit(strings.ToUpper(strconv.FormatBool(cve.IsKev)))
 		case "template":
 			if cve.IsTemplate {
 				row[i] = "✅"
@@ -399,20 +406,31 @@ func getRow(headers []string, cve CVEData) []interface{} {
 				row[i] = "❌"
 			}
 		case "poc":
-			row[i] = strings.ToUpper(strconv.FormatBool(cve.IsPoc))
+			row[i] = getCellValueByLimit(strings.ToUpper(strconv.FormatBool(cve.IsPoc)))
 		case "rank":
 			row[i] = ""
 			if cve.Hackerone.Rank > 0 {
-				row[i] = cve.Hackerone.Rank
+				row[i] = getCellValueByLimit(cve.Hackerone.Rank)
 			}
 		case "reports":
-			row[i] = cve.Hackerone.Count
+			row[i] = getCellValueByLimit(cve.Hackerone.Count)
 
 		default:
 			row[i] = ""
 		}
 	}
 	return row
+}
+
+func getCellValueByLimit(cell interface{}) string {
+	if cell == nil {
+		return ""
+	}
+	cellValue := fmt.Sprintf("%v", cell)
+	if len(cellValue) > DEFAULT_FEILD_CHAR_LIMIT {
+		cellValue = cellValue[:DEFAULT_FEILD_CHAR_LIMIT] + "..."
+	}
+	return cellValue
 }
 
 func getCves(options Options) (*CVEBulkData, error) {
