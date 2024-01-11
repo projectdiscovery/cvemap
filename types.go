@@ -32,6 +32,7 @@ type Options struct {
 	hasNucleiTemplate  string
 	hasPoc             string
 	search             string
+	enablePageKeys     bool
 	json               bool
 	limit              int
 	offset             int

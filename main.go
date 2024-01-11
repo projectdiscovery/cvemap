@@ -10,7 +10,9 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
+	"github.com/eiannone/keyboard"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/projectdiscovery/goflags"
 	"github.com/projectdiscovery/gologger"
@@ -133,6 +135,8 @@ func main() {
 		flagset.IntVarP(&options.limit, "limit", "l", 50, "limit the number of results to display"),
 		flagset.IntVar(&options.offset, "offset", 0, "offset the results to display"),
 		flagset.BoolVarP(&options.json, "json", "j", false, "return output in json format"),
+		// experimental
+		flagset.BoolVarP(&options.enablePageKeys, "enable-page-keys", "epk", false, "enable page keys to navigate results"),
 	)
 
 	flagset.CreateGroup("DEBUG", "debug",
@@ -191,26 +195,33 @@ func main() {
 	if isDefaultRun(options) {
 		options.kev = "true"
 	}
+
 	processHeaders(&options)
-	process(options)
+	if options.enablePageKeys {
+		processWithPageKeyEvents(options)
+	} else {
+		_ = process(options)
+	}
 }
 
-func process(options Options) {
+func process(options Options) *CVEBulkData {
 	var cvesResp *CVEBulkData
 	var err error
 	cvesResp, err = getCves(options)
 	if err != nil {
 		gologger.Fatal().Msgf("Error getting CVEs: %s\n", err)
-		return
+		return nil
 	}
 
 	if options.json {
 		outputJson(cvesResp.Cves)
-		return
+		return cvesResp
 	}
 
-	if options.verbose {
-		gologger.Print().Msgf("\n Limit: %v Offset: %v ResultCount: %v TotalResults: %v\n", options.limit, options.offset, cvesResp.ResultCount, cvesResp.TotalResults)
+	nPages := cvesResp.TotalResults / options.limit
+	currentPage := (options.offset / options.limit) + 1
+	if options.verbose || options.enablePageKeys {
+		gologger.Print().Msgf("\n Limit: %v Page: %v TotalPages: %v TotalResults: %v\n", options.limit, currentPage, nPages, cvesResp.TotalResults)
 	}
 
 	// limit headers to 10, otherwise it will be too wide
@@ -221,6 +232,62 @@ func process(options Options) {
 	headers, rows := generateTableData(cvesResp.Cves, options.tableHeaders)
 
 	renderTable(headers, rows)
+
+	if options.enablePageKeys {
+		pageString := ""
+		if currentPage > 1 {
+			pageString += " ◀     "
+		}
+		if currentPage < nPages {
+			pageString += "     ▶"
+		}
+		fmt.Print(pageString)
+	}
+	return cvesResp
+}
+
+func processWithPageKeyEvents(options Options) {
+	cveResp := process(options)
+
+	// wait for user input
+	err := keyboard.Open()
+	if err != nil {
+		panic(err)
+	}
+	defer keyboard.Close()
+	waitGroup := sync.WaitGroup{}
+	waitGroup.Add(1)
+
+	go func() {
+		for {
+			_, key, err := keyboard.GetKey()
+			if err != nil {
+				panic(err)
+			}
+
+			if key == keyboard.KeyEsc || key == keyboard.KeyCtrlC {
+				waitGroup.Done()
+				break
+			}
+
+			switch key {
+			case keyboard.KeyArrowRight:
+				if options.offset+options.limit < cveResp.TotalResults {
+					options.offset += options.limit
+					clearScreen()
+					cveResp = process(options)
+				}
+			case keyboard.KeyArrowLeft:
+				if options.offset-options.limit >= 0 {
+					options.offset -= options.limit
+					clearScreen()
+					cveResp = process(options)
+				}
+			}
+		}
+	}()
+
+	waitGroup.Wait()
 }
 
 func processHeaders(options *Options) {
@@ -348,13 +415,6 @@ func getRow(headers []string, cve CVEData) []interface{} {
 func getCves(options Options) (*CVEBulkData, error) {
 	if options.listId {
 		return getCvesForSpecificFields([]string{"cve_id"}, options.limit, options.offset)
-		// if err != nil {
-		// 	return nil, err
-		// }
-		// for _, cve := range cvesResp.Cves {
-		// 	fmt.Println(cve.CveID)
-		// }
-		// return
 	}
 	if options.search != "" {
 		return getCvesBySearchString(options.search, options.limit, options.offset)
