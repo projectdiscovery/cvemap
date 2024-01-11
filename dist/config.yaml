@@ -37,7 +37,6 @@ builds:
         goarch: arm
       - goos: windows
         goarch: arm64
-    dir: .
     main: cmd/cvemap/main.go
     binary: '{{ .ProjectName }}'
     builder: go
