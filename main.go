@@ -219,6 +219,9 @@ func process(options Options) *CVEBulkData {
 	}
 
 	nPages := cvesResp.TotalResults / options.limit
+	if cvesResp.TotalResults%options.limit > 0 {
+		nPages++
+	}
 	currentPage := (options.offset / options.limit) + 1
 	if options.verbose || options.enablePageKeys {
 		gologger.Print().Msgf("\n Limit: %v Page: %v TotalPages: %v TotalResults: %v\n", options.limit, currentPage, nPages, cvesResp.TotalResults)
