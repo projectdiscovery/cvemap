@@ -35,7 +35,9 @@ jobs:
       - name: Race Condition Tests
         run: go run -race . -id CVE-1999-0027
         working-directory: cmd/cvemap/
-      
+        env:
+          PDCP_API_KEY: "${{ secrets.PDCP_API_KEY }}"
+
       - name: Test Example Code
         run: go run .
 #        working-directory: examples/
