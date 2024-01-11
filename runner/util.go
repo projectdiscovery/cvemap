@@ -1,4 +1,4 @@
-package main
+package runner
 
 import (
 	"os"
@@ -23,8 +23,8 @@ func getLatestVersionCVSSScore(cvss CvssMetrics) float64 {
 }
 
 func isDefaultRun(opts Options) bool {
-	options := len(opts.cveIds) == 0 && len(opts.cweIds) == 0 && len(opts.vendor) == 0 && len(opts.product) == 0 && len(opts.severity) == 0 && len(opts.cvssScore) == 0 && len(opts.epssPercentile) == 0 && len(opts.assignees) == 0 && len(opts.reference) == 0 && opts.epssScore == "" && opts.cpe == "" && opts.vulnStatus == "" && opts.age == ""
-	filters := opts.kev == "" && opts.hackerone == "" && opts.hasNucleiTemplate == "" && opts.hasPoc == ""
+	options := len(opts.CveIds) == 0 && len(opts.CweIds) == 0 && len(opts.Vendor) == 0 && len(opts.Product) == 0 && len(opts.Severity) == 0 && len(opts.CvssScore) == 0 && len(opts.EpssPercentile) == 0 && len(opts.Assignees) == 0 && len(opts.Reference) == 0 && opts.EpssScore == "" && opts.Cpe == "" && opts.VulnStatus == "" && opts.Age == ""
+	filters := opts.Kev == "" && opts.Hackerone == "" && opts.HasNucleiTemplate == "" && opts.HasPoc == ""
 	return options && filters && !fileutil.HasStdin()
 }
 

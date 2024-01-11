@@ -1,46 +1,4 @@
-package main
-
-import (
-	"github.com/projectdiscovery/goflags"
-)
-
-type Options struct {
-	cveIds    goflags.StringSlice
-	cweIds    goflags.StringSlice
-	vendor    goflags.StringSlice
-	product   goflags.StringSlice
-	eproduct  goflags.StringSlice
-	severity  goflags.StringSlice
-	cvssScore goflags.StringSlice
-	//cvssMetrics        goflags.StringSlice
-	epssPercentile goflags.StringSlice
-	//year               goflags.StringSlice
-	assignees goflags.StringSlice
-	reference goflags.StringSlice
-	//vulnType           goflags.StringSlice
-	includeColumns []string
-	excludeColumns []string
-	tableHeaders   []string
-	listId         bool
-	epssScore      string
-	cpe            string
-	vulnStatus     string
-	age            string
-	kev            string
-	//trending           bool
-	hackerone          string
-	hasNucleiTemplate  string
-	hasPoc             string
-	search             string
-	enablePageKeys     bool
-	json               bool
-	limit              int
-	offset             int
-	version            bool
-	disableUpdateCheck bool
-	silent             bool
-	verbose            bool
-}
+package runner
 
 type CVEBulkData struct {
 	ResultCount  int       `json:"result_count"`

@@ -1,4 +1,4 @@
-package main
+package runner
 
 import (
 	"encoding/json"
@@ -91,99 +91,69 @@ var (
 	maxLimit = 300
 )
 
-func main() {
+func ParseOptions() *Options {
 	var options Options
-	var pdcpauth bool
 
 	flagset := goflags.NewFlagSet()
 	flagset.SetDescription(`Navigate the CVE jungle with ease.`)
 
 	flagset.CreateGroup("config", "Config",
-		flagset.BoolVar(&pdcpauth, "auth", false, "configure projectdiscovery cloud (pdcp) api key"),
+		flagset.BoolVar(&options.PdcpAuth, "auth", false, "configure projectdiscovery cloud (pdcp) api key"),
 	)
 
 	flagset.CreateGroup("OPTIONS", "options",
-		flagset.StringSliceVar(&options.cveIds, "id", nil, "cve to list for given id", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringSliceVar(&options.CveIds, "id", nil, "cve to list for given id", goflags.CommaSeparatedStringSliceOptions),
 		// flagset.StringSliceVarP(&options.cweIds, "cwe-id", "cwe", nil, "cve to list for given cwe id", goflags.CommaSeparatedStringSliceOptions),
-		flagset.StringSliceVarP(&options.vendor, "vendor", "v", nil, "cve to list for given vendor", goflags.CommaSeparatedStringSliceOptions),
-		flagset.StringSliceVarP(&options.product, "product", "p", nil, "cve to list for given product", goflags.CommaSeparatedStringSliceOptions),
-		flagset.StringSliceVar(&options.eproduct, "eproduct", nil, "cves to exclude based on products", goflags.CommaSeparatedStringSliceOptions),
-		flagset.StringSliceVarP(&options.severity, "severity", "s", nil, "cve to list for given severity", goflags.CommaSeparatedStringSliceOptions),
-		flagset.StringSliceVarP(&options.cvssScore, "cvss-score", "cs", nil, "cve to list for given cvss score", goflags.CommaSeparatedStringSliceOptions),
-		flagset.StringVarP(&options.cpe, "cpe", "c", "", "cve to list for given cpe"),
-		flagset.StringVarP(&options.epssScore, "epss-score", "es", "", "cve to list for given epss score"),
-		flagset.StringSliceVarP(&options.epssPercentile, "epss-percentile", "ep", nil, "cve to list for given epss percentile", goflags.CommaSeparatedStringSliceOptions),
-		flagset.StringVar(&options.age, "age", "", "cve to list published by given age in days"),
-		flagset.StringSliceVarP(&options.assignees, "assignee", "a", nil, "cve to list for given publisher assignee", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringSliceVarP(&options.Vendor, "vendor", "v", nil, "cve to list for given vendor", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringSliceVarP(&options.Product, "product", "p", nil, "cve to list for given product", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringSliceVar(&options.Eproduct, "eproduct", nil, "cves to exclude based on products", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringSliceVarP(&options.Severity, "severity", "s", nil, "cve to list for given severity", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringSliceVarP(&options.CvssScore, "cvss-score", "cs", nil, "cve to list for given cvss score", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringVarP(&options.Cpe, "cpe", "c", "", "cve to list for given cpe"),
+		flagset.StringVarP(&options.EpssScore, "epss-score", "es", "", "cve to list for given epss score"),
+		flagset.StringSliceVarP(&options.EpssPercentile, "epss-percentile", "ep", nil, "cve to list for given epss percentile", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringVar(&options.Age, "age", "", "cve to list published by given age in days"),
+		flagset.StringSliceVarP(&options.Assignees, "assignee", "a", nil, "cve to list for given publisher assignee", goflags.CommaSeparatedStringSliceOptions),
 		//flagset.StringSliceVarP(&options.vulnType, "type", "vt", nil, "cve to list for given vulnerability type", goflags.CommaSeparatedStringSliceOptions),
-		flagset.EnumVarP(&options.vulnStatus, "vstatus", "vs", goflags.EnumVariable(-1), strings.Replace(fmt.Sprintf("cve to list for given vulnerability status in cli output. supported: %s", allowedVstatus.String()), " ,", "", -1), allowedVstatus),
+		flagset.EnumVarP(&options.VulnStatus, "vstatus", "vs", goflags.EnumVariable(-1), strings.Replace(fmt.Sprintf("cve to list for given vulnerability status in cli output. supported: %s", allowedVstatus.String()), " ,", "", -1), allowedVstatus),
 	)
 
 	flagset.CreateGroup("update", "Update",
 		flagset.CallbackVarP(GetUpdateCallback(), "update", "up", "update cvemap to latest version"),
-		flagset.BoolVarP(&options.disableUpdateCheck, "disable-update-check", "duc", false, "disable automatic cvemap update check"),
+		flagset.BoolVarP(&options.DisableUpdateCheck, "disable-update-check", "duc", false, "disable automatic cvemap update check"),
 	)
 
 	flagset.CreateGroup("FILTER", "filter",
-		flagset.StringVarP(&options.search, "search", "q", "", "search in cve data"),
-		flagset.DynamicVarP(&options.kev, "kev", "k", "true", "display cves marked as exploitable vulnerabilities by cisa"),
-		flagset.DynamicVarP(&options.hasNucleiTemplate, "template", "t", "true", "display cves that has public nuclei templates"),
-		flagset.DynamicVar(&options.hasPoc, "poc", "true", "display cves that has public published poc"),
-		flagset.DynamicVarP(&options.hackerone, "hackerone", "h1", "true", "display cves reported on hackerone"),
+		flagset.StringVarP(&options.Search, "search", "q", "", "search in cve data"),
+		flagset.DynamicVarP(&options.Kev, "kev", "k", "true", "display cves marked as exploitable vulnerabilities by cisa"),
+		flagset.DynamicVarP(&options.HasNucleiTemplate, "template", "t", "true", "display cves that has public nuclei templates"),
+		flagset.DynamicVar(&options.HasPoc, "poc", "true", "display cves that has public published poc"),
+		flagset.DynamicVarP(&options.Hackerone, "hackerone", "h1", "true", "display cves reported on hackerone"),
 	)
 
 	flagset.CreateGroup("OUTPUT", "output",
-		flagset.EnumSliceVarP(&options.includeColumns, "field", "f", []goflags.EnumVariable{goflags.EnumVariable(-1)}, strings.Replace(fmt.Sprintf("fields to display in cli output. supported: %s", allowedHeaderString), " ,", "", -1), allowedHeader),
-		flagset.EnumSliceVarP(&options.excludeColumns, "exclude", "fe", []goflags.EnumVariable{goflags.EnumVariable(-1)}, strings.Replace(fmt.Sprintf("fields to exclude from cli output. supported: %s", allowedHeaderString), " ,", "", -1), allowedHeader),
-		flagset.BoolVarP(&options.listId, "list-id", "lid", false, "list only the cve ids in the output"),
-		flagset.IntVarP(&options.limit, "limit", "l", 50, "limit the number of results to display"),
-		flagset.IntVar(&options.offset, "offset", 0, "offset the results to display"),
-		flagset.BoolVarP(&options.json, "json", "j", false, "return output in json format"),
+		flagset.EnumSliceVarP(&options.IncludeColumns, "field", "f", []goflags.EnumVariable{goflags.EnumVariable(-1)}, strings.Replace(fmt.Sprintf("fields to display in cli output. supported: %s", allowedHeaderString), " ,", "", -1), allowedHeader),
+		flagset.EnumSliceVarP(&options.ExcludeColumns, "exclude", "fe", []goflags.EnumVariable{goflags.EnumVariable(-1)}, strings.Replace(fmt.Sprintf("fields to exclude from cli output. supported: %s", allowedHeaderString), " ,", "", -1), allowedHeader),
+		flagset.BoolVarP(&options.ListId, "list-id", "lid", false, "list only the cve ids in the output"),
+		flagset.IntVarP(&options.Limit, "limit", "l", 50, "limit the number of results to display"),
+		flagset.IntVar(&options.Offset, "offset", 0, "offset the results to display"),
+		flagset.BoolVarP(&options.Json, "json", "j", false, "return output in json format"),
 		// experimental
-		flagset.BoolVarP(&options.enablePageKeys, "enable-page-keys", "epk", false, "enable page keys to navigate results"),
+		flagset.BoolVarP(&options.EnablePageKeys, "enable-page-keys", "epk", false, "enable page keys to navigate results"),
 	)
 
 	flagset.CreateGroup("DEBUG", "debug",
-		flagset.BoolVar(&options.version, "version", false, "Version"),
-		flagset.BoolVar(&options.silent, "silent", false, "Silent"),
-		flagset.BoolVar(&options.verbose, "verbose", false, "Verbose"),
+		flagset.BoolVar(&options.Version, "version", false, "Version"),
+		flagset.BoolVar(&options.Silent, "silent", false, "Silent"),
+		flagset.BoolVar(&options.Verbose, "verbose", false, "Verbose"),
 	)
 
 	if err := flagset.Parse(); err != nil {
 		gologger.Fatal().Msgf("Error parsing flags: %s\n", err)
 	}
 
-	if options.version {
-		gologger.Info().Msgf("Current Version: %s\n", version)
-		os.Exit(0)
-	}
-
-	if options.silent {
-		gologger.DefaultLogger.SetMaxLevel(levels.LevelSilent)
-	} else if options.verbose {
-		gologger.DefaultLogger.SetMaxLevel(levels.LevelVerbose)
-	}
-
-	if pdcpauth {
-		AuthWithPDCP()
-	}
-
-	// Show the user the banner
-	showBanner()
-
-	if !options.disableUpdateCheck {
-		latestVersion, err := updateutils.GetToolVersionCallback("cvemap", version)()
-		if err != nil {
-			if options.verbose {
-				gologger.Error().Msgf("cvemap version check failed: %v", err.Error())
-			}
-		} else {
-			gologger.Info().Msgf("Current cvemap version %v %v", version, updateutils.GetVersionDescription(version, latestVersion))
-		}
-	}
-
-	if options.limit > maxLimit {
-		options.limit = maxLimit
+	if options.Limit > maxLimit {
+		options.Limit = maxLimit
 	}
 
 	if fileutil.HasStdin() {
@@ -192,16 +162,51 @@ func main() {
 		if err != nil {
 			gologger.Fatal().Msgf("couldn't read stdin: %s\n", err)
 		}
-		options.cveIds = append(options.cveIds, strings.Split(strings.TrimSpace(string(bin)), "\n")...)
+		options.CveIds = append(options.CveIds, strings.Split(strings.TrimSpace(string(bin)), "\n")...)
+	}
+
+	return &options
+}
+
+func Run(options Options) {
+
+	if options.Version {
+		gologger.Info().Msgf("Current Version: %s\n", Version)
+		os.Exit(0)
+	}
+
+	if options.PdcpAuth {
+		AuthWithPDCP()
+	}
+
+	if options.Silent {
+		gologger.DefaultLogger.SetMaxLevel(levels.LevelSilent)
+	} else if options.Verbose {
+		gologger.DefaultLogger.SetMaxLevel(levels.LevelVerbose)
+	}
+
+	// Show the user the banner
+	showBanner()
+
+	if !options.DisableUpdateCheck {
+		latestVersion, err := updateutils.GetToolVersionCallback("cvemap", Version)()
+		if err != nil {
+			if options.Verbose {
+				gologger.Error().Msgf("cvemap version check failed: %v", err.Error())
+			}
+		} else {
+			gologger.Info().Msgf("Current cvemap version %v %v", Version, updateutils.GetVersionDescription(Version, latestVersion))
+		}
 	}
 
 	// on default, enable kev
 	if isDefaultRun(options) {
-		options.kev = "true"
+		options.Kev = "true"
 	}
 
-	processHeaders(&options)
-	if options.enablePageKeys {
+	parseHeaders(&options)
+
+	if options.EnablePageKeys {
 		processWithPageKeyEvents(options)
 	} else {
 		_ = process(options)
@@ -217,30 +222,37 @@ func process(options Options) *CVEBulkData {
 		return nil
 	}
 
-	if options.json {
+	if options.Json {
 		outputJson(cvesResp.Cves)
 		return cvesResp
 	}
 
-	nPages := cvesResp.TotalResults / options.limit
-	if cvesResp.TotalResults%options.limit > 0 {
+	nPages := cvesResp.TotalResults / options.Limit
+	if cvesResp.TotalResults%options.Limit > 0 {
 		nPages++
 	}
-	currentPage := (options.offset / options.limit) + 1
-	if options.verbose || options.enablePageKeys {
-		gologger.Print().Msgf("\n Limit: %v Page: %v TotalPages: %v TotalResults: %v\n", options.limit, currentPage, nPages, cvesResp.TotalResults)
+	currentPage := (options.Offset / options.Limit) + 1
+	if options.Verbose || options.EnablePageKeys {
+		gologger.Print().Msgf("\n Limit: %v Page: %v TotalPages: %v TotalResults: %v\n", options.Limit, currentPage, nPages, cvesResp.TotalResults)
+	}
+
+	if options.ListId {
+		for _, cve := range cvesResp.Cves {
+			fmt.Println(cve.CveID)
+		}
+		return cvesResp
 	}
 
 	// limit headers to 10, otherwise it will be too wide
-	if len(options.tableHeaders) > 10 {
-		options.tableHeaders = options.tableHeaders[:10]
+	if len(options.TableHeaders) > 10 {
+		options.TableHeaders = options.TableHeaders[:10]
 	}
 
-	headers, rows := generateTableData(cvesResp.Cves, options.tableHeaders)
+	headers, rows := generateTableData(cvesResp.Cves, options.TableHeaders)
 
 	renderTable(headers, rows)
 
-	if options.enablePageKeys {
+	if options.EnablePageKeys {
 		pageString := ""
 		if currentPage > 1 {
 			pageString += " ◀     "
@@ -279,14 +291,14 @@ func processWithPageKeyEvents(options Options) {
 
 			switch key {
 			case keyboard.KeyArrowRight:
-				if options.offset+options.limit < cveResp.TotalResults {
-					options.offset += options.limit
+				if options.Offset+options.Limit < cveResp.TotalResults {
+					options.Offset += options.Limit
 					clearScreen()
 					cveResp = process(options)
 				}
 			case keyboard.KeyArrowLeft:
-				if options.offset-options.limit >= 0 {
-					options.offset -= options.limit
+				if options.Offset-options.Limit >= 0 {
+					options.Offset -= options.Limit
 					clearScreen()
 					cveResp = process(options)
 				}
@@ -297,18 +309,18 @@ func processWithPageKeyEvents(options Options) {
 	waitGroup.Wait()
 }
 
-func processHeaders(options *Options) {
+func parseHeaders(options *Options) {
 	// construct headers
 	headers := make([]string, 0)
 
-	if options.hackerone == "true" {
+	if options.Hackerone == "true" {
 		defaultHeaders = []string{"ID", "CVSS", "Severity", "Rank", "Reports", "Product", "Age", "Template"}
 	}
 
-	options.includeColumns = getValidHeaders(options.includeColumns)
-	options.excludeColumns = getValidHeaders(options.excludeColumns)
+	options.IncludeColumns = getValidHeaders(options.IncludeColumns)
+	options.ExcludeColumns = getValidHeaders(options.ExcludeColumns)
 
-	options.includeColumns = append(defaultHeaders, options.includeColumns...)
+	options.IncludeColumns = append(defaultHeaders, options.IncludeColumns...)
 	// case insensitive contains check
 	contains := func(array []string, element string) bool {
 		for _, e := range array {
@@ -319,12 +331,12 @@ func processHeaders(options *Options) {
 		return false
 	}
 	// add headers to display
-	for _, header := range options.includeColumns {
-		if !contains(options.excludeColumns, header) && !contains(headers, header) {
+	for _, header := range options.IncludeColumns {
+		if !contains(options.ExcludeColumns, header) && !contains(headers, header) {
 			headers = append(headers, header)
 		}
 	}
-	options.tableHeaders = headers
+	options.TableHeaders = headers
 }
 
 func renderTable(headers []string, rows [][]interface{}) {
@@ -367,7 +379,10 @@ func getRow(headers []string, cve CVEData) []interface{} {
 		case "epss":
 			row[i] = getCellValueByLimit(cve.Epss.Score)
 		case "cvss":
-			row[i] = getCellValueByLimit(getLatestVersionCVSSScore(*cve.CvssMetrics))
+			row[i] = ""
+			if cve.CvssMetrics != nil {
+				row[i] = getCellValueByLimit(getLatestVersionCVSSScore(*cve.CvssMetrics))
+			}
 		case "severity":
 			row[i] = getCellValueByLimit(strings.ToTitle(cve.Severity))
 		case "cwe":
@@ -434,11 +449,11 @@ func getCellValueByLimit(cell interface{}) string {
 }
 
 func getCves(options Options) (*CVEBulkData, error) {
-	if options.listId {
-		return getCvesForSpecificFields([]string{"cve_id"}, options.limit, options.offset)
+	if options.ListId {
+		return getCvesForSpecificFields([]string{"cve_id"}, options.Limit, options.Offset)
 	}
-	if options.search != "" {
-		return getCvesBySearchString(options.search, options.limit, options.offset)
+	if options.Search != "" {
+		return getCvesBySearchString(options.Search, options.Limit, options.Offset)
 	}
 	return getCvesByFilters(constructQueryParams(options))
 }
@@ -549,18 +564,18 @@ func outputJson(cve []CVEData) {
 
 func constructQueryParams(opts Options) string {
 	queryParams := &url.Values{}
-	if len(opts.cveIds) > 0 {
-		addQueryParams(queryParams, "cve_id", opts.cveIds)
+	if len(opts.CveIds) > 0 {
+		addQueryParams(queryParams, "cve_id", opts.CveIds)
 	}
-	if len(opts.severity) > 0 {
-		addQueryParams(queryParams, "severity", opts.severity)
+	if len(opts.Severity) > 0 {
+		addQueryParams(queryParams, "severity", opts.Severity)
 	}
-	if len(opts.assignees) > 0 {
-		addQueryParams(queryParams, "assignee", opts.assignees)
+	if len(opts.Assignees) > 0 {
+		addQueryParams(queryParams, "assignee", opts.Assignees)
 	}
-	if len(opts.cvssScore) > 0 {
+	if len(opts.CvssScore) > 0 {
 		cvsKey := "cvss_score"
-		for _, cvssScore := range opts.cvssScore {
+		for _, cvssScore := range opts.CvssScore {
 			if cvssScore[0] == '>' {
 				cvsKey = "cvss_score_gte"
 				cvssScore = cvssScore[1:]
@@ -572,78 +587,78 @@ func constructQueryParams(opts Options) string {
 		}
 	}
 
-	if len(opts.age) > 0 {
+	if len(opts.Age) > 0 {
 		ageKey := "age_in_days"
-		if opts.age[0] == '>' {
+		if opts.Age[0] == '>' {
 			ageKey = "age_in_days_gte"
-			opts.age = opts.age[1:]
-		} else if opts.age[0] == '<' {
+			opts.Age = opts.Age[1:]
+		} else if opts.Age[0] == '<' {
 			ageKey = "age_in_days_lte"
-			opts.age = opts.age[1:]
+			opts.Age = opts.Age[1:]
 		}
-		queryParams.Add(ageKey, opts.age)
+		queryParams.Add(ageKey, opts.Age)
 	}
-	if opts.kev == "true" {
+	if opts.Kev == "true" {
 		queryParams.Add("is_exploited", "true")
-	} else if opts.kev == "false" {
+	} else if opts.Kev == "false" {
 		queryParams.Add("is_exploited", "false")
 	}
-	if opts.hasNucleiTemplate == "true" {
+	if opts.HasNucleiTemplate == "true" {
 		queryParams.Add("is_template", "true")
-	} else if opts.hasNucleiTemplate == "false" {
+	} else if opts.HasNucleiTemplate == "false" {
 		queryParams.Add("is_template", "false")
 	}
-	if opts.hasPoc == "true" {
+	if opts.HasPoc == "true" {
 		queryParams.Add("is_poc", "true")
-	} else if opts.hasPoc == "false" {
+	} else if opts.HasPoc == "false" {
 		queryParams.Add("is_poc", "false")
 	}
-	if len(opts.vulnStatus) > 0 {
-		queryParams.Add("vuln_status", strings.ToLower(opts.vulnStatus))
+	if len(opts.VulnStatus) > 0 {
+		queryParams.Add("vuln_status", strings.ToLower(opts.VulnStatus))
 	}
-	if len(opts.reference) > 0 {
-		addQueryParams(queryParams, "reference", opts.reference)
+	if len(opts.Reference) > 0 {
+		addQueryParams(queryParams, "reference", opts.Reference)
 	}
-	if len(opts.epssScore) > 0 {
+	if len(opts.EpssScore) > 0 {
 		epssKey := "epss.epss_score"
-		if opts.epssScore[0] == '>' {
+		if opts.EpssScore[0] == '>' {
 			epssKey = "epss.epss_score_gte"
-			opts.epssScore = opts.epssScore[1:]
-		} else if opts.epssScore[0] == '<' {
+			opts.EpssScore = opts.EpssScore[1:]
+		} else if opts.EpssScore[0] == '<' {
 			epssKey = "epss.epss_score_lte"
-			opts.epssScore = opts.epssScore[1:]
+			opts.EpssScore = opts.EpssScore[1:]
 		}
-		queryParams.Add(epssKey, opts.epssScore)
+		queryParams.Add(epssKey, opts.EpssScore)
 	}
-	if len(opts.epssPercentile) > 0 {
-		addQueryParams(queryParams, "epss.epss_percentile", opts.epssPercentile)
+	if len(opts.EpssPercentile) > 0 {
+		addQueryParams(queryParams, "epss.epss_percentile", opts.EpssPercentile)
 	}
-	if len(opts.cweIds) > 0 {
-		addQueryParams(queryParams, "cwe_id", opts.cweIds)
+	if len(opts.CweIds) > 0 {
+		addQueryParams(queryParams, "cwe_id", opts.CweIds)
 	}
-	if len(opts.cpe) > 0 {
-		queryParams.Add("cpe.cpe", opts.cpe)
+	if len(opts.Cpe) > 0 {
+		queryParams.Add("cpe.cpe", opts.Cpe)
 	}
-	if len(opts.product) > 0 {
-		addQueryParams(queryParams, "cpe.product", opts.product)
+	if len(opts.Product) > 0 {
+		addQueryParams(queryParams, "cpe.product", opts.Product)
 	}
-	if len(opts.eproduct) > 0 {
-		addQueryParams(queryParams, "cpe.product_ne", opts.eproduct)
+	if len(opts.Eproduct) > 0 {
+		addQueryParams(queryParams, "cpe.product_ne", opts.Eproduct)
 	}
-	if len(opts.vendor) > 0 {
-		addQueryParams(queryParams, "cpe.vendor", opts.vendor)
+	if len(opts.Vendor) > 0 {
+		addQueryParams(queryParams, "cpe.vendor", opts.Vendor)
 	}
-	if opts.hackerone == "true" {
+	if opts.Hackerone == "true" {
 		queryParams.Add("hackerone.rank_gte", "1")
 		queryParams.Add("sort_asc", "hackerone.rank")
 	} else {
 		queryParams.Add("sort_desc", "cve_id")
 	}
-	if opts.limit > 0 {
-		queryParams.Add("limit", strconv.Itoa(opts.limit))
+	if opts.Limit > 0 {
+		queryParams.Add("limit", strconv.Itoa(opts.Limit))
 	}
-	if opts.offset >= 0 {
-		queryParams.Add("offset", strconv.Itoa(opts.offset))
+	if opts.Offset >= 0 {
+		queryParams.Add("offset", strconv.Itoa(opts.Offset))
 	}
 	return queryParams.Encode()
 }
