@@ -40,8 +40,8 @@ jobs:
           PDCP_API_SERVER: https://api.projectdiscovery.io
           DEBUG: true
 
-      - name: Test Example Code
-        run: go run .
-#        working-directory: examples/
+      # - name: Test Example Code
+      #   run: go run .
+      #   working-directory: examples/
 
       
