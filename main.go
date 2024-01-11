@@ -191,7 +191,39 @@ func main() {
 	if isDefaultRun(options) {
 		options.kev = "true"
 	}
+	processHeaders(&options)
+	process(options)
+}
 
+func process(options Options) {
+	var cvesResp *CVEBulkData
+	var err error
+	cvesResp, err = getCves(options)
+	if err != nil {
+		gologger.Fatal().Msgf("Error getting CVEs: %s\n", err)
+		return
+	}
+
+	if options.json {
+		outputJson(cvesResp.Cves)
+		return
+	}
+
+	if options.verbose {
+		gologger.Print().Msgf("\n Limit: %v Offset: %v ResultCount: %v TotalResults: %v\n", options.limit, options.offset, cvesResp.ResultCount, cvesResp.TotalResults)
+	}
+
+	// limit headers to 10, otherwise it will be too wide
+	if len(options.tableHeaders) > 10 {
+		options.tableHeaders = options.tableHeaders[:10]
+	}
+
+	headers, rows := generateTableData(cvesResp.Cves, options.tableHeaders)
+
+	renderTable(headers, rows)
+}
+
+func processHeaders(options *Options) {
 	// construct headers
 	headers := make([]string, 0)
 
@@ -218,50 +250,7 @@ func main() {
 			headers = append(headers, header)
 		}
 	}
-	// limit headers to 10, otherwise it will be too wide
-	if len(headers) > 10 {
-		headers = headers[:10]
-	}
-	var cvesResp *CVEBulkData
-	var err error
-
-	if options.listId {
-		cvesResp, err = getCvesForSpecificFields([]string{"cve_id"}, options.limit, options.offset)
-		if err != nil {
-			gologger.Fatal().Msgf("Error getting CVEs: %s\n", err)
-			return
-		}
-		for _, cve := range cvesResp.Cves {
-			fmt.Println(cve.CveID)
-		}
-		return
-	}
-
-	if options.search != "" {
-		cvesResp, err = getCvesBySearchString(options.search, options.limit, options.offset)
-	} else {
-		cvesResp, err = getCvesByFilters(constructQueryParams(options))
-	}
-	if err != nil {
-		gologger.Fatal().Msgf("Error getting CVEs: %s\n", err)
-		return
-	}
-
-	if options.verbose {
-		gologger.Print().Msgf("\n Limit: %v Offset: %v ResultCount: %v TotalResults: %v\n", options.limit, options.offset, cvesResp.ResultCount, cvesResp.TotalResults)
-	}
-
-	if options.json {
-		outputJson(cvesResp.Cves)
-		return
-	}
-
-	headers, rows := generateTableData(cvesResp.Cves, headers)
-	if options.limit > len(rows) {
-		options.limit = len(rows)
-	}
-
-	renderTable(headers, rows)
+	options.tableHeaders = headers
 }
 
 func renderTable(headers []string, rows [][]interface{}) {
@@ -354,6 +343,23 @@ func getRow(headers []string, cve CVEData) []interface{} {
 		}
 	}
 	return row
+}
+
+func getCves(options Options) (*CVEBulkData, error) {
+	if options.listId {
+		return getCvesForSpecificFields([]string{"cve_id"}, options.limit, options.offset)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		// for _, cve := range cvesResp.Cves {
+		// 	fmt.Println(cve.CveID)
+		// }
+		// return
+	}
+	if options.search != "" {
+		return getCvesBySearchString(options.search, options.limit, options.offset)
+	}
+	return getCvesByFilters(constructQueryParams(options))
 }
 
 func getCvesByFilters(encodedParams string) (*CVEBulkData, error) {
