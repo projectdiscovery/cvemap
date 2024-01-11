@@ -510,6 +510,8 @@ func getCvesForSpecificFields(fields []string, limit, offset int) (*CVEBulkData,
 	return &cvesInBulk, nil
 }
 
+var UNAUTHORIZEDERR = errorutil.New(`unexpected status code: 401 (get your free api key from https://cloud.projectdiscovery.io)`)
+
 func makeRequest(url string) (*http.Response, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -524,7 +526,16 @@ func makeRequest(url string) (*http.Response, error) {
 		}
 		fmt.Println(string(dump))
 	}
-	return httpCleint.Do(req)
+	resp, err := httpCleint.Do(req)
+	if err == nil && resp.StatusCode == http.StatusUnauthorized {
+		var errResp ErrorMessage
+		_ = json.NewDecoder(resp.Body).Decode(&errResp)
+		if os.Getenv("DEBUG") == "true" {
+			gologger.Error().Msgf("unauthorized: %s\n", errResp.Message)
+		}
+		return nil, UNAUTHORIZEDERR
+	}
+	return resp, err
 }
 
 func outputJson(cve []CVEData) {
