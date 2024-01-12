@@ -1,7 +1,8 @@
-package main
+package runner
 
 import (
 	"github.com/projectdiscovery/gologger"
+	"github.com/projectdiscovery/utils/auth/pdcp"
 	updateutils "github.com/projectdiscovery/utils/update"
 )
 
@@ -16,7 +17,7 @@ const banner = `
 `
 
 // Version is the current version
-const version = `v0.0.1`
+const Version = `v0.0.1`
 
 // showBanner is used to show the banner to the user
 func showBanner() {
@@ -28,6 +29,12 @@ func showBanner() {
 func GetUpdateCallback() func() {
 	return func() {
 		showBanner()
-		updateutils.GetUpdateToolCallback("cvemap", version)()
+		updateutils.GetUpdateToolCallback("cvemap", Version)()
 	}
+}
+
+// AuthWithPDCP is used to authenticate with PDCP
+func AuthWithPDCP() {
+	showBanner()
+	pdcp.CheckNValidateCredentials("cvemap")
 }

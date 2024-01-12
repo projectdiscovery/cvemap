@@ -24,7 +24,7 @@ builds:
       goarch: 'arm64'
 
   binary: '{{ .ProjectName }}'
-  main: .
+  main: cmd/cvemap/main.go
 
 archives:
 - format: zip
