@@ -102,7 +102,7 @@ func ParseOptions() *Options {
 	)
 
 	flagset.CreateGroup("OPTIONS", "options",
-	    // currently only one cve id is supported
+		// currently only one cve id is supported
 		flagset.StringSliceVar(&options.CveIds, "id", nil, "cve to list for given id", goflags.CommaSeparatedStringSliceOptions),
 		// flagset.StringSliceVarP(&options.cweIds, "cwe-id", "cwe", nil, "cve to list for given cwe id", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringSliceVarP(&options.Vendor, "vendor", "v", nil, "cve to list for given vendor", goflags.CommaSeparatedStringSliceOptions),
@@ -217,7 +217,7 @@ func Run(options Options) {
 func process(options Options) *CVEBulkData {
 	var cvesResp *CVEBulkData
 	var err error
-	cvesResp, err = getCves(options)
+	cvesResp, err = GetCvesByOptions(options)
 	if err != nil {
 		gologger.Fatal().Msgf("Error getting CVEs: %s\n", err)
 		return nil
@@ -449,12 +449,12 @@ func getCellValueByLimit(cell interface{}) string {
 	return cellValue
 }
 
-func getCves(options Options) (*CVEBulkData, error) {
+func GetCvesByOptions(options Options) (*CVEBulkData, error) {
 	if options.ListId {
 		return getCvesForSpecificFields([]string{"cve_id"}, options.Limit, options.Offset)
 	}
 	if options.Search != "" {
-		return getCvesBySearchString(options.Search, options.Limit, options.Offset)
+		return GetCvesBySearchString(options.Search, options.Limit, options.Offset)
 	}
 	return getCvesByFilters(constructQueryParams(options))
 }
@@ -481,7 +481,7 @@ func getCvesByFilters(encodedParams string) (*CVEBulkData, error) {
 	return &cvesInBulk, nil
 }
 
-func getCvesBySearchString(query string, limit, offset int) (*CVEBulkData, error) {
+func GetCvesBySearchString(query string, limit, offset int) (*CVEBulkData, error) {
 	url := fmt.Sprintf("%s/cves/search?q=%s&limit=%v&offset=%v", baseUrl, query, limit, offset)
 	// Send an HTTP GET request
 	response, err := makeRequest(url)
@@ -524,6 +524,31 @@ func getCvesForSpecificFields(fields []string, limit, offset int) (*CVEBulkData,
 		return nil, err
 	}
 	return &cvesInBulk, nil
+}
+
+func GetCveById(cveId string) (*CVEData, error) {
+	url := fmt.Sprintf("%s/cves?cve_id=%s", baseUrl, cveId)
+	// Send an HTTP GET request
+	response, err := makeRequest(url)
+	if err != nil {
+		return nil, errorutil.New("Error getting CVEs: %s\n", err)
+	}
+	defer response.Body.Close()
+	// Check the response status code
+	if response.StatusCode != http.StatusOK {
+		return nil, errorutil.New("unexpected status code: %d", response.StatusCode)
+	}
+	// Create a variable to store the response data
+	var cveBulkData CVEBulkData
+	// Decode the JSON response into an array of CVEData structs
+	err = json.NewDecoder(response.Body).Decode(&cveBulkData)
+	if err != nil {
+		return nil, errorutil.New("Error decoding response: %s\n", err)
+	}
+	if len(cveBulkData.Cves) == 0 {
+		return nil, errorutil.New("cve not found")
+	}
+	return &cveBulkData.Cves[0], nil
 }
 
 var UNAUTHORIZEDERR = errorutil.New(`unexpected status code: 401 (get your free api key from https://cloud.projectdiscovery.io)`)
