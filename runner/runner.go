@@ -140,7 +140,7 @@ func ParseOptions() *Options {
 	flagset.CreateGroup("OUTPUT", "output",
 		flagset.EnumSliceVarP(&options.IncludeColumns, "field", "f", []goflags.EnumVariable{goflags.EnumVariable(-1)}, strings.Replace(fmt.Sprintf("fields to display in cli output. supported: %s", allowedHeaderString), " ,", "", -1), allowedHeader),
 		flagset.EnumSliceVarP(&options.ExcludeColumns, "exclude", "fe", []goflags.EnumVariable{goflags.EnumVariable(-1)}, strings.Replace(fmt.Sprintf("fields to exclude from cli output. supported: %s", allowedHeaderString), " ,", "", -1), allowedHeader),
-		flagset.BoolVarP(&options.ListId, "list-id", "lid", false, "list only the cve ids in the output"),
+		flagset.BoolVarP(&options.ListId, "list-id", "lsi", false, "list only the cve ids in the output"),
 		flagset.IntVarP(&options.Limit, "limit", "l", 50, "limit the number of results to display"),
 		flagset.IntVar(&options.Offset, "offset", 0, "offset the results to display"),
 		flagset.BoolVarP(&options.Json, "json", "j", false, "return output in json format"),
