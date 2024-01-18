@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	splashDelay = 3 * time.Second
+	splashDelay = 1 * time.Second
 )
 
 type App struct {
@@ -113,7 +113,6 @@ func (a *App) SearchInCvemapResource(searchString string) {
 	a.UpdateContext(ctx)
 	stackedViews := a.Content.Pages.Stack.Flatten()
 	gologger.Info().Msgf("search string: %s", searchString)
-	gologger.Info().Msgf("stackedViews: %v", stackedViews[0])
 	a.gotoResource(stackedViews[0], "", true)
 	// a.App.Flash().Infof("Refreshing %v...", stackedViews[0])
 }
@@ -180,9 +179,9 @@ func (a *App) buildHeader() tview.Primitive {
 	if !a.showHeader {
 		return header
 	}
-	header.AddItem(a.info(), 50, 1, false)
+	header.AddItem(a.info(), 30, 1, false)
 	header.AddItem(a.Menu(), 0, 1, false)
-	header.AddItem(ui.NewLogo(), 40, 1, false)
+	header.AddItem(ui.NewLogo(), 35, 1, false)
 	return header
 }
 

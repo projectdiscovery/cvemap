@@ -19,3 +19,8 @@
 
 # Go workspace file
 go.work
+
+cmd/integration-test/integration-test
+cmd/integration-test/cvemap
+cmd/cvemap/cvemap
+cmd/cvemapui/cvemapui

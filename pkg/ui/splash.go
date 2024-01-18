@@ -43,5 +43,5 @@ func (s *Splash) layoutLogo(t *tview.TextView) {
 
 func (s *Splash) layoutRev(t *tview.TextView, rev string) {
 	t.SetText(rev)
-	t.SetTextColor(tcell.ColorSpringGreen)
+	t.SetTextColor(tcell.ColorOrangeRed)
 }

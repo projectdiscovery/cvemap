@@ -30,7 +30,7 @@ func (i *InfoPrimitive) Draw(screen tcell.Screen) {
     // Draw the labels
     y := 1
     for label, value := range i.Labels {
-        tview.Print(screen, label+":", 1, y, len(label)+1, tview.AlignRight, tcell.ColorYellow)
+        tview.Print(screen, label+":", 1, y, len(label)+1, tview.AlignRight, tcell.ColorDarkOrange)
         tview.Print(screen, value, 10, y, len(value), tview.AlignLeft, tcell.ColorWhite)
         y++
     }
