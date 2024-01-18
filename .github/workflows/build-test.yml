@@ -33,6 +33,7 @@ jobs:
         working-directory: .
         
       - name: Race Condition Tests
+        if: github.actor != 'dependabot[bot]'
         run: go run -race . -id CVE-1999-0027
         working-directory: cmd/cvemap/
         env:
