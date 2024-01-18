@@ -145,7 +145,9 @@ func (t *Table) importAsCSV(evt *tcell.EventKey) *tcell.EventKey {
 	}
 	writer.Flush()
 	t.app.Flash().Info("CSV file created and CSV file path copied to clipboard.")
-	clipboard.WriteAll(path)
+	if err := clipboard.WriteAll(path); err != nil {
+		gologger.Error().Msgf("Error copying to clipboard: %v", err)
+	}
 	return nil
 }
 

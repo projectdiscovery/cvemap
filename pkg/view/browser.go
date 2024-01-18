@@ -6,6 +6,7 @@ import (
 
 	"github.com/derailed/tcell/v2"
 	"github.com/projectdiscovery/cvemap/pkg/ui"
+	"github.com/projectdiscovery/gologger"
 )
 
 // Browser represents a generic resource browser.
@@ -57,7 +58,9 @@ func (b *Browser) Start() {
 	//b.GetModel().AddListener(b)
 	b.Table.Start()
 	//b.CmdBuff().AddListener(b)
-	b.Table.GetModel().Refresh(b.prepareContext())
+	if err := b.Table.GetModel().Refresh(b.prepareContext()); err != nil {
+		gologger.Error().Msgf("Browser Start err %v", err)
+	}
 	b.Refresh()
 	// if err := b.GetModel().Watch(b.context); err != nil {
 	// 	b.App().Flash().Err(fmt.Errorf("Watcher failed for %s -- %w", b.Resource(), err))

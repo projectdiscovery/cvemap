@@ -171,7 +171,9 @@ func (v *LiveView) keyboard(evt *tcell.EventKey) *tcell.EventKey {
 
 func (v *LiveView) copyJson(evt *tcell.EventKey) *tcell.EventKey {
 	copiedText := v.text.GetText(true)
-	clipboard.WriteAll(copiedText)
+	if err := clipboard.WriteAll(copiedText); err != nil {
+		gologger.Error().Msgf("Error copying to clipboard: %v", err)
+	}
 	v.app.Flash().Info("Text Copied to Clipboard.")
 	return nil
 }
