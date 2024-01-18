@@ -23,14 +23,14 @@ Navigate the Common Vulnerabilities and Exposures (CVE) jungle with ease using C
 
 ![image](static/cvemap.png)
 
- - **CVE Dataset (NIST)**
- - **Mapping of CVE to EPSS**
- - **Mapping of CVE to KEV**
- - **Mapping of CVE to HackerOne**
- - **Mapping of CVE to CPE**
- - **Mapping of CVE to Nuclei Template**
- - **Mapping of CVE to GitHub POCs**
- - Customizable Filters
+ - **CVE Dataset Search & Query**
+ - **CVE to EPSS Mapping**
+ - **CVE to KEV Mapping**
+ - **CVE to CPE Mapping**
+ - **CVE to GitHub POCs Mapping**
+ - **CVE to Nuclei Template Mapping**
+ - **CVE to HackerOne report Mapping**
+ - Customizable Filters on CVE data
  - STDIN Input / JSONL Output
 
 
@@ -53,12 +53,14 @@ Usage:
   cvemap [flags]
 
 Flags:
-INPUT:
-   -id string[]                    cve to list for given id
+CONFIG:
+   -auth  configure projectdiscovery cloud (pdcp) api key
 
 OPTIONS:
+   -id string[]                    cve to list for given id
    -v, -vendor string[]            cve to list for given vendor
    -p, -product string[]           cve to list for given product
+   -eproduct string[]              cves to exclude based on products
    -s, -severity string[]          cve to list for given severity
    -cs, -cvss-score string[]       cve to list for given cvss score
    -c, -cpe string                 cve to list for given cpe
@@ -66,28 +68,54 @@ OPTIONS:
    -ep, -epss-percentile string[]  cve to list for given epss percentile
    -age string                     cve to list published by given age in days
    -a, -assignee string[]          cve to list for given publisher assignee
-   -vs, -vstatus value             cve to list for given vulnerability status in cli output. supported: new, confirmed, unconfirmed, modified, rejected, unknown
+   -vs, -vstatus value             cve to list for given vulnerability status in cli output. supported: unknown, new, confirmed, unconfirmed, modified, rejected
 
 UPDATE:
    -up, -update                 update cvemap to latest version
    -duc, -disable-update-check  disable automatic cvemap update check
 
 FILTER:
-   -k, -kev         display cves marked as exploitable vulnerabilities by cisa (default true)
-   -t, -template    display cves that has public nuclei templates (default true)
-   -poc             display cves that has public published poc (default true)
-   -h1, -hackerone  display cves reported on hackerone (default true)
+   -q, -search string  search in cve data
+   -k, -kev            display cves marked as exploitable vulnerabilities by cisa (default true)
+   -t, -template       display cves that has public nuclei templates (default true)
+   -poc                display cves that has public published poc (default true)
+   -h1, -hackerone     display cves reported on hackerone (default true)
 
 OUTPUT:
-   -f, -field value     fields to display in cli output. supported: age, template, poc, assignee, product, vendor, vstatus, kev, cwe, epss
-   -fe, -exclude value  fields to exclude from cli output. supported: age, template, poc, assignee, product, vendor, vstatus, kev, cwe, epss
-   -l, -limit int       limit the number of results to display (default 50)
-   -j, -json            return output in json format
+   -f, -field value         fields to display in cli output. supported: age, kev, template, poc, cwe, epss, assignee, product, vendor, vstatus
+   -fe, -exclude value      fields to exclude from cli output. supported: age, kev, template, poc, cwe, epss, assignee, product, vendor, vstatus
+   -lsi, -list-id           list only the cve ids in the output
+   -l, -limit int           limit the number of results to display (default 50)
+   -offset int              offset the results to display
+   -j, -json                return output in json format
+   -epk, -enable-page-keys  enable page keys to navigate results
 
 DEBUG:
    -version  Version
    -silent   Silent
    -verbose  Verbose
+```
+
+## Configuring CVEMap CLI
+
+CVEMap CLI is built on top of the authenticated CVEMap API which can configured using the `-auth` option as shown below:
+
+```bash
+cvemap -auth
+
+
+   ______   _____  ____ ___  ____  ____
+  / ___/ | / / _ \/ __ \__ \/ __ \/ __ \
+ / /__ | |/ /  __/ / / / / / /_/ / /_/ /
+ \___/ |___/\___/_/ /_/ /_/\__,_/ .___/ 
+                               /_/
+            
+
+    projectdiscovery.io
+
+[INF] Get your free api key by signing up at https://cloud.projectdiscovery.io
+[*] Enter PDCP API Key (exit to abort): *************
+[INF] Successfully logged in as (@user)
 ```
 
 ## Examples
@@ -218,112 +246,120 @@ $ cvemap -silent -template=false -poc=true -kev=true -l 5 -f poc,kev
 ### JSON Output
 
 ```bash
-cvemap -product papercut_mf -t -kev -j
+$ echo CVE-2024-21887 | cvemap -json
 ```
 
 ```json
 [
   {
-    "cve_id": "CVE-2023-27350",
-    "cve_description": "This vulnerability allows remote attackers to bypass authentication on affected installations of PaperCut NG 22.0.5 (Build 63914). Authentication is not required to exploit this vulnerability. The specific flaw exists within the SetupCompleted class. The issue results from improper access control. An attacker can leverage this vulnerability to bypass authentication and execute arbitrary code in the context of SYSTEM. Was ZDI-CAN-18987.",
+    "cve_id": "CVE-2024-21887",
+    "cve_description": "A command injection vulnerability in web components of Ivanti Connect Secure (9.x, 22.x) and Ivanti Policy Secure (9.x, 22.x)  allows an authenticated administrator to send specially crafted requests and execute arbitrary commands on the appliance.",
     "severity": "critical",
-    "cvss_score": 9.8,
+    "cvss_score": 9.1,
     "cvss_metrics": {
       "cvss30": {
-        "score": 9.8,
-        "vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+        "score": 9.1,
+        "vector": "CVSS:3.0/AV:N/AC:L/PR:H/UI:N/S:C/C:H/I:H/A:H",
         "severity": "critical"
       },
       "cvss31": {
-        "score": 9.8,
-        "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+        "score": 9.1,
+        "vector": "CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:C/C:H/I:H/A:H",
         "severity": "critical"
       }
     },
     "weaknesses": [
       {
-        "cwe_id": "NVD-CWE-Other"
-      },
-      {
-        "cwe_id": "CWE-284",
-        "cwe_name": "Improper Access Control"
+        "cwe_id": "CWE-77",
+        "cwe_name": "Improper Neutralization of Special Elements used in a Command ('Command Injection')"
       }
     ],
     "epss": {
-      "epss_score": 0.97156,
-      "epss_percentile": 0.99735
+      "epss_score": 0,
+      "epss_percentile": 0
     },
     "cpe": {
-      "cpe": "cpe:2.3:a:papercut:papercut_mf:*:*:*:*:*:*:*:*",
-      "vendor": "papercut",
-      "product": "papercut_mf"
+      "cpe": "cpe:2.3:a:ivanti:connect_secure:9.0:*:*:*:*:*:*:*",
+      "vendor": "ivanti",
+      "product": "connect_secure"
     },
-    "reference": [
-      "http://packetstormsecurity.com/files/171982/PaperCut-MF-NG-Authentication-Bypass-Remote-Code-Execution.html",
-      "http://packetstormsecurity.com/files/172512/PaperCut-NG-MG-22.0.4-Remote-Code-Execution.html",
-      "http://packetstormsecurity.com/files/172780/PaperCut-PaperCutNG-Authentication-Bypass.html",
-      "https://news.sophos.com/en-us/2023/04/27/increased-exploitation-of-papercut-drawing-blood-around-the-internet/",
-      "https://www.papercut.com/kb/Main/PO-1216-and-PO-1219",
-      "https://www.zerodayinitiative.com/advisories/ZDI-23-233/"
-    ],
     "poc": [
       {
-        "url": "https://github.com/Jenderal92/CVE-2023-27350",
-        "source": "github-lhc",
-        "added_at": "2023-07-02"
+        "url": "https://github.com/TheRedDevil1/Check-Vulns-Script",
+        "source": "gh-nomi-sec",
+        "added_at": "2024-01-17T10:29:02Z"
       },
       {
-        "url": "https://github.com/0ximan1337/CVE-2023-27350-POC",
-        "source": "github-lhc",
-        "added_at": "2023-07-02"
+        "url": "https://github.com/Chocapikk/CVE-2024-21887",
+        "source": "gh-nomi-sec",
+        "added_at": "2024-01-16T20:59:38Z"
+      },
+      {
+        "url": "https://github.com/duy-31/CVE-2023-46805_CVE-2024-21887",
+        "source": "gh-nomi-sec",
+        "added_at": "2024-01-16T19:40:59Z"
+      },
+      {
+        "url": "https://github.com/rxwx/pulse-meter",
+        "source": "gh-nomi-sec",
+        "added_at": "2024-01-16T19:19:52Z"
+      },
+      {
+        "url": "https://github.com/yoryio/CVE-2023-46805_CVE-2024-21887_Scanner",
+        "source": "gh-nomi-sec",
+        "added_at": "2024-01-14T18:30:11Z"
+      },
+      {
+        "url": "https://github.com/oways/ivanti-CVE-2024-21887",
+        "source": "gh-nomi-sec",
+        "added_at": "2024-01-14T09:25:56Z"
       }
     ],
-    "vendor_advisory": "https://www.papercut.com/kb/Main/PO-1216-and-PO-1219",
+    "vendor_advisory": "https://forums.ivanti.com/s/article/CVE-2023-46805-Authentication-Bypass-CVE-2024-21887-Command-Injection-for-Ivanti-Connect-Secure-and-Ivanti-Policy-Secure-Gateways?language=en_US",
     "is_template": true,
     "nuclei_templates": {
-      "template_url": "https://github.com/projectdiscovery/nuclei-templates/blob/main/http/cves/2023/CVE-2023-27350.yaml"
+      "template_url": "https://cloud.projectdiscovery.io/public/CVE-2024-21887"
     },
     "is_exploited": true,
     "kev": {
-      "added_date": "2023-04-21",
-      "due_date": "2023-05-12"
+      "added_date": "2024-01-10",
+      "due_date": "2024-01-31"
     },
-    "assignee": "zdi-disclosures@trendmicro.com",
-    "published_at": "2023-04-20T16:15:07.653",
-    "updated_at": "2023-06-07T18:15:09.540",
+    "assignee": "support@hackerone.com",
+    "published_at": "2024-01-12T17:15:10.017",
+    "updated_at": "2024-01-13T02:00:00.970",
     "activity": {
       "rank": 0,
       "count": 0
     },
     "hackerone": {
-      "rank": 6066,
-      "count": 0
+      "rank": 22,
+      "count": 3
     },
-    "age_in_days": 199,
-    "vuln_status": "modified",
+    "age_in_days": 5,
+    "vuln_status": "confirmed",
     "is_poc": true,
-    "is_remote": true,
     "vulnerable_cpe": [
-      "cpe:2.3:a:papercut:papercut_mf:*:*:*:*:*:*:*:*",
-      "cpe:2.3:a:papercut:papercut_ng:*:*:*:*:*:*:*:*"
-    ],
-    "shodan": {
-      "count": 4074,
-      "query": [
-        "http.html:\"PaperCut\"",
-        "cpe:\"cpe:2.3:a:papercut:papercut_mf\""
-      ]
-    }
+      "cpe:2.3:a:ivanti:connect_secure:9.0:*:*:*:*:*:*:*",
+      "cpe:2.3:a:ivanti:connect_secure:9.1:r1:*:*:*:*:*:*",
+      "cpe:2.3:a:ivanti:connect_secure:9.1:r10:*:*:*:*:*:*",
+      "cpe:2.3:a:ivanti:connect_secure:9.1:r11:*:*:*:*:*:*",
+      "cpe:2.3:a:ivanti:connect_secure:9.1:r11.3:*:*:*:*:*:*",
+      "cpe:2.3:a:ivanti:connect_secure:9.1:r11.4:*:*:*:*:*:*",
+      "cpe:2.3:a:ivanti:connect_secure:9.1:r11.5:*:*:*:*:*:*",
+      "cpe:2.3:a:ivanti:policy_secure:22.6:r1:*:*:*:*:*:*",
+      ...
+      ...
+    ]
   }
 ]
 ```
 
-## Notes
+## Note
 
-- CVE dataset gets updated daily.
-- Data accuracy is based on source information.
+- CVE dataset gets updated in every 6 hours.
 
-## Acknowledgements
+## References
 
 - **[National Vulnerability Database (NVD)](https://nvd.nist.gov/developers)**: Comprehensive CVE vulnerability data.
 - **[Known Exploited Vulnerabilities Catalog (KEV)](https://www.cisa.gov/known-exploited-vulnerabilities-catalog)**: Exploited vulnerabilities catalog.
