@@ -23,7 +23,7 @@ func main() {
 	flag.Parse()
 	SetupMockServer()
 	os.Setenv("CVEMAP_API_URL", "http://localhost:8080/api/v1")
-	os.Setenv("X_PDCP_KEY", xPDCPHeaderTestKey)
+	os.Setenv("PDCP_API_KEY", xPDCPHeaderTestKey)
 	if err := runIntegrationTests(); err != nil {
 		fmt.Println("Error running integration tests:", err)
 	}

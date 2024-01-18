@@ -37,8 +37,8 @@ func init() {
 		baseUrl = os.Getenv("CVEMAP_API_URL")
 	}
 	pch := pdcp.PDCPCredHandler{}
-	if os.Getenv("X_PDCP_KEY") != "" {
-		pdcpApiKey = os.Getenv("X_PDCP_KEY")
+	if os.Getenv("PDCP_API_KEY") != "" {
+		pdcpApiKey = os.Getenv("PDCP_API_KEY")
 	} else if creds, err := pch.GetCreds(); err == nil {
 		pdcpApiKey = creds.APIKey
 	}
