@@ -33,8 +33,13 @@ var (
 )
 
 func init() {
+	if os.Getenv("CVEMAP_API_URL") != "" {
+		baseUrl = os.Getenv("CVEMAP_API_URL")
+	}
 	pch := pdcp.PDCPCredHandler{}
-	if creds, err := pch.GetCreds(); err == nil {
+	if os.Getenv("PDCP_API_KEY") != "" {
+		pdcpApiKey = os.Getenv("PDCP_API_KEY")
+	} else if creds, err := pch.GetCreds(); err == nil {
 		pdcpApiKey = creds.APIKey
 	}
 	if os.Getenv("DEFAULT_FEILD_CHAR_LIMIT") != "" {
@@ -102,7 +107,7 @@ func ParseOptions() *Options {
 	)
 
 	flagset.CreateGroup("OPTIONS", "options",
-	    // currently only one cve id is supported
+		// currently only one cve id is supported
 		flagset.StringSliceVar(&options.CveIds, "id", nil, "cve to list for given id", goflags.CommaSeparatedStringSliceOptions),
 		// flagset.StringSliceVarP(&options.cweIds, "cwe-id", "cwe", nil, "cve to list for given cwe id", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringSliceVarP(&options.Vendor, "vendor", "v", nil, "cve to list for given vendor", goflags.CommaSeparatedStringSliceOptions),

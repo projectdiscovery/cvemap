@@ -31,6 +31,21 @@ jobs:
       - name: Test
         run: go test ./...
         working-directory: .
+      
+      - name: Integration Tests Linux, macOS
+        if: runner.os == 'Linux' || runner.os == 'macOS'
+        env:
+          GH_ACTION: true
+        run: bash run.sh
+        working-directory: cmd/integration-test/
+      
+      - name: Integration Tests Windows
+        if: runner.os == 'Windows'
+        env:
+          GH_ACTION: true
+          MSYS_NO_PATHCONV: true
+        run: bash run.sh
+        working-directory: cmd/integration-test/
         
       - name: Race Condition Tests
         if: github.actor != 'dependabot[bot]'

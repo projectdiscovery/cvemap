@@ -1,0 +1,56 @@
+{
+    "result_count": 1,
+    "total_results": 1,
+    "cves": [
+        {
+            "cpe": {
+                "cpe": "cpe:2.3:o:sgi:irix:*:*:*:*:*:*:*:*",
+                "vendor": "sgi",
+                "product": "irix"
+            },
+            "epss": {
+                "epss_score": 0.00064,
+                "epss_percentile": 0.26181
+            },
+            "cve_id": "CVE-1999-0027",
+            "is_oss": false,
+            "is_poc": false,
+            "assignee": "cve@mitre.org",
+            "severity": "high",
+            "hackerone": {
+                "rank": 6320,
+                "count": 0
+            },
+            "is_remote": false,
+            "reference": [
+                "https://exchange.xforce.ibmcloud.com/vulnerabilities/CVE-1999-0027",
+                "https://github.com/Kuromesi/Py4CSKG"
+            ],
+            "cvss_score": 7.2,
+            "updated_at": "2022-08-17T07:15:08.580",
+            "weaknesses": [
+                {
+                    "cwe_id": "CWE-119",
+                    "cwe_name": "Improper Restriction of Operations within the Bounds of a Memory Buffer"
+                }
+            ],
+            "age_in_days": 9682,
+            "is_template": false,
+            "vuln_status": "modified",
+            "cvss_metrics": {
+                "cvss2": {
+                    "score": 7.2,
+                    "vector": "CVSS:2.0/AV:L/AC:L/Au:N/C:C/I:C/A:C",
+                    "severity": "high"
+                }
+            },
+            "is_exploited": false,
+            "published_at": "1997-07-16T04:00:00.000",
+            "vulnerable_cpe": [
+                "cpe:2.3:o:sgi:irix:*:*:*:*:*:*:*:*"
+            ],
+            "cve_description": "root privileges via buffer overflow in eject command on SGI IRIX systems.",
+            "vendor_advisory": ""
+        }
+    ]
+}
