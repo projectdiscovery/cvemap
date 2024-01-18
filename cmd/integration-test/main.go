@@ -15,7 +15,6 @@ var (
 	debug               = os.Getenv("DEBUG") == "true"
 	success             = aurora.Green("[✓]").String()
 	failed              = aurora.Red("[✘]").String()
-	errored             = false
 	currentCvemapBinary = flag.String("current", "", "Current Branch Cvemap Binary")
 )
 
@@ -53,7 +52,6 @@ func runIntegrationTests() error {
 
 	for testName, testcase := range testCases {
 		if err := testcase.Execute(); err != nil {
-			errored = true
 			fmt.Fprintf(os.Stderr, "%s Test \"%s\" failed: %s\n", failed, testName, err)
 		} else {
 			fmt.Printf("%s Test \"%s\" passed!\n", success, testName)

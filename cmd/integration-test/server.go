@@ -53,7 +53,9 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	for _, data := range cveData.Cves {
 		if data.CveID == cveID {
 			// Return the data corresponding to the given CVE ID
-			json.NewEncoder(w).Encode(cveData)
+			if err := json.NewEncoder(w).Encode(cveData); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 			return
 		}
 	}
