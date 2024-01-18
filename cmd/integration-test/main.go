@@ -12,17 +12,18 @@ import (
 )
 
 var (
-	debug               = os.Getenv("DEBUG") == "true"
-	success             = aurora.Green("[✓]").String()
-	failed              = aurora.Red("[✘]").String()
-	currentCvemapBinary = flag.String("current", "", "Current Branch Cvemap Binary")
+	xPDCPHeaderTestKey = "test-67291d9a-0aa6-49b1-b249-2b9d4b45bcea"
+	debug                 = os.Getenv("DEBUG") == "true"
+	success               = aurora.Green("[✓]").String()
+	failed                = aurora.Red("[✘]").String()
+	currentCvemapBinary   = flag.String("current", "", "Current Branch Cvemap Binary")
 )
 
 func main() {
 	flag.Parse()
 	SetupMockServer()
 	os.Setenv("CVEMAP_API_URL", "http://localhost:8080/api/v1")
-	os.Setenv("X_PDCP_KEY", "67291d9a-0aa6-49b1-b249-2b9d4b45bcea")
+	os.Setenv("X_PDCP_KEY", xPDCPHeaderTestKey)
 	if err := runIntegrationTests(); err != nil {
 		fmt.Println("Error running integration tests:", err)
 	}

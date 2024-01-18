@@ -35,7 +35,7 @@ func SetupMockServer() {
 func RequireAPIKey(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		apiKey := r.Header.Get("X-PDCP-Key")
-		if apiKey != "67291d9a-0aa6-49b1-b249-2b9d4b45bcea" {
+		if apiKey != xPDCPHeaderTestKey {
 			http.Error(w, "Unauthorized: X-PDCP-Key header is required", http.StatusUnauthorized)
 			return
 		}
