@@ -22,12 +22,14 @@ var (
 )
 
 func init() {
-	pch := pdcp.PDCPCredHandler{}
-	if creds, err := pch.GetCreds(); err == nil {
-		PDCPApiKey = creds.APIKey
+	if os.Getenv("CVEMAP_API_URL") != "" {
+		BaseUrl = os.Getenv("CVEMAP_API_URL")
 	}
-	if os.Getenv(XPDCPKeyHeader) != "" {
-		PDCPApiKey = os.Getenv(XPDCPKeyHeader)
+	pch := pdcp.PDCPCredHandler{}
+	if os.Getenv("PDCP_API_KEY") != "" {
+		PDCPApiKey = os.Getenv("PDCP_API_KEY")
+	} else if creds, err := pch.GetCreds(); err == nil {
+		PDCPApiKey = creds.APIKey
 	}
 }
 

@@ -5,6 +5,8 @@ go 1.21
 require (
 	github.com/eiannone/keyboard v0.0.0-20220611211555-0d226195f203
 	github.com/jedib0t/go-pretty/v6 v6.4.7
+	github.com/logrusorgru/aurora v2.0.3+incompatible
+	github.com/pkg/errors v0.9.1
 	github.com/projectdiscovery/goflags v0.1.34
 	github.com/projectdiscovery/gologger v1.1.12
 	github.com/projectdiscovery/utils v0.0.74-0.20240115220656-48fef326de18
@@ -52,7 +54,6 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/klauspost/pgzip v1.2.5 // indirect
-	github.com/logrusorgru/aurora v2.0.3+incompatible // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
@@ -68,7 +69,6 @@ require (
 	github.com/nwaples/rardecode v1.1.3 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/pierrec/lz4/v4 v4.1.2 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/projectdiscovery/blackrock v0.0.1 // indirect
 	github.com/projectdiscovery/fastdialer v0.0.54 // indirect
 	github.com/projectdiscovery/hmap v0.0.34 // indirect
