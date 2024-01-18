@@ -8,6 +8,8 @@ import (
 
 	"github.com/projectdiscovery/cvemap/pkg/constant"
 	"github.com/projectdiscovery/cvemap/pkg/runner"
+	"github.com/projectdiscovery/cvemap/pkg/service"
+	"github.com/projectdiscovery/cvemap/pkg/types"
 	"github.com/projectdiscovery/gologger"
 	errorutil "github.com/projectdiscovery/utils/errors"
 )
@@ -32,14 +34,14 @@ func (e *Cvemap) List(ctx context.Context) ([]Object, error) {
 
 	// Start time for GetCvesByOptions
 	start := time.Now()
-	var cvesInBulk *runner.CVEBulkData
+	var cvesInBulk *types.CVEBulkData
 	var err error
 	var searchString string
 
 	if e.ctx != nil && e.ctx.Value(constant.KeySearchString) != nil {
 		searchString = e.ctx.Value(constant.KeySearchString).(string)
 		// TODO: Make limit and offset dynamic
-		cvesInBulk, err = runner.GetCvesBySearchString(searchString, 100, 0)
+		cvesInBulk, err = service.GetCvesBySearchString(searchString, 100, 0)
 		e.ctx = context.WithValue(e.ctx, constant.KeySearchString, "")
 		elapsed := time.Since(start)
 		gologger.Info().Msgf("Time taken for GetCvesBySearchString: %.2fs", elapsed.Seconds())
@@ -68,7 +70,7 @@ func (e *Cvemap) Get(ctx context.Context, path string) (Object, error) {
 
 func (e *Cvemap) Describe(cveId string) (string, error) {
 	start := time.Now()
-	cveData, err := runner.GetCveById(cveId)
+	cveData, err := service.GetCveById(cveId)
 	if err != nil {
 		gologger.Error().Msgf("Error getting cve data for %s: %v", cveId, err)
 		return "", err

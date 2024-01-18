@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/derailed/tview"
-	"github.com/projectdiscovery/cvemap/pkg/runner"
+	"github.com/projectdiscovery/cvemap/pkg/types"
 	errorutil "github.com/projectdiscovery/utils/errors"
 )
 
@@ -27,7 +27,7 @@ func (cvemap Cvemap) Header() Header {
 }
 
 func (cvemap Cvemap) Render(o interface{}, ns string, row *Row) error {
-	cve, ok := o.(runner.CVEData)
+	cve, ok := o.(types.CVEData)
 
 	if !ok {
 		return errorutil.New("expected CVEData, but got %T", o)

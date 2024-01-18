@@ -5,10 +5,11 @@ import (
 	"os/exec"
 	"runtime"
 
+	"github.com/projectdiscovery/cvemap/pkg/types"
 	fileutil "github.com/projectdiscovery/utils/file"
 )
 
-func getLatestVersionCVSSScore(cvss CvssMetrics) float64 {
+func getLatestVersionCVSSScore(cvss types.CvssMetrics) float64 {
 	var highestScore float64
 	if cvss.Cvss2 != nil {
 		highestScore = cvss.Cvss2.Score

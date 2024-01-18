@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"os"
 	"strconv"
@@ -14,29 +12,20 @@ import (
 
 	"github.com/eiannone/keyboard"
 	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/projectdiscovery/cvemap/pkg/service"
+	"github.com/projectdiscovery/cvemap/pkg/types"
 	"github.com/projectdiscovery/goflags"
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/gologger/levels"
-	"github.com/projectdiscovery/utils/auth/pdcp"
-	errorutil "github.com/projectdiscovery/utils/errors"
 	fileutil "github.com/projectdiscovery/utils/file"
 	updateutils "github.com/projectdiscovery/utils/update"
 )
 
-const xPDCPKeyHeader = "X-PDCP-Key"
-
 var (
-	baseUrl                  = "https://cve.projectdiscovery.io/api/v1"
-	httpCleint               = &http.Client{}
-	pdcpApiKey               = ""
 	DEFAULT_FEILD_CHAR_LIMIT = 20
 )
 
 func init() {
-	pch := pdcp.PDCPCredHandler{}
-	if creds, err := pch.GetCreds(); err == nil {
-		pdcpApiKey = creds.APIKey
-	}
 	if os.Getenv("DEFAULT_FEILD_CHAR_LIMIT") != "" {
 		DEFAULT_FEILD_CHAR_LIMIT, _ = strconv.Atoi(os.Getenv("DEFAULT_FEILD_CHAR_LIMIT"))
 	}
@@ -214,8 +203,8 @@ func Run(options Options) {
 	}
 }
 
-func process(options Options) *CVEBulkData {
-	var cvesResp *CVEBulkData
+func process(options Options) *types.CVEBulkData {
+	var cvesResp *types.CVEBulkData
 	var err error
 	cvesResp, err = GetCvesByOptions(options)
 	if err != nil {
@@ -363,7 +352,7 @@ func renderTable(headers []string, rows [][]interface{}) {
 	t.Render()
 }
 
-func generateTableData(cves []CVEData, headers []string) ([]string, [][]interface{}) {
+func generateTableData(cves []types.CVEData, headers []string) ([]string, [][]interface{}) {
 	dataRows := make([][]interface{}, len(cves))
 	for r, cve := range cves {
 		dataRows[r] = getRow(headers, cve)
@@ -371,7 +360,7 @@ func generateTableData(cves []CVEData, headers []string) ([]string, [][]interfac
 	return headers, dataRows
 }
 
-func getRow(headers []string, cve CVEData) []interface{} {
+func getRow(headers []string, cve types.CVEData) []interface{} {
 	row := make([]interface{}, len(headers))
 	for i, header := range headers {
 		switch strings.ToLower(header) {
@@ -449,137 +438,17 @@ func getCellValueByLimit(cell interface{}) string {
 	return cellValue
 }
 
-func GetCvesByOptions(options Options) (*CVEBulkData, error) {
+func GetCvesByOptions(options Options) (*types.CVEBulkData, error) {
 	if options.ListId {
-		return getCvesForSpecificFields([]string{"cve_id"}, options.Limit, options.Offset)
+		return service.GetCvesForSpecificFields([]string{"cve_id"}, options.Limit, options.Offset)
 	}
 	if options.Search != "" {
-		return GetCvesBySearchString(options.Search, options.Limit, options.Offset)
+		return service.GetCvesBySearchString(options.Search, options.Limit, options.Offset)
 	}
-	return getCvesByFilters(constructQueryParams(options))
+	return service.GetCvesByParams(constructQueryParams(options))
 }
 
-func getCvesByFilters(encodedParams string) (*CVEBulkData, error) {
-	url := fmt.Sprintf("%s/cves?%s", baseUrl, encodedParams)
-	// Send an HTTP GET request
-	response, err := makeRequest(url)
-	if err != nil {
-		return nil, err
-	}
-	defer response.Body.Close()
-	// Check the response status code
-	if response.StatusCode != http.StatusOK {
-		return nil, errorutil.New("unexpected status code: %d", response.StatusCode)
-	}
-	// Create a variable to store the response data
-	var cvesInBulk CVEBulkData
-	// Decode the JSON response into an array of CVEData structs
-	err = json.NewDecoder(response.Body).Decode(&cvesInBulk)
-	if err != nil {
-		return nil, err
-	}
-	return &cvesInBulk, nil
-}
-
-func GetCvesBySearchString(query string, limit, offset int) (*CVEBulkData, error) {
-	url := fmt.Sprintf("%s/cves/search?q=%s&limit=%v&offset=%v", baseUrl, query, limit, offset)
-	// Send an HTTP GET request
-	response, err := makeRequest(url)
-	if err != nil {
-		return nil, err
-	}
-	defer response.Body.Close()
-	// Check the response status code
-	if response.StatusCode != http.StatusOK {
-		return nil, errorutil.New("unexpected status code: %d", response.StatusCode)
-	}
-	// Create a variable to store the response data
-	var cvesInBulk CVEBulkData
-	// Decode the JSON response into an array of CVEData structs
-	err = json.NewDecoder(response.Body).Decode(&cvesInBulk)
-	if err != nil {
-		return nil, err
-	}
-	return &cvesInBulk, nil
-}
-
-// all the root level fields are supported
-func getCvesForSpecificFields(fields []string, limit, offset int) (*CVEBulkData, error) {
-	url := fmt.Sprintf("%s/cves?fields=%s&limit=%v&offset=%v", baseUrl, strings.Join(fields, ","), limit, offset)
-	// Send an HTTP GET request
-	response, err := makeRequest(url)
-	if err != nil {
-		return nil, err
-	}
-	defer response.Body.Close()
-	// Check the response status code
-	if response.StatusCode != http.StatusOK {
-		return nil, errorutil.New("unexpected status code: %d", response.StatusCode)
-	}
-	// Create a variable to store the response data
-	var cvesInBulk CVEBulkData
-	// Decode the JSON response into an array of CVEData structs
-	err = json.NewDecoder(response.Body).Decode(&cvesInBulk)
-	if err != nil {
-		return nil, err
-	}
-	return &cvesInBulk, nil
-}
-
-func GetCveById(cveId string) (*CVEData, error) {
-	url := fmt.Sprintf("%s/cves?cve_id=%s", baseUrl, cveId)
-	// Send an HTTP GET request
-	response, err := makeRequest(url)
-	if err != nil {
-		return nil, errorutil.New("Error getting CVEs: %s\n", err)
-	}
-	defer response.Body.Close()
-	// Check the response status code
-	if response.StatusCode != http.StatusOK {
-		return nil, errorutil.New("unexpected status code: %d", response.StatusCode)
-	}
-	// Create a variable to store the response data
-	var cveBulkData CVEBulkData
-	// Decode the JSON response into an array of CVEData structs
-	err = json.NewDecoder(response.Body).Decode(&cveBulkData)
-	if err != nil {
-		return nil, errorutil.New("Error decoding response: %s\n", err)
-	}
-	if len(cveBulkData.Cves) == 0 {
-		return nil, errorutil.New("cve not found")
-	}
-	return &cveBulkData.Cves[0], nil
-}
-
-var UNAUTHORIZEDERR = errorutil.New(`unexpected status code: 401 (get your free api key from https://cloud.projectdiscovery.io)`)
-
-func makeRequest(url string) (*http.Response, error) {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		gologger.Fatal().Msgf("Error creating request: %s\n", err)
-	}
-	req.Header.Set(xPDCPKeyHeader, pdcpApiKey)
-	if os.Getenv("DEBUG") == "true" {
-		// dump request
-		dump, err := httputil.DumpRequest(req, true)
-		if err != nil {
-			gologger.Fatal().Msgf("Error dumping request: %s\n", err)
-		}
-		fmt.Println(string(dump))
-	}
-	resp, err := httpCleint.Do(req)
-	if err == nil && resp.StatusCode == http.StatusUnauthorized {
-		var errResp ErrorMessage
-		_ = json.NewDecoder(resp.Body).Decode(&errResp)
-		if os.Getenv("DEBUG") == "true" {
-			gologger.Error().Msgf("unauthorized: %s\n", errResp.Message)
-		}
-		return nil, UNAUTHORIZEDERR
-	}
-	return resp, err
-}
-
-func outputJson(cve []CVEData) {
+func outputJson(cve []types.CVEData) {
 	json, err := json.MarshalIndent(cve, "", "  ")
 	if err != nil {
 		gologger.Error().Msgf("Error marshalling json: %s\n", err)

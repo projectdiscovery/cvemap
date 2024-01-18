@@ -1,4 +1,4 @@
-package runner
+package types
 
 type CVEBulkData struct {
 	ResultCount  int       `json:"result_count"`
