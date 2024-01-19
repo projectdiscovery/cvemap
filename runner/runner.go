@@ -487,9 +487,17 @@ func getCvesByFilters(encodedParams string) (*CVEBulkData, error) {
 }
 
 func getCvesBySearchString(query string, limit, offset int) (*CVEBulkData, error) {
-	url := fmt.Sprintf("%s/cves/search?q=%s&limit=%v&offset=%v", baseUrl, query, limit, offset)
-	// Send an HTTP GET request
-	response, err := makeRequest(url)
+	u, err := url.Parse(fmt.Sprintf("%s/cves/search", baseUrl))
+	if err != nil {
+		return nil, err
+	}
+	// Construct query parameters
+	q := u.Query()
+	q.Set("q", query)
+	q.Set("limit", fmt.Sprintf("%v", limit))
+	q.Set("offset", fmt.Sprintf("%v", offset))
+	u.RawQuery = q.Encode()
+	response, err := makeRequest(u.String())
 	if err != nil {
 		return nil, err
 	}
