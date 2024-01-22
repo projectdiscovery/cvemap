@@ -15,6 +15,7 @@ require (
 require (
 	aead.dev/minisign v0.2.0 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
+	github.com/Mzack9999/gcache v0.0.0-20230410081825-519e28eab057 // indirect
 	github.com/Mzack9999/go-http-digest-auth-client v0.6.1-0.20220414142836-eb8883508809 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/akrylysov/pogreb v0.10.1 // indirect
@@ -30,6 +31,7 @@ require (
 	github.com/denisbrodbeck/machineid v1.0.1 // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/dlclark/regexp2 v1.8.1 // indirect
+	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5 // indirect
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/gaukas/godicttls v0.0.4 // indirect
@@ -57,7 +59,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/pierrec/lz4/v4 v4.1.2 // indirect
 	github.com/projectdiscovery/blackrock v0.0.1 // indirect
-	github.com/projectdiscovery/fastdialer v0.0.54 // indirect
+	github.com/projectdiscovery/fastdialer v0.0.55 // indirect
 	github.com/projectdiscovery/hmap v0.0.34 // indirect
 	github.com/projectdiscovery/networkpolicy v0.0.7 // indirect
 	github.com/projectdiscovery/retryabledns v1.0.52 // indirect
