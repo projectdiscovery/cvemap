@@ -9,7 +9,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/projectdiscovery/goflags v0.1.34
 	github.com/projectdiscovery/gologger v1.1.12
-	github.com/projectdiscovery/utils v0.0.74-0.20240115220656-48fef326de18
+	github.com/projectdiscovery/utils v0.0.74
 )
 
 require (
