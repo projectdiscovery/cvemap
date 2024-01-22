@@ -135,7 +135,7 @@ func ParseOptions() *Options {
 		flagset.DynamicVarP(&options.HasNucleiTemplate, "template", "t", "true", "display cves that has public nuclei templates"),
 		flagset.DynamicVar(&options.HasPoc, "poc", "true", "display cves that has public published poc"),
 		flagset.DynamicVarP(&options.Hackerone, "hackerone", "h1", "true", "display cves reported on hackerone"),
-		flagset.DynamicVarP(&options.RemotlyExploitable, "remotely-exploitable", "re", "true", "display remotely exploitable cves (AV:N & PR:N | PR:L)"),
+		flagset.DynamicVarP(&options.RemotlyExploitable, "remote", "re", "true", "display remotely exploitable cves (AV:N & PR:N | PR:L)"),
 	)
 
 	flagset.CreateGroup("OUTPUT", "output",
