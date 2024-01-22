@@ -636,6 +636,7 @@ func constructQueryParams(opts Options) string {
 	if len(opts.CvssScore) > 0 {
 		var cvsKey string
 		for _, cvssScore := range opts.CvssScore {
+			cvsKey = "cvss_score"
 			if cvssScore[0] == '>' {
 				cvsKey = "cvss_score_gte"
 				cvssScore = cvssScore[1:]
