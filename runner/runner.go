@@ -634,7 +634,7 @@ func constructQueryParams(opts Options) string {
 		addQueryParams(queryParams, "assignee", opts.Assignees)
 	}
 	if len(opts.CvssScore) > 0 {
-		cvsKey := "cvss_score"
+		var cvsKey string
 		for _, cvssScore := range opts.CvssScore {
 			if cvssScore[0] == '>' {
 				cvsKey = "cvss_score_gte"
@@ -741,7 +741,7 @@ func constructQueryByOptions(opts Options) string {
 		query = fmt.Sprintf("%s severity:%s", query, strings.Join(opts.Severity, ","))
 	}
 	if len(opts.CvssScore) > 0 {
-		cvsKey := "cvss_score"
+		var cvsKey string
 		for _, cvssScore := range opts.CvssScore {
 			cvsKey = "cvss_score"
 			if cvssScore[0] == '>' {
