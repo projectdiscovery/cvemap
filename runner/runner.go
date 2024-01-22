@@ -21,6 +21,7 @@ import (
 	"github.com/projectdiscovery/utils/auth/pdcp"
 	errorutil "github.com/projectdiscovery/utils/errors"
 	fileutil "github.com/projectdiscovery/utils/file"
+	sliceutil "github.com/projectdiscovery/utils/slice"
 	updateutils "github.com/projectdiscovery/utils/update"
 )
 
@@ -464,7 +465,8 @@ func getCves(options Options) (*CVEBulkData, error) {
 		return getCvesForSpecificFields([]string{"cve_id"}, options.Limit, options.Offset)
 	}
 	if options.Search != "" {
-		return getCvesBySearchString(options.Search, options.Limit, options.Offset)
+		query := constructQueryByOptions(options)
+		return getCvesBySearchString(query, options.Limit, options.Offset)
 	}
 	return getCvesByFilters(constructQueryParams(options))
 }
@@ -656,21 +658,6 @@ func constructQueryParams(opts Options) string {
 		}
 		queryParams.Add(ageKey, opts.Age)
 	}
-	if opts.Kev == "true" {
-		queryParams.Add("is_exploited", "true")
-	} else if opts.Kev == "false" {
-		queryParams.Add("is_exploited", "false")
-	}
-	if opts.HasNucleiTemplate == "true" {
-		queryParams.Add("is_template", "true")
-	} else if opts.HasNucleiTemplate == "false" {
-		queryParams.Add("is_template", "false")
-	}
-	if opts.HasPoc == "true" {
-		queryParams.Add("is_poc", "true")
-	} else if opts.HasPoc == "false" {
-		queryParams.Add("is_poc", "false")
-	}
 	if len(opts.VulnStatus) > 0 {
 		queryParams.Add("vuln_status", strings.ToLower(opts.VulnStatus))
 	}
@@ -706,6 +693,21 @@ func constructQueryParams(opts Options) string {
 	if len(opts.Vendor) > 0 {
 		addQueryParams(queryParams, "cpe.vendor", opts.Vendor)
 	}
+	if opts.Kev == "true" {
+		queryParams.Add("is_exploited", "true")
+	} else if opts.Kev == "false" {
+		queryParams.Add("is_exploited", "false")
+	}
+	if opts.HasNucleiTemplate == "true" {
+		queryParams.Add("is_template", "true")
+	} else if opts.HasNucleiTemplate == "false" {
+		queryParams.Add("is_template", "false")
+	}
+	if opts.HasPoc == "true" {
+		queryParams.Add("is_poc", "true")
+	} else if opts.HasPoc == "false" {
+		queryParams.Add("is_poc", "false")
+	}
 	if opts.Hackerone == "true" {
 		queryParams.Add("hackerone.rank_gte", "1")
 		queryParams.Add("sort_asc", "hackerone.rank")
@@ -722,6 +724,105 @@ func constructQueryParams(opts Options) string {
 		queryParams.Add("offset", strconv.Itoa(opts.Offset))
 	}
 	return queryParams.Encode()
+}
+
+func constructQueryByOptions(opts Options) string {
+	query := opts.Search
+	if len(opts.Vendor) > 0 {
+		query = fmt.Sprintf("%s cpe.vendor:%s", query, strings.Join(opts.Vendor, ","))
+	}
+	if len(opts.Product) > 0 {
+		query = fmt.Sprintf("%s cpe.product:%s", query, strings.Join(opts.Product, ","))
+	}
+	if len(opts.Eproduct) > 0 {
+		query = fmt.Sprintf("%s cpe.product_ne:%s", query, strings.Join(opts.Eproduct, ","))
+	}
+	if len(opts.Severity) > 0 {
+		query = fmt.Sprintf("%s severity:%s", query, strings.Join(opts.Severity, ","))
+	}
+	if len(opts.CvssScore) > 0 {
+		cvsKey := "cvss_score"
+		for _, cvssScore := range opts.CvssScore {
+			cvsKey = "cvss_score"
+			if cvssScore[0] == '>' {
+				cvsKey = "cvss_score_gte"
+				cvssScore = cvssScore[1:]
+			} else if cvssScore[0] == '<' {
+				cvsKey = "cvss_score_lte"
+				cvssScore = cvssScore[1:]
+			}
+			query = fmt.Sprintf("%s %s:%s", query, cvsKey, cvssScore)
+		}
+	}
+	if len(opts.EpssScore) > 0 {
+		epssKey := "epss.epss_score"
+		if opts.EpssScore[0] == '>' {
+			epssKey = "epss.epss_score_gte"
+			opts.EpssScore = opts.EpssScore[1:]
+		} else if opts.EpssScore[0] == '<' {
+			epssKey = "epss.epss_score_lte"
+			opts.EpssScore = opts.EpssScore[1:]
+		}
+		query = fmt.Sprintf("%s %s:%s", query, epssKey, opts.EpssScore)
+	}
+	if len(opts.Cpe) > 0 {
+		query = fmt.Sprintf(`%s cpe.cpe:"%s"`, query, opts.Cpe)
+	}
+	if len(opts.EpssPercentile) > 0 {
+		query = fmt.Sprintf("%s epss.epss_percentile:%s", query, strings.Join(opts.EpssPercentile, ","))
+	}
+	if len(opts.CweIds) > 0 {
+		query = fmt.Sprintf("%s cwe_id:%s", query, strings.Join(opts.CweIds, ","))
+	}
+	if len(opts.Age) > 0 {
+		ageKey := "age_in_days"
+		if opts.Age[0] == '>' {
+			ageKey = "age_in_days_gte"
+			opts.Age = opts.Age[1:]
+		} else if opts.Age[0] == '<' {
+			ageKey = "age_in_days_lte"
+			opts.Age = opts.Age[1:]
+		}
+		query = fmt.Sprintf("%s %s:%s", query, ageKey, opts.Age)
+	}
+	if len(opts.Assignees) > 0 {
+		query = fmt.Sprintf("%s assignee:%s", query, strings.Join(opts.Assignees, ","))
+	}
+	if len(opts.VulnStatus) > 0 {
+		query = fmt.Sprintf("%s vuln_status:%s", query, strings.ToLower(opts.VulnStatus))
+	}
+	if opts.Kev == "true" {
+		query = fmt.Sprintf("%s is_exploited:true", query)
+	} else if opts.Kev == "false" {
+		query = fmt.Sprintf("%s is_exploited:false", query)
+	}
+	if opts.HasNucleiTemplate == "true" {
+		query = fmt.Sprintf("%s is_template:true", query)
+	} else if opts.HasNucleiTemplate == "false" {
+		query = fmt.Sprintf("%s is_template:false", query)
+	}
+	if opts.HasPoc == "true" {
+		query = fmt.Sprintf("%s is_poc:true", query)
+	} else if opts.HasPoc == "false" {
+		query = fmt.Sprintf("%s is_poc:false", query)
+	}
+	if opts.Hackerone == "true" {
+		query = fmt.Sprintf("%s hackerone.rank_gte:1 sort_asc:hackerone.rank", query)
+	} else {
+		query = fmt.Sprintf("%s sort_desc:cve_id", query)
+	}
+	if opts.RemotlyExploitable == "true" {
+		query = fmt.Sprintf("%s is_remote:true", query)
+	}
+
+	parts := strings.Split(query, " ")
+	parts = sliceutil.PruneEmptyStrings(parts)
+	parts = sliceutil.Dedupe(parts)
+	query = strings.Join(parts, " ")
+	if os.Getenv("DEBUG") == "true" {
+		fmt.Println("constructed query: ", query)
+	}
+	return query
 }
 
 func addQueryParams(queryParams *url.Values, key string, values []string) *url.Values {
