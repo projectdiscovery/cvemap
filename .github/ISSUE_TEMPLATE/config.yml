@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: Ask an question / advise on using cvemap
+    url: https://github.com/projectdiscovery/cvemap/discussions/categories/q-a
+    about: Ask a question or request support for using cvemap
+
+  - name: Share idea / feature to discuss for cvemap
+    url: https://github.com/projectdiscovery/cvemap/discussions/categories/ideas
+    about: Share idea / feature to discuss for cvemap
+
+  - name: Connect with PD Team (Discord)
+    url: https://discord.gg/projectdiscovery
+    about: Connect with PD Team for direct communication
