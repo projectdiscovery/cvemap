@@ -639,10 +639,10 @@ func constructQueryParams(opts Options) string {
 			cvsKey = "cvss_score"
 			if cvssScore[0] == '>' {
 				cvsKey = "cvss_score_gte"
-				cvssScore = cvssScore[1:]
+				cvssScore = strings.TrimSpace(cvssScore[1:])
 			} else if cvssScore[0] == '<' {
 				cvsKey = "cvss_score_lte"
-				cvssScore = cvssScore[1:]
+				cvssScore = strings.TrimSpace(cvssScore[1:])
 			}
 			queryParams.Add(cvsKey, cvssScore)
 		}
@@ -652,10 +652,10 @@ func constructQueryParams(opts Options) string {
 		ageKey := "age_in_days"
 		if opts.Age[0] == '>' {
 			ageKey = "age_in_days_gte"
-			opts.Age = opts.Age[1:]
+			opts.Age = strings.TrimSpace(opts.Age[1:])
 		} else if opts.Age[0] == '<' {
 			ageKey = "age_in_days_lte"
-			opts.Age = opts.Age[1:]
+			opts.Age = strings.TrimSpace(opts.Age[1:])
 		}
 		queryParams.Add(ageKey, opts.Age)
 	}
@@ -669,15 +669,26 @@ func constructQueryParams(opts Options) string {
 		epssKey := "epss.epss_score"
 		if opts.EpssScore[0] == '>' {
 			epssKey = "epss.epss_score_gte"
-			opts.EpssScore = opts.EpssScore[1:]
+			opts.EpssScore = strings.TrimSpace(opts.EpssScore[1:])
 		} else if opts.EpssScore[0] == '<' {
 			epssKey = "epss.epss_score_lte"
-			opts.EpssScore = opts.EpssScore[1:]
+			opts.EpssScore = strings.TrimSpace(opts.EpssScore[1:])
 		}
 		queryParams.Add(epssKey, opts.EpssScore)
 	}
 	if len(opts.EpssPercentile) > 0 {
-		addQueryParams(queryParams, "epss.epss_percentile", opts.EpssPercentile)
+		var epKey string
+		for _, ep := range opts.EpssPercentile {
+			epKey = "epss.epss_percentile"
+			if ep[0] == '>' {
+				epKey = "epss.epss_percentile_gte"
+				ep = strings.TrimSpace(ep[1:])
+			} else if ep[0] == '<' {
+				epKey = "epss.epss_percentile_lte"
+				ep = strings.TrimSpace(ep[1:])
+			}
+			queryParams.Add(epKey, ep)
+		}
 	}
 	if len(opts.CweIds) > 0 {
 		addQueryParams(queryParams, "cwe_id", opts.CweIds)
@@ -747,10 +758,10 @@ func constructQueryByOptions(opts Options) string {
 			cvsKey = "cvss_score"
 			if cvssScore[0] == '>' {
 				cvsKey = "cvss_score_gte"
-				cvssScore = cvssScore[1:]
+				cvssScore = strings.TrimSpace(cvssScore[1:])
 			} else if cvssScore[0] == '<' {
 				cvsKey = "cvss_score_lte"
-				cvssScore = cvssScore[1:]
+				cvssScore = strings.TrimSpace(cvssScore[1:])
 			}
 			query = fmt.Sprintf("%s %s:%s", query, cvsKey, cvssScore)
 		}
@@ -759,18 +770,29 @@ func constructQueryByOptions(opts Options) string {
 		epssKey := "epss.epss_score"
 		if opts.EpssScore[0] == '>' {
 			epssKey = "epss.epss_score_gte"
-			opts.EpssScore = opts.EpssScore[1:]
+			opts.EpssScore = strings.TrimSpace(opts.EpssScore[1:])
 		} else if opts.EpssScore[0] == '<' {
 			epssKey = "epss.epss_score_lte"
-			opts.EpssScore = opts.EpssScore[1:]
+			opts.EpssScore = strings.TrimSpace(opts.EpssScore[1:])
 		}
 		query = fmt.Sprintf("%s %s:%s", query, epssKey, opts.EpssScore)
 	}
+	if len(opts.EpssPercentile) > 0 {
+		var epKey string
+		for _, ep := range opts.EpssPercentile {
+			epKey = "epss.epss_percentile"
+			if ep[0] == '>' {
+				epKey = "epss.epss_percentile_gte"
+				ep = strings.TrimSpace(ep[1:])
+			} else if ep[0] == '<' {
+				epKey = "epss.epss_percentile_lte"
+				ep = strings.TrimSpace(ep[1:])
+			}
+			query = fmt.Sprintf("%s %s:%s", query, epKey, ep)
+		}
+	}
 	if len(opts.Cpe) > 0 {
 		query = fmt.Sprintf(`%s cpe.cpe:"%s"`, query, opts.Cpe)
-	}
-	if len(opts.EpssPercentile) > 0 {
-		query = fmt.Sprintf("%s epss.epss_percentile:%s", query, strings.Join(opts.EpssPercentile, ","))
 	}
 	if len(opts.CweIds) > 0 {
 		query = fmt.Sprintf("%s cwe_id:%s", query, strings.Join(opts.CweIds, ","))
@@ -779,10 +801,10 @@ func constructQueryByOptions(opts Options) string {
 		ageKey := "age_in_days"
 		if opts.Age[0] == '>' {
 			ageKey = "age_in_days_gte"
-			opts.Age = opts.Age[1:]
+			opts.Age = strings.TrimSpace(opts.Age[1:])
 		} else if opts.Age[0] == '<' {
 			ageKey = "age_in_days_lte"
-			opts.Age = opts.Age[1:]
+			opts.Age = strings.TrimSpace(opts.Age[1:])
 		}
 		query = fmt.Sprintf("%s %s:%s", query, ageKey, opts.Age)
 	}
