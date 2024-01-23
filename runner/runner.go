@@ -461,9 +461,6 @@ func getCves(options Options) (*CVEBulkData, error) {
 	if len(options.CveIds) > 0 {
 		return getCvesByIds(options.CveIds)
 	}
-	if options.ListId {
-		return getCvesForSpecificFields([]string{"cve_id"}, options.Limit, options.Offset)
-	}
 	if options.Search != "" {
 		query := constructQueryByOptions(options)
 		return getCvesBySearchString(query, options.Limit, options.Offset)
@@ -562,27 +559,27 @@ func getCvesBySearchString(query string, limit, offset int) (*CVEBulkData, error
 }
 
 // all the root level fields are supported
-func getCvesForSpecificFields(fields []string, limit, offset int) (*CVEBulkData, error) {
-	url := fmt.Sprintf("%s/cves?fields=%s&limit=%v&offset=%v", baseUrl, strings.Join(fields, ","), limit, offset)
-	// Send an HTTP GET request
-	response, err := makeGetRequest(url)
-	if err != nil {
-		return nil, err
-	}
-	defer response.Body.Close()
-	// Check the response status code
-	if response.StatusCode != http.StatusOK {
-		return nil, errorutil.New("unexpected status code: %d", response.StatusCode)
-	}
-	// Create a variable to store the response data
-	var cvesInBulk CVEBulkData
-	// Decode the JSON response into an array of CVEData structs
-	err = json.NewDecoder(response.Body).Decode(&cvesInBulk)
-	if err != nil {
-		return nil, err
-	}
-	return &cvesInBulk, nil
-}
+// func getCvesForSpecificFields(fields []string, encodedParams string, limit, offset int) (*CVEBulkData, error) {
+// 	url := fmt.Sprintf("%s/cves?fields=%s&%s&limit=%v&offset=%v", baseUrl, strings.Join(fields, ","), encodedParams, limit, offset)
+// 	// Send an HTTP GET request
+// 	response, err := makeGetRequest(url)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer response.Body.Close()
+// 	// Check the response status code
+// 	if response.StatusCode != http.StatusOK {
+// 		return nil, errorutil.New("unexpected status code: %d", response.StatusCode)
+// 	}
+// 	// Create a variable to store the response data
+// 	var cvesInBulk CVEBulkData
+// 	// Decode the JSON response into an array of CVEData structs
+// 	err = json.NewDecoder(response.Body).Decode(&cvesInBulk)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return &cvesInBulk, nil
+// }
 
 var UNAUTHORIZEDERR = errorutil.New(`unexpected status code: 401 (get your free api key from https://cloud.projectdiscovery.io)`)
 
