@@ -1,5 +1,7 @@
 package runner
 
+import "time"
+
 type CVEBulkData struct {
 	ResultCount  int       `json:"result_count"`
 	TotalResults int       `json:"total_results"`
@@ -29,27 +31,25 @@ type CVEData struct {
 	} `json:"poc,omitempty"`
 	VendorAdvisory  *string          `json:"vendor_advisory,omitempty"`
 	Patch           []string         `json:"patch_url,omitempty"`
-	IsTemplate      bool             `json:"is_template,omitempty"`
+	IsTemplate      bool             `json:"is_template"`
 	NucleiTemplates *NucleiTemplates `json:"nuclei_templates,omitempty"`
-	IsKev           bool             `json:"is_exploited,omitempty"`
+	IsKev           bool             `json:"is_exploited"`
 	Kev             *KevObject       `json:"kev,omitempty"`
 	Assignee        string           `json:"assignee,omitempty"`
 	PublishedAt     string           `json:"published_at,omitempty"`
 	UpdatedAt       string           `json:"updated_at,omitempty"`
-	Activity        struct {
-		Rank  int `json:"rank"`
-		Count int `json:"count"`
-	} `json:"activity,omitempty"`
-	Hackerone struct {
+	Hackerone       struct {
 		Rank  int `json:"rank"`
 		Count int `json:"count"`
 	} `json:"hackerone,omitempty"`
 	AgeInDays     int               `json:"age_in_days,omitempty"`
 	VulnStatus    string            `json:"vuln_status,omitempty"`
-	IsPoc         bool              `json:"is_poc,omitempty"`
-	IsRemote      bool              `json:"is_remote,omitempty"`
+	IsPoc         bool              `json:"is_poc"`
+	IsRemote      bool              `json:"is_remote"`
+	IsOss         bool              `json:"is_oss"`
 	VulnerableCPE []string          `json:"vulnerable_cpe,omitempty"`
 	Shodan        *OutputShodanData `json:"shodan,omitempty"`
+	OSS           *OSS              `json:"oss,omitempty"`
 }
 
 type CvssMetrics struct {
@@ -76,17 +76,52 @@ type Cvss31 struct {
 	Severity string  `json:"severity"`
 }
 
+type NucleiTemplates struct {
+	TemplateIssue     string     `json:"template_issue,omitempty"`
+	TemplateIssueType string     `json:"template_issue_type,omitempty"`
+	TemplatePath      string     `json:"template_path,omitempty"`
+	TemplatePR        string     `json:"template_pr,omitempty"`
+	TemplateURL       string     `json:"template_url,omitempty"`
+	CreatedAt         *time.Time `json:"created_at,omitempty"`
+	UpdatedAt         *time.Time `json:"updated_at,omitempty"`
+}
+
+type OSS struct {
+	AllLanguages  map[string]int `json:"all_languages,omitempty"`
+	Description   string        `json:"description,omitempty"`
+	Forks         int           `json:"forks,omitempty"`
+	Language      string        `json:"language,omitempty"`
+	Stars         int           `json:"stars,omitempty"`
+	Subscribers   int           `json:"subscribers,omitempty"`
+	Topics        []string      `json:"topics,omitempty"`
+	PushedAt      CustomTime     `json:"pushed_at,omitempty"`
+	CreatedAt     CustomTime     `json:"created_at,omitempty"`
+	UpdatedAt     CustomTime     `json:"updated_at,omitempty"`
+	URL           string        `json:"url,omitempty"`
+}
+
+type CustomTime struct {
+	time.Time
+}
+
+func (ct *CustomTime) UnmarshalJSON(b []byte) error {
+	s := string(b)
+	if s == "null" {
+		return nil
+	}
+	t, err := time.Parse(`"2006-01-02 15:04:05 -0700 MST"`, s)
+	if err != nil {
+		return err
+	}
+	ct.Time = t
+	return nil
+}
+
 type OutputCpe struct {
 	Cpe      *string `json:"cpe,omitempty"`
 	Vendor   *string `json:"vendor,omitempty"`
 	Product  *string `json:"product,omitempty"`
 	Platform *string `json:"framework,omitempty"`
-}
-
-type NucleiTemplates struct {
-	TemplateURL   *string `json:"template_url,omitempty"`
-	TemplateIssue *string `json:"template_issue,omitempty"`
-	TemplatePR    *string `json:"template_pr,omitempty"`
 }
 
 type KevObject struct {
