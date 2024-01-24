@@ -225,7 +225,7 @@ func Run(options Options) {
 func process(options Options) *CVEBulkData {
 	var cvesResp *CVEBulkData
 	var err error
-	cvesResp, err = getCves(options)
+	cvesResp, err = GetCves(options)
 	if err != nil {
 		gologger.Fatal().Msgf("Error getting CVEs: %s\n", err)
 		return nil
@@ -457,7 +457,7 @@ func getCellValueByLimit(cell interface{}) string {
 	return cellValue
 }
 
-func getCves(options Options) (*CVEBulkData, error) {
+func GetCves(options Options) (*CVEBulkData, error) {
 	if len(options.CveIds) > 0 {
 		return getCvesByIds(options.CveIds)
 	}
