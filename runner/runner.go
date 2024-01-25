@@ -865,11 +865,5 @@ func getValidHeaders(keys []string) []string {
 }
 
 func GetCves(options Options) (*CVEBulkData, error) {
-	var cvesResp *CVEBulkData
-	var err error
-	cvesResp, err = getCves(options)
-	if err != nil {
-		return nil, err
-	}
-	return cvesResp, nil
+	return getCves(options)
 }
