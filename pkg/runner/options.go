@@ -40,4 +40,5 @@ type Options struct {
 	DisableUpdateCheck bool
 	Silent             bool
 	Verbose            bool
+	Debug              bool
 }

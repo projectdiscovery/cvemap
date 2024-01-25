@@ -1,12 +1,9 @@
 package runner
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"os"
 	"strconv"
@@ -15,34 +12,32 @@ import (
 
 	"github.com/eiannone/keyboard"
 	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/projectdiscovery/cvemap/pkg/service"
+	"github.com/projectdiscovery/cvemap/pkg/types"
 	"github.com/projectdiscovery/goflags"
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/gologger/levels"
 	"github.com/projectdiscovery/utils/auth/pdcp"
-	errorutil "github.com/projectdiscovery/utils/errors"
 	fileutil "github.com/projectdiscovery/utils/file"
 	sliceutil "github.com/projectdiscovery/utils/slice"
 	updateutils "github.com/projectdiscovery/utils/update"
 )
 
-const xPDCPKeyHeader = "X-PDCP-Key"
-
 var (
-	baseUrl                  = "https://cve.projectdiscovery.io/api/v1"
-	httpCleint               = &http.Client{}
-	pdcpApiKey               = ""
+	BaseUrl                  = "https://cve.projectdiscovery.io/api/v1"
+	PDCPApiKey               = ""
 	DEFAULT_FEILD_CHAR_LIMIT = 20
 )
 
 func init() {
 	if os.Getenv("CVEMAP_API_URL") != "" {
-		baseUrl = os.Getenv("CVEMAP_API_URL")
+		BaseUrl = os.Getenv("CVEMAP_API_URL")
 	}
 	pch := pdcp.PDCPCredHandler{}
 	if os.Getenv("PDCP_API_KEY") != "" {
-		pdcpApiKey = os.Getenv("PDCP_API_KEY")
+		PDCPApiKey = os.Getenv("PDCP_API_KEY")
 	} else if creds, err := pch.GetCreds(); err == nil {
-		pdcpApiKey = creds.APIKey
+		PDCPApiKey = creds.APIKey
 	}
 	if os.Getenv("DEFAULT_FEILD_CHAR_LIMIT") != "" {
 		DEFAULT_FEILD_CHAR_LIMIT, _ = strconv.Atoi(os.Getenv("DEFAULT_FEILD_CHAR_LIMIT"))
@@ -155,10 +150,15 @@ func ParseOptions() *Options {
 		flagset.BoolVar(&options.Version, "version", false, "Version"),
 		flagset.BoolVar(&options.Silent, "silent", false, "Silent"),
 		flagset.BoolVar(&options.Verbose, "verbose", false, "Verbose"),
+		flagset.BoolVar(&options.Debug, "debug", false, "Debug"),
 	)
 
 	if err := flagset.Parse(); err != nil {
 		gologger.Fatal().Msgf("Error parsing flags: %s\n", err)
+	}
+
+	if os.Getenv("DEBUG") == "true" {
+		options.Debug = true
 	}
 
 	if options.Limit > maxLimit {
@@ -174,33 +174,55 @@ func ParseOptions() *Options {
 		options.CveIds = append(options.CveIds, strings.Split(strings.TrimSpace(string(bin)), "\n")...)
 	}
 
+	// convert cve-ids and cwe-ids to uppercase
+	for i, cveId := range options.CveIds {
+		options.CveIds[i] = strings.ToUpper(cveId)
+	}
+	for i, cweId := range options.CweIds {
+		options.CweIds[i] = strings.ToUpper(cweId)
+	}
 	return &options
 }
 
-func Run(options Options) {
+type Runner struct {
+	Options       *Options
+	CvemapService *service.Cvemap
+}
 
-	if options.Version {
+func New(options *Options) *Runner {
+	r := &Runner{
+		Options:       options,
+		CvemapService: service.NewCvemap(BaseUrl, PDCPApiKey),
+	}
+	if r.Options.Debug {
+		r.CvemapService.Debug = true
+	}
+	return r
+}
+
+func (r *Runner) Run() {
+	if r.Options.Version {
 		gologger.Info().Msgf("Current Version: %s\n", Version)
 		os.Exit(0)
 	}
 
-	if options.PdcpAuth {
+	if r.Options.PdcpAuth {
 		AuthWithPDCP()
 	}
 
-	if options.Silent {
+	if r.Options.Silent {
 		gologger.DefaultLogger.SetMaxLevel(levels.LevelSilent)
-	} else if options.Verbose {
+	} else if r.Options.Verbose {
 		gologger.DefaultLogger.SetMaxLevel(levels.LevelVerbose)
 	}
 
 	// Show the user the banner
 	showBanner()
 
-	if !options.DisableUpdateCheck {
+	if !r.Options.DisableUpdateCheck {
 		latestVersion, err := updateutils.GetToolVersionCallback("cvemap", Version)()
 		if err != nil {
-			if options.Verbose {
+			if r.Options.Verbose {
 				gologger.Error().Msgf("cvemap version check failed: %v", err.Error())
 			}
 		} else {
@@ -209,43 +231,57 @@ func Run(options Options) {
 	}
 
 	// on default, enable kev
-	if isDefaultRun(options) {
-		options.Kev = "true"
+	if isDefaultRun(*r.Options) {
+		r.Options.Kev = "true"
 	}
 
-	parseHeaders(&options)
+	parseHeaders(r.Options)
 
-	if options.EnablePageKeys && len(options.CveIds) == 0 {
-		processWithPageKeyEvents(options)
+	if r.Options.EnablePageKeys && len(r.Options.CveIds) == 0 {
+		r.processWithPageKeyEvents()
 	} else {
-		_ = process(options)
+		_ = r.process()
 	}
 }
 
-func process(options Options) *CVEBulkData {
-	var cvesResp *CVEBulkData
+func (r *Runner) GetCves() (*types.CVEBulkData, error) {
+	if len(r.Options.CveIds) > 0 {
+		return r.CvemapService.GetCvesByIds(r.Options.CveIds)
+	}
+	if r.Options.Search != "" {
+		query := constructQueryByOptions(*r.Options)
+		if r.Options.Debug {
+			gologger.Print().Msgf("constructed query: %s\n", query)
+		}
+		return r.CvemapService.GetCvesBySearchString(query, r.Options.Limit, r.Options.Offset)
+	}
+	return r.CvemapService.GetCvesByFilters(constructQueryParams(*r.Options))
+}
+
+func (r *Runner) process() *types.CVEBulkData {
+	var cvesResp *types.CVEBulkData
 	var err error
-	cvesResp, err = getCves(options)
+	cvesResp, err = r.GetCves()
 	if err != nil {
 		gologger.Fatal().Msgf("Error getting CVEs: %s\n", err)
 		return nil
 	}
 
-	if options.Json {
+	if r.Options.Json {
 		outputJson(cvesResp.Cves)
 		return cvesResp
 	}
 
-	nPages := cvesResp.TotalResults / options.Limit
-	if cvesResp.TotalResults%options.Limit > 0 {
+	nPages := cvesResp.TotalResults / r.Options.Limit
+	if cvesResp.TotalResults%r.Options.Limit > 0 {
 		nPages++
 	}
-	currentPage := (options.Offset / options.Limit) + 1
-	if len(options.CveIds) == 0 && (options.Verbose || options.EnablePageKeys) {
-		gologger.Print().Msgf("\n Limit: %v Page: %v TotalPages: %v TotalResults: %v\n", options.Limit, currentPage, nPages, cvesResp.TotalResults)
+	currentPage := (r.Options.Offset / r.Options.Limit) + 1
+	if len(r.Options.CveIds) == 0 && (r.Options.Verbose || r.Options.EnablePageKeys) {
+		gologger.Print().Msgf("\n Limit: %v Page: %v TotalPages: %v TotalResults: %v\n", r.Options.Limit, currentPage, nPages, cvesResp.TotalResults)
 	}
 
-	if options.ListId {
+	if r.Options.ListId {
 		for _, cve := range cvesResp.Cves {
 			fmt.Println(cve.CveID)
 		}
@@ -253,15 +289,15 @@ func process(options Options) *CVEBulkData {
 	}
 
 	// limit headers to 10, otherwise it will be too wide
-	if len(options.TableHeaders) > 10 {
-		options.TableHeaders = options.TableHeaders[:10]
+	if len(r.Options.TableHeaders) > 10 {
+		r.Options.TableHeaders = r.Options.TableHeaders[:10]
 	}
 
-	headers, rows := generateTableData(cvesResp.Cves, options.TableHeaders)
+	headers, rows := generateTableData(cvesResp.Cves, r.Options.TableHeaders)
 
 	renderTable(headers, rows)
 
-	if options.EnablePageKeys {
+	if r.Options.EnablePageKeys {
 		pageString := ""
 		if currentPage > 1 {
 			pageString += " ◀     "
@@ -274,9 +310,8 @@ func process(options Options) *CVEBulkData {
 	return cvesResp
 }
 
-func processWithPageKeyEvents(options Options) {
-	cveResp := process(options)
-
+func (r *Runner) processWithPageKeyEvents() {
+	cveResp := r.process()
 	// wait for user input
 	err := keyboard.Open()
 	if err != nil {
@@ -300,16 +335,16 @@ func processWithPageKeyEvents(options Options) {
 
 			switch key {
 			case keyboard.KeyArrowRight:
-				if options.Offset+options.Limit < cveResp.TotalResults {
-					options.Offset += options.Limit
+				if r.Options.Offset+r.Options.Limit < cveResp.TotalResults {
+					r.Options.Offset += r.Options.Limit
 					clearScreen()
-					cveResp = process(options)
+					cveResp = r.process()
 				}
 			case keyboard.KeyArrowLeft:
-				if options.Offset-options.Limit >= 0 {
-					options.Offset -= options.Limit
+				if r.Options.Offset-r.Options.Limit >= 0 {
+					r.Options.Offset -= r.Options.Limit
 					clearScreen()
-					cveResp = process(options)
+					cveResp = r.process()
 				}
 			}
 		}
@@ -371,7 +406,7 @@ func renderTable(headers []string, rows [][]interface{}) {
 	t.Render()
 }
 
-func generateTableData(cves []CVEData, headers []string) ([]string, [][]interface{}) {
+func generateTableData(cves []types.CVEData, headers []string) ([]string, [][]interface{}) {
 	dataRows := make([][]interface{}, len(cves))
 	for r, cve := range cves {
 		dataRows[r] = getRow(headers, cve)
@@ -379,7 +414,7 @@ func generateTableData(cves []CVEData, headers []string) ([]string, [][]interfac
 	return headers, dataRows
 }
 
-func getRow(headers []string, cve CVEData) []interface{} {
+func getRow(headers []string, cve types.CVEData) []interface{} {
 	row := make([]interface{}, len(headers))
 	for i, header := range headers {
 		switch strings.ToLower(header) {
@@ -457,163 +492,7 @@ func getCellValueByLimit(cell interface{}) string {
 	return cellValue
 }
 
-func getCves(options Options) (*CVEBulkData, error) {
-	if len(options.CveIds) > 0 {
-		return getCvesByIds(options.CveIds)
-	}
-	if options.Search != "" {
-		query := constructQueryByOptions(options)
-		return getCvesBySearchString(query, options.Limit, options.Offset)
-	}
-	return getCvesByFilters(constructQueryParams(options))
-}
-
-func getCvesByFilters(encodedParams string) (*CVEBulkData, error) {
-	url := fmt.Sprintf("%s/cves?%s", baseUrl, encodedParams)
-	// Send an HTTP GET request
-	response, err := makeGetRequest(url)
-	if err != nil {
-		return nil, err
-	}
-	defer response.Body.Close()
-	// Check the response status code
-	if response.StatusCode != http.StatusOK {
-		return nil, errorutil.New("unexpected status code: %d", response.StatusCode)
-	}
-	// Create a variable to store the response data
-	var cvesInBulk CVEBulkData
-	// Decode the JSON response into an array of CVEData structs
-	err = json.NewDecoder(response.Body).Decode(&cvesInBulk)
-	if err != nil {
-		return nil, err
-	}
-	return &cvesInBulk, nil
-}
-
-func getCvesByIds(cveIds []string) (*CVEBulkData, error) {
-	url := fmt.Sprintf("%s/cves", baseUrl)
-	// send only 100 cve ids max
-	if len(cveIds) > 100 {
-		cveIds = cveIds[:100]
-	}
-	var cveIdList CVEIdList
-	cveIdList.Cves = append(cveIdList.Cves, cveIds...)
-	reqData, err := json.Marshal(cveIdList)
-	if err != nil {
-		return nil, err
-	}
-	// Send an HTTP POST request
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqData))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set(xPDCPKeyHeader, pdcpApiKey)
-
-	response, err := doRequest(req)
-	if err != nil {
-		return nil, err
-	}
-	defer response.Body.Close()
-	// Check the response status code
-	if response.StatusCode != http.StatusOK {
-		return nil, errorutil.New("unexpected status code: %d", response.StatusCode)
-	}
-	var cvesInBulk CVEBulkData
-	// Decode the JSON response into an array of CVEData structs
-	err = json.NewDecoder(response.Body).Decode(&cvesInBulk)
-	if err != nil {
-		return nil, err
-	}
-	return &cvesInBulk, nil
-}
-
-func getCvesBySearchString(query string, limit, offset int) (*CVEBulkData, error) {
-	u, err := url.Parse(fmt.Sprintf("%s/cves/search", baseUrl))
-	if err != nil {
-		return nil, err
-	}
-	// Construct query parameters
-	q := u.Query()
-	q.Set("q", query)
-	q.Set("limit", fmt.Sprintf("%v", limit))
-	q.Set("offset", fmt.Sprintf("%v", offset))
-	u.RawQuery = q.Encode()
-	response, err := makeGetRequest(u.String())
-	if err != nil {
-		return nil, err
-	}
-	defer response.Body.Close()
-	// Check the response status code
-	if response.StatusCode != http.StatusOK {
-		return nil, errorutil.New("unexpected status code: %d", response.StatusCode)
-	}
-	// Create a variable to store the response data
-	var cvesInBulk CVEBulkData
-	// Decode the JSON response into an array of CVEData structs
-	err = json.NewDecoder(response.Body).Decode(&cvesInBulk)
-	if err != nil {
-		return nil, err
-	}
-	return &cvesInBulk, nil
-}
-
-// all the root level fields are supported
-// func getCvesForSpecificFields(fields []string, encodedParams string, limit, offset int) (*CVEBulkData, error) {
-// 	url := fmt.Sprintf("%s/cves?fields=%s&%s&limit=%v&offset=%v", baseUrl, strings.Join(fields, ","), encodedParams, limit, offset)
-// 	// Send an HTTP GET request
-// 	response, err := makeGetRequest(url)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer response.Body.Close()
-// 	// Check the response status code
-// 	if response.StatusCode != http.StatusOK {
-// 		return nil, errorutil.New("unexpected status code: %d", response.StatusCode)
-// 	}
-// 	// Create a variable to store the response data
-// 	var cvesInBulk CVEBulkData
-// 	// Decode the JSON response into an array of CVEData structs
-// 	err = json.NewDecoder(response.Body).Decode(&cvesInBulk)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return &cvesInBulk, nil
-// }
-
-var UNAUTHORIZEDERR = errorutil.New(`unexpected status code: 401 (get your free api key from https://cloud.projectdiscovery.io)`)
-
-func makeGetRequest(url string) (*http.Response, error) {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		gologger.Fatal().Msgf("Error creating request: %s\n", err)
-	}
-	req.Header.Set(xPDCPKeyHeader, pdcpApiKey)
-	return doRequest(req)
-}
-
-func doRequest(req *http.Request) (*http.Response, error) {
-	if os.Getenv("DEBUG") == "true" {
-		// dump request
-		dump, err := httputil.DumpRequest(req, true)
-		if err != nil {
-			gologger.Fatal().Msgf("Error dumping request: %s\n", err)
-		}
-		gologger.Print().Msgf("%s\n", string(dump))
-	}
-	resp, err := httpCleint.Do(req)
-	if err == nil && resp.StatusCode == http.StatusUnauthorized {
-		var errResp ErrorMessage
-		_ = json.NewDecoder(resp.Body).Decode(&errResp)
-		if os.Getenv("DEBUG") == "true" {
-			gologger.Error().Msgf("unauthorized: %s\n", errResp.Message)
-		}
-		return nil, UNAUTHORIZEDERR
-	}
-	return resp, err
-}
-
-func outputJson(cve []CVEData) {
+func outputJson(cve []types.CVEData) {
 	json, err := json.MarshalIndent(cve, "", "  ")
 	if err != nil {
 		gologger.Error().Msgf("Error marshalling json: %s\n", err)
@@ -688,9 +567,6 @@ func constructQueryParams(opts Options) string {
 		}
 	}
 	if len(opts.CweIds) > 0 {
-		for i, cweId := range opts.CweIds {
-			opts.CweIds[i] = strings.ToUpper(cweId)
-		}
 		addQueryParams(queryParams, "weaknesses.$.cwe_id", opts.CweIds)
 	}
 	if len(opts.Cpe) > 0 {
@@ -795,9 +671,6 @@ func constructQueryByOptions(opts Options) string {
 		query = fmt.Sprintf(`%s cpe.cpe:"%s"`, query, opts.Cpe)
 	}
 	if len(opts.CweIds) > 0 {
-		for i, cweId := range opts.CweIds {
-			opts.CweIds[i] = strings.ToUpper(cweId)
-		}
 		query = fmt.Sprintf("%s %s:%s", query, "weaknesses.$.cwe_id", strings.Join(opts.CweIds, ","))
 	}
 	if len(opts.Age) > 0 {
@@ -845,9 +718,6 @@ func constructQueryByOptions(opts Options) string {
 	parts = sliceutil.PruneEmptyStrings(parts)
 	parts = sliceutil.Dedupe(parts)
 	query = strings.Join(parts, " ")
-	if os.Getenv("DEBUG") == "true" {
-		gologger.Print().Msgf("constructed query: %s\n", query)
-	}
 	return query
 }
 

@@ -8,15 +8,15 @@ import (
 
 	"github.com/logrusorgru/aurora"
 	"github.com/pkg/errors"
-	"github.com/projectdiscovery/cvemap/runner/testutils"
+	"github.com/projectdiscovery/cvemap/pkg/testutils"
 )
 
 var (
-	xPDCPHeaderTestKey = "test-67291d9a-0aa6-49b1-b249-2b9d4b45bcea"
-	debug                 = os.Getenv("DEBUG") == "true"
-	success               = aurora.Green("[✓]").String()
-	failed                = aurora.Red("[✘]").String()
-	currentCvemapBinary   = flag.String("current", "", "Current Branch Cvemap Binary")
+	xPDCPHeaderTestKey  = "test-67291d9a-0aa6-49b1-b249-2b9d4b45bcea"
+	debug               = os.Getenv("DEBUG") == "true"
+	success             = aurora.Green("[✓]").String()
+	failed              = aurora.Red("[✘]").String()
+	currentCvemapBinary = flag.String("current", "", "Current Branch Cvemap Binary")
 )
 
 func main() {
