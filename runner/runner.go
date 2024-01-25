@@ -269,7 +269,7 @@ func process(options Options) *CVEBulkData {
 		if currentPage < nPages {
 			pageString += "     ▶"
 		}
-		fmt.Print(pageString)
+		gologger.Print().Msgf("%s", pageString)
 	}
 	return cvesResp
 }
@@ -599,7 +599,7 @@ func doRequest(req *http.Request) (*http.Response, error) {
 		if err != nil {
 			gologger.Fatal().Msgf("Error dumping request: %s\n", err)
 		}
-		fmt.Println(string(dump))
+		gologger.Print().Msgf("%s\n", string(dump))
 	}
 	resp, err := httpCleint.Do(req)
 	if err == nil && resp.StatusCode == http.StatusUnauthorized {
@@ -619,7 +619,7 @@ func outputJson(cve []CVEData) {
 		gologger.Error().Msgf("Error marshalling json: %s\n", err)
 		return
 	}
-	fmt.Println(string(json))
+	gologger.Print().Msgf("%s\n", string(json))
 }
 
 func constructQueryParams(opts Options) string {
@@ -846,7 +846,7 @@ func constructQueryByOptions(opts Options) string {
 	parts = sliceutil.Dedupe(parts)
 	query = strings.Join(parts, " ")
 	if os.Getenv("DEBUG") == "true" {
-		fmt.Println("constructed query: ", query)
+		gologger.Print().Msgf("constructed query: %s\n", query)
 	}
 	return query
 }

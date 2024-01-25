@@ -24,7 +24,7 @@ func getLatestVersionCVSSScore(cvss CvssMetrics) float64 {
 
 func isDefaultRun(opts Options) bool {
 	options := len(opts.CveIds) == 0 && len(opts.CweIds) == 0 && len(opts.Vendor) == 0 && len(opts.Product) == 0 && len(opts.Severity) == 0 && len(opts.CvssScore) == 0 && len(opts.EpssPercentile) == 0 && len(opts.Assignees) == 0 && len(opts.Reference) == 0 && opts.EpssScore == "" && opts.Cpe == "" && opts.VulnStatus == "" && opts.Age == ""
-	filters := opts.Kev == "" && opts.Hackerone == "" && opts.HasNucleiTemplate == "" && opts.HasPoc == "" && opts.RemotlyExploitable == ""
+	filters := opts.Kev == "" && opts.Hackerone == "" && opts.HasNucleiTemplate == "" && opts.HasPoc == "" && opts.RemotlyExploitable == "" && opts.Search == ""
 	return options && filters && !fileutil.HasStdin()
 }
 
