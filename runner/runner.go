@@ -111,7 +111,7 @@ func ParseOptions() *Options {
 	flagset.CreateGroup("OPTIONS", "options",
 		// currently only one cve id is supported
 		flagset.StringSliceVar(&options.CveIds, "id", nil, "cve to list for given id", goflags.FileCommaSeparatedStringSliceOptions),
-		// flagset.StringSliceVarP(&options.cweIds, "cwe-id", "cwe", nil, "cve to list for given cwe id", goflags.CommaSeparatedStringSliceOptions),
+		flagset.StringSliceVarP(&options.CweIds, "cwe-id", "cwe", nil, "cve to list for given cwe id", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringSliceVarP(&options.Vendor, "vendor", "v", nil, "cve to list for given vendor", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringSliceVarP(&options.Product, "product", "p", nil, "cve to list for given product", goflags.CommaSeparatedStringSliceOptions),
 		flagset.StringSliceVar(&options.Eproduct, "eproduct", nil, "cves to exclude based on products", goflags.CommaSeparatedStringSliceOptions),
@@ -688,7 +688,10 @@ func constructQueryParams(opts Options) string {
 		}
 	}
 	if len(opts.CweIds) > 0 {
-		addQueryParams(queryParams, "cwe_id", opts.CweIds)
+		for i, cweId := range opts.CweIds {
+			opts.CweIds[i] = strings.ToUpper(cweId)
+		}
+		addQueryParams(queryParams, "weaknesses.$.cwe_id", opts.CweIds)
 	}
 	if len(opts.Cpe) > 0 {
 		queryParams.Add("cpe.cpe", opts.Cpe)
@@ -792,7 +795,10 @@ func constructQueryByOptions(opts Options) string {
 		query = fmt.Sprintf(`%s cpe.cpe:"%s"`, query, opts.Cpe)
 	}
 	if len(opts.CweIds) > 0 {
-		query = fmt.Sprintf("%s cwe_id:%s", query, strings.Join(opts.CweIds, ","))
+		for i, cweId := range opts.CweIds {
+			opts.CweIds[i] = strings.ToUpper(cweId)
+		}
+		query = fmt.Sprintf("%s %s:%s", query, "weaknesses.$.cwe_id", strings.Join(opts.CweIds, ","))
 	}
 	if len(opts.Age) > 0 {
 		ageKey := "age_in_days"
