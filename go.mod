@@ -9,8 +9,8 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/projectdiscovery/goflags v0.1.37
 	github.com/projectdiscovery/gologger v1.1.12
-	github.com/projectdiscovery/retryablehttp-go v1.0.45
-	github.com/projectdiscovery/utils v0.0.76
+	github.com/projectdiscovery/retryablehttp-go v1.0.44
+	github.com/projectdiscovery/utils v0.0.75
 )
 
 require (
@@ -37,6 +37,7 @@ require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5 // indirect
 	github.com/fatih/color v1.16.0 // indirect
+	github.com/gaukas/godicttls v0.0.4 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
@@ -63,13 +64,13 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/projectdiscovery/blackrock v0.0.1 // indirect
-	github.com/projectdiscovery/fastdialer v0.0.57 // indirect
-	github.com/projectdiscovery/hmap v0.0.36 // indirect
+	github.com/projectdiscovery/fastdialer v0.0.55 // indirect
+	github.com/projectdiscovery/hmap v0.0.35 // indirect
 	github.com/projectdiscovery/networkpolicy v0.0.7 // indirect
-	github.com/projectdiscovery/retryabledns v1.0.53 // indirect
-	github.com/quic-go/quic-go v0.41.0 // indirect
-	github.com/refraction-networking/utls v1.6.2 // indirect
-	github.com/rivo/uniseg v0.4.6 // indirect
+	github.com/projectdiscovery/retryabledns v1.0.52 // indirect
+	github.com/quic-go/quic-go v0.37.7 // indirect
+	github.com/refraction-networking/utls v1.5.4 // indirect
+	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/tidwall/btree v1.7.0 // indirect
