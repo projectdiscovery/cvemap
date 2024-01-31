@@ -18,29 +18,24 @@ import (
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/gologger/levels"
 	"github.com/projectdiscovery/utils/auth/pdcp"
+	"github.com/projectdiscovery/utils/env"
 	fileutil "github.com/projectdiscovery/utils/file"
 	sliceutil "github.com/projectdiscovery/utils/slice"
 	updateutils "github.com/projectdiscovery/utils/update"
 )
 
 var (
-	BaseUrl                  = "https://cve.projectdiscovery.io/api/v1"
+	BaseUrl                  = env.GetEnvOrDefault("CVEMAP_API_URL", "https://cve.projectdiscovery.io/api/v1")
 	PDCPApiKey               = ""
-	DEFAULT_FEILD_CHAR_LIMIT = 20
+	DEFAULT_FEILD_CHAR_LIMIT = env.GetEnvOrDefault("DEFAULT_FEILD_CHAR_LIMIT", 20)
 )
 
 func init() {
-	if os.Getenv("CVEMAP_API_URL") != "" {
-		BaseUrl = os.Getenv("CVEMAP_API_URL")
-	}
 	pch := pdcp.PDCPCredHandler{}
 	if os.Getenv("PDCP_API_KEY") != "" {
 		PDCPApiKey = os.Getenv("PDCP_API_KEY")
 	} else if creds, err := pch.GetCreds(); err == nil {
 		PDCPApiKey = creds.APIKey
-	}
-	if os.Getenv("DEFAULT_FEILD_CHAR_LIMIT") != "" {
-		DEFAULT_FEILD_CHAR_LIMIT, _ = strconv.Atoi(os.Getenv("DEFAULT_FEILD_CHAR_LIMIT"))
 	}
 }
 
@@ -156,10 +151,7 @@ func ParseOptions() *Options {
 	if err := flagset.Parse(); err != nil {
 		gologger.Fatal().Msgf("Error parsing flags: %s\n", err)
 	}
-
-	if os.Getenv("DEBUG") == "true" {
-		options.Debug = true
-	}
+	options.Debug = env.GetEnvOrDefault("DEBUG", false)
 
 	if options.Limit > maxLimit {
 		options.Limit = maxLimit
@@ -231,7 +223,7 @@ func (r *Runner) Run() {
 	}
 
 	// on default, enable kev
-	if isDefaultRun(*r.Options) {
+	if isDefaultRun(r.Options) {
 		r.Options.Kev = "true"
 	}
 
@@ -255,7 +247,7 @@ func (r *Runner) GetCves() (*types.CVEBulkData, error) {
 		}
 		return r.CvemapService.GetCvesBySearchString(query, r.Options.Limit, r.Options.Offset)
 	}
-	return r.CvemapService.GetCvesByFilters(constructQueryParams(*r.Options))
+	return r.CvemapService.GetCvesByFilters(constructQueryParams(r.Options))
 }
 
 func (r *Runner) process() *types.CVEBulkData {
@@ -501,7 +493,7 @@ func outputJson(cve []types.CVEData) {
 	gologger.Print().Msgf("%s\n", string(json))
 }
 
-func constructQueryParams(opts Options) string {
+func constructQueryParams(opts *Options) string {
 	queryParams := &url.Values{}
 	if len(opts.Severity) > 0 {
 		addQueryParams(queryParams, "severity", opts.Severity)

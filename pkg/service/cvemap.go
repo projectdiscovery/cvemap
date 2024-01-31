@@ -5,20 +5,27 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"strings"
 
 	"github.com/projectdiscovery/cvemap/pkg/types"
 	"github.com/projectdiscovery/gologger"
+	"github.com/projectdiscovery/retryablehttp-go"
 	errorutil "github.com/projectdiscovery/utils/errors"
 )
 
 const xPDCPHeaderKey = "X-PDCP-Key"
 
 var (
-	httpCleint = &http.Client{}
+	client          *retryablehttp.Client
+	ErrUnAuthorized = errorutil.New(`unauthorized: 401 (get your free api key from https://cloud.projectdiscovery.io)`)
 )
+
+func init() {
+	opts := retryablehttp.DefaultOptionsSingle
+	opts.NoAdjustTimeout = true
+	client = retryablehttp.NewClient(opts)
+}
 
 type Cvemap struct {
 	BaseUrl    string
@@ -46,7 +53,7 @@ func (c *Cvemap) GetCvesByIds(cveIds []string) (*types.CVEBulkData, error) {
 		return nil, err
 	}
 	// Send an HTTP POST request
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqData))
+	req, err := retryablehttp.NewRequest("POST", url, bytes.NewBuffer(reqData))
 	if err != nil {
 		return nil, err
 	}
@@ -146,10 +153,8 @@ func (c *Cvemap) GetCvesForSpecificFields(fields []string, encodedParams string,
 	return &cvesInBulk, nil
 }
 
-var UNAUTHORIZEDERR = errorutil.New(`unauthorized: 401 (get your free api key from https://cloud.projectdiscovery.io)`)
-
 func (c *Cvemap) makeGetRequest(url string) (*http.Response, error) {
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := retryablehttp.NewRequest("GET", url, nil)
 	if err != nil {
 		gologger.Fatal().Msgf("Error creating request: %s\n", err)
 	}
@@ -157,20 +162,20 @@ func (c *Cvemap) makeGetRequest(url string) (*http.Response, error) {
 	return c.doRequest(req)
 }
 
-func (c *Cvemap) doRequest(req *http.Request) (*http.Response, error) {
+func (c *Cvemap) doRequest(req *retryablehttp.Request) (*http.Response, error) {
 	if c.Debug {
 		// dump request
-		dump, err := httputil.DumpRequest(req, true)
+		dump, err := req.Dump()
 		if err != nil {
 			gologger.Fatal().Msgf("Error dumping request: %s\n", err)
 		}
 		gologger.Print().Msgf("%s\n", string(dump))
 	}
-	resp, err := httpCleint.Do(req)
+	resp, err := client.Do(req)
 
 	if err == nil && resp.StatusCode != http.StatusOK {
 		if resp.StatusCode == http.StatusUnauthorized {
-			return nil, UNAUTHORIZEDERR
+			return nil, ErrUnAuthorized
 		}
 		if c.Debug {
 			var errResp types.ErrorMessage
