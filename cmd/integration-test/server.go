@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/projectdiscovery/cvemap/runner"
+	"github.com/projectdiscovery/cvemap/pkg/types"
 )
 
-var cveData *runner.CVEBulkData
+var cveData *types.CVEBulkData
 
 func SetupMockServer() {
 	var err error
@@ -63,14 +63,14 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 // LoadData loads data from a JSON file into a slice of CVEData.
-func loadData(filename string) (*runner.CVEBulkData, error) {
+func loadData(filename string) (*types.CVEBulkData, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
-	var data runner.CVEBulkData
+	var data types.CVEBulkData
 	decoder := json.NewDecoder(file)
 	if err := decoder.Decode(&data); err != nil {
 		return nil, err
