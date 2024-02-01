@@ -490,7 +490,7 @@ func outputJson(cve []types.CVEData) {
 		gologger.Error().Msgf("Error marshalling json: %s\n", err)
 		return
 	}
-	gologger.Print().Msgf("%s\n", string(json))
+	gologger.Silent().Msgf("%s\n", string(json))
 }
 
 func constructQueryParams(opts *Options) string {
