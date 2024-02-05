@@ -64,8 +64,8 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/projectdiscovery/blackrock v0.0.1 // indirect
-	github.com/projectdiscovery/fastdialer v0.0.55 // indirect
-	github.com/projectdiscovery/hmap v0.0.35 // indirect
+	github.com/projectdiscovery/fastdialer v0.0.57 // indirect
+	github.com/projectdiscovery/hmap v0.0.36 // indirect
 	github.com/projectdiscovery/networkpolicy v0.0.7 // indirect
 	github.com/projectdiscovery/retryabledns v1.0.54 // indirect
 	github.com/quic-go/quic-go v0.37.7 // indirect
