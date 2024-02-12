@@ -165,6 +165,13 @@ func ParseOptions() *Options {
 		AuthWithPDCP()
 	} else if len(options.PdcpAuth) == 36 {
 		PDCPApiKey = options.PdcpAuth
+		ph := pdcp.PDCPCredHandler{}
+		if _, err := ph.GetCreds(); err == pdcp.ErrNoCreds {
+			apiServer := env.GetEnvOrDefault("PDCP_API_SERVER", pdcp.DefaultApiServer)
+			if validatedCreds, err := ph.ValidateAPIKey(PDCPApiKey, apiServer, "cvemap"); err == nil {
+				_ = ph.SaveCreds(validatedCreds)
+			}
+		}
 	}
 
 	if options.Limit > maxLimit {
