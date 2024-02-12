@@ -3,7 +3,7 @@ package runner
 import "github.com/projectdiscovery/goflags"
 
 type Options struct {
-	PdcpAuth  bool
+	PdcpAuth  string
 	CveIds    goflags.StringSlice
 	CweIds    goflags.StringSlice
 	Vendor    goflags.StringSlice
