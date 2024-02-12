@@ -95,7 +95,7 @@ func ParseOptions() *Options {
 	flagset.SetDescription(`Navigate the CVE jungle with ease.`)
 
 	flagset.CreateGroup("config", "Config",
-		flagset.BoolVar(&options.PdcpAuth, "auth", false, "configure projectdiscovery cloud (pdcp) api key"),
+		flagset.DynamicVar(&options.PdcpAuth, "auth", "true", "configure projectdiscovery cloud (pdcp) api key"),
 	)
 
 	flagset.CreateGroup("OPTIONS", "options",
@@ -152,6 +152,20 @@ func ParseOptions() *Options {
 		gologger.Fatal().Msgf("Error parsing flags: %s\n", err)
 	}
 	options.Debug = env.GetEnvOrDefault("DEBUG", false)
+	if !options.Debug {
+		options.Debug = env.GetEnvOrDefault("DEBUG", false)
+	}
+	if options.Version {
+		gologger.Info().Msgf("Current Version: %s\n", Version)
+		os.Exit(0)
+	}
+
+	// api key hierarchy: cli flag > env var > .pdcp/credential file
+	if options.PdcpAuth == "true" {
+		AuthWithPDCP()
+	} else if len(options.PdcpAuth) == 36 {
+		PDCPApiKey = options.PdcpAuth
+	}
 
 	if options.Limit > maxLimit {
 		options.Limit = maxLimit
@@ -193,15 +207,6 @@ func New(options *Options) *Runner {
 }
 
 func (r *Runner) Run() {
-	if r.Options.Version {
-		gologger.Info().Msgf("Current Version: %s\n", Version)
-		os.Exit(0)
-	}
-
-	if r.Options.PdcpAuth {
-		AuthWithPDCP()
-	}
-
 	if r.Options.Silent {
 		gologger.DefaultLogger.SetMaxLevel(levels.LevelSilent)
 	} else if r.Options.Verbose {
