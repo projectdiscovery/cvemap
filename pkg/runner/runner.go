@@ -234,6 +234,10 @@ func (r *Runner) Run() {
 		}
 	}
 
+	if r.Options.CveIds[0] == "" {
+		r.Options.CveIds = []string{} 
+	}
+
 	// on default, enable kev
 	if isDefaultRun(r.Options) {
 		r.Options.Kev = "true"
