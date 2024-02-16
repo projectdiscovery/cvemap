@@ -234,7 +234,7 @@ func (r *Runner) Run() {
 		}
 	}
 
-	if r.Options.CveIds[0] == "" {
+	if len(r.Options.CveIds) > 0 && r.Options.CveIds[0] == "" {
 		r.Options.CveIds = []string{} 
 	}
 
