@@ -184,7 +184,10 @@ func ParseOptions() *Options {
 		if err != nil {
 			gologger.Fatal().Msgf("couldn't read stdin: %s\n", err)
 		}
-		options.CveIds = append(options.CveIds, strings.Split(strings.TrimSpace(string(bin)), "\n")...)
+		stdinStr := strings.TrimSpace(string(bin))
+		if stdinStr != "" {
+			options.CveIds = append(options.CveIds, strings.Split(stdinStr, "\n")...)
+		}
 	}
 
 	// convert cve-ids and cwe-ids to uppercase
