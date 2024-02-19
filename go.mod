@@ -65,7 +65,7 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/projectdiscovery/blackrock v0.0.1 // indirect
 	github.com/projectdiscovery/fastdialer v0.0.58 // indirect
-	github.com/projectdiscovery/hmap v0.0.38 // indirect
+	github.com/projectdiscovery/hmap v0.0.39 // indirect
 	github.com/projectdiscovery/networkpolicy v0.0.7 // indirect
 	github.com/projectdiscovery/retryabledns v1.0.55 // indirect
 	github.com/quic-go/quic-go v0.37.7 // indirect
