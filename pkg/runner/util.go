@@ -1,13 +1,47 @@
 package runner
 
 import (
+	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 
 	"github.com/projectdiscovery/cvemap/pkg/types"
 	fileutil "github.com/projectdiscovery/utils/file"
 )
+
+func DoHealthCheck(opts Options) string {
+	var test strings.Builder
+	test.WriteString(fmt.Sprintf("Version: %s\n", Version))
+	test.WriteString(fmt.Sprintf("Operating System: %s\n", runtime.GOOS))
+	test.WriteString(fmt.Sprintf("Architecture: %s\n", runtime.GOARCH))
+	test.WriteString(fmt.Sprintf("Go Version: %s\n", runtime.Version()))
+	test.WriteString(fmt.Sprintf("Compiler: %s\n", runtime.Compiler))
+
+	var testResult string
+	c4, err := net.Dial("tcp4", "cve.projectdiscovery.io:443")
+	if err == nil && c4 != nil {
+		c4.Close()
+	}
+	testResult = "Ok"
+	if err != nil {
+		testResult = fmt.Sprintf("Ko (%s)", err)
+	}
+	test.WriteString(fmt.Sprintf("IPv4 connectivity to cve.projectdiscovery.io:443 => %s\n", testResult))
+
+	u4, err := net.Dial("udp4", "cve.projectdiscovery.io:53")
+	if err == nil && u4 != nil {
+		u4.Close()
+	}
+	testResult = "Ok"
+	if err != nil {
+		testResult = fmt.Sprintf("Ko (%s)", err)
+	}
+	test.WriteString(fmt.Sprintf("IPv4 UDP connectivity to cve.projectdiscovery.io:53 => %s\n", testResult))
+	return test.String()
+}
 
 func getLatestVersionCVSSScore(cvss types.CvssMetrics) float64 {
 	var highestScore float64
