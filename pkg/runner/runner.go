@@ -364,7 +364,7 @@ func parseHeaders(options *Options) {
 	headers := make([]string, 0)
 
 	if options.Hackerone == "true" {
-		defaultHeaders = []string{"ID", "CVSS", "Severity", "Rank", "Reports", "Product", "Age", "Template"}
+		defaultHeaders = []string{"ID", "CVSS", "Severity", "EPSS", "Rank", "Reports", "Age", "Product", "Template"}
 	}
 
 	options.IncludeColumns = getValidHeaders(options.IncludeColumns)
