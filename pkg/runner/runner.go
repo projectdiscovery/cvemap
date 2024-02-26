@@ -146,6 +146,7 @@ func ParseOptions() *Options {
 		flagset.BoolVar(&options.Silent, "silent", false, "Silent"),
 		flagset.BoolVar(&options.Verbose, "verbose", false, "Verbose"),
 		flagset.BoolVar(&options.Debug, "debug", false, "Debug"),
+		flagset.BoolVarP(&options.HealthCheck, "health-check", "hc", false, "run diagnostic check up"),
 	)
 
 	if err := flagset.Parse(); err != nil {
@@ -156,6 +157,12 @@ func ParseOptions() *Options {
 	}
 	if options.Version {
 		gologger.Info().Msgf("Current Version: %s\n", Version)
+		os.Exit(0)
+	}
+
+	if options.HealthCheck {
+		showBanner()
+		gologger.Print().Msgf("%s\n", DoHealthCheck(options))
 		os.Exit(0)
 	}
 

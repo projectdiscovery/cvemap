@@ -41,4 +41,5 @@ type Options struct {
 	Silent             bool
 	Verbose            bool
 	Debug              bool
+	HealthCheck        bool
 }
