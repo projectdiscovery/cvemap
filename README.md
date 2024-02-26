@@ -54,10 +54,11 @@ Usage:
 
 Flags:
 CONFIG:
-   -auth  configure projectdiscovery cloud (pdcp) api key
+   -auth  configure projectdiscovery cloud (pdcp) api key (default true)
 
 OPTIONS:
    -id string[]                    cve to list for given id
+   -cwe, -cwe-id string[]          cve to list for given cwe id
    -v, -vendor string[]            cve to list for given vendor
    -p, -product string[]           cve to list for given product
    -eproduct string[]              cves to exclude based on products
@@ -68,7 +69,7 @@ OPTIONS:
    -ep, -epss-percentile string[]  cve to list for given epss percentile
    -age string                     cve to list published by given age in days
    -a, -assignee string[]          cve to list for given publisher assignee
-   -vs, -vstatus value             cve to list for given vulnerability status in cli output. supported: unknown, new, confirmed, unconfirmed, modified, rejected
+   -vs, -vstatus value             cve to list for given vulnerability status in cli output. supported: new, confirmed, unconfirmed, modified, rejected, unknown
 
 UPDATE:
    -up, -update                 update cvemap to latest version
@@ -80,10 +81,11 @@ FILTER:
    -t, -template       display cves that has public nuclei templates (default true)
    -poc                display cves that has public published poc (default true)
    -h1, -hackerone     display cves reported on hackerone (default true)
+   -re, -remote        display remotely exploitable cves (AV:N & PR:N | PR:L) (default true)
 
 OUTPUT:
-   -f, -field value         fields to display in cli output. supported: age, kev, template, poc, cwe, epss, assignee, product, vendor, vstatus
-   -fe, -exclude value      fields to exclude from cli output. supported: age, kev, template, poc, cwe, epss, assignee, product, vendor, vstatus
+   -f, -field value         fields to display in cli output. supported: product, vendor, assignee, age, poc, cwe, epss, vstatus, kev, template
+   -fe, -exclude value      fields to exclude from cli output. supported: product, vendor, assignee, age, poc, cwe, epss, vstatus, kev, template
    -lsi, -list-id           list only the cve ids in the output
    -l, -limit int           limit the number of results to display (default 50)
    -offset int              offset the results to display
@@ -91,9 +93,11 @@ OUTPUT:
    -epk, -enable-page-keys  enable page keys to navigate results
 
 DEBUG:
-   -version  Version
-   -silent   Silent
-   -verbose  Verbose
+   -version            Version
+   -silent             Silent
+   -verbose            Verbose
+   -debug              Debug
+   -hc, -health-check  run diagnostic check up
 ```
 
 ## Configuring CVEMap CLI
