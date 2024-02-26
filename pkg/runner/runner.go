@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -22,6 +21,7 @@ import (
 	fileutil "github.com/projectdiscovery/utils/file"
 	sliceutil "github.com/projectdiscovery/utils/slice"
 	updateutils "github.com/projectdiscovery/utils/update"
+	urlutil "github.com/projectdiscovery/utils/url"
 )
 
 var (
@@ -151,7 +151,6 @@ func ParseOptions() *Options {
 	if err := flagset.Parse(); err != nil {
 		gologger.Fatal().Msgf("Error parsing flags: %s\n", err)
 	}
-	options.Debug = env.GetEnvOrDefault("DEBUG", false)
 	if !options.Debug {
 		options.Debug = env.GetEnvOrDefault("DEBUG", false)
 	}
@@ -509,7 +508,7 @@ func outputJson(cve []types.CVEData) {
 }
 
 func constructQueryParams(opts *Options) string {
-	queryParams := &url.Values{}
+	queryParams := urlutil.NewOrderedParams()
 	if len(opts.Severity) > 0 {
 		addQueryParams(queryParams, "severity", opts.Severity)
 	}
@@ -603,22 +602,39 @@ func constructQueryParams(opts *Options) string {
 	} else if opts.HasPoc == "false" {
 		queryParams.Add("is_poc", "false")
 	}
-	if opts.Hackerone == "true" {
-		queryParams.Add("hackerone.rank_gte", "1")
-		queryParams.Add("sort_asc", "hackerone.rank")
-	} else {
-		queryParams.Add("sort_desc", "cve_id")
-	}
 	if opts.RemotlyExploitable == "true" {
 		queryParams.Add("is_remote", "true")
 	}
+	subQuery := ""
+	if opts.Hackerone == "true" {
+		subQuery = "hackerone.rank_gte=1"
+		subQuery += "&sort_asc=hackerone.rank"
+	} else {
+		subQuery = "sort_desc=cve_id"
+	}
 	if opts.Limit > 0 {
-		queryParams.Add("limit", strconv.Itoa(opts.Limit))
+		if len(subQuery) > 0 {
+			subQuery += "&"
+		}
+		subQuery += fmt.Sprintf("limit=%d", opts.Limit)
 	}
 	if opts.Offset >= 0 {
-		queryParams.Add("offset", strconv.Itoa(opts.Offset))
+		if len(subQuery) > 0 {
+			subQuery += "&"
+		}
+		subQuery += fmt.Sprintf("offset=%d", opts.Offset)
 	}
-	return queryParams.Encode()
+	query := queryParams.Encode()
+	if len(opts.CweIds) == 1 {
+		if len(query) > 0 && len(subQuery) > 0 {
+			query += "&"
+		}
+		return query + subQuery
+	}
+	if len(query) > 0 && len(subQuery) > 0 {
+		query = "&" + query
+	}
+	return subQuery + query
 }
 
 func constructQueryByOptions(opts Options) string {
@@ -728,7 +744,7 @@ func constructQueryByOptions(opts Options) string {
 	return query
 }
 
-func addQueryParams(queryParams *url.Values, key string, values []string) *url.Values {
+func addQueryParams(queryParams *urlutil.OrderedParams, key string, values []string) *urlutil.OrderedParams {
 	if len(values) > 0 {
 		for _, value := range values {
 			queryParams.Add(key, value)
