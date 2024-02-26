@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -22,6 +21,7 @@ import (
 	fileutil "github.com/projectdiscovery/utils/file"
 	sliceutil "github.com/projectdiscovery/utils/slice"
 	updateutils "github.com/projectdiscovery/utils/update"
+	urlutil "github.com/projectdiscovery/utils/url"
 )
 
 var (
@@ -505,7 +505,7 @@ func outputJson(cve []types.CVEData) {
 }
 
 func constructQueryParams(opts *Options) string {
-	queryParams := &url.Values{}
+	queryParams := urlutil.NewOrderedParams()
 	if len(opts.Severity) > 0 {
 		addQueryParams(queryParams, "severity", opts.Severity)
 	}
@@ -741,7 +741,7 @@ func constructQueryByOptions(opts Options) string {
 	return query
 }
 
-func addQueryParams(queryParams *url.Values, key string, values []string) *url.Values {
+func addQueryParams(queryParams *urlutil.OrderedParams, key string, values []string) *urlutil.OrderedParams {
 	if len(values) > 0 {
 		for _, value := range values {
 			queryParams.Add(key, value)
