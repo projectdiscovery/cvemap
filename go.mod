@@ -9,7 +9,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/projectdiscovery/goflags v0.1.41
 	github.com/projectdiscovery/gologger v1.1.12
-	github.com/projectdiscovery/retryablehttp-go v1.0.49
+	github.com/projectdiscovery/retryablehttp-go v1.0.50
 	github.com/projectdiscovery/utils v0.0.80
 )
 
@@ -67,7 +67,7 @@ require (
 	github.com/projectdiscovery/fastdialer v0.0.60 // indirect
 	github.com/projectdiscovery/hmap v0.0.40 // indirect
 	github.com/projectdiscovery/networkpolicy v0.0.7 // indirect
-	github.com/projectdiscovery/retryabledns v1.0.56 // indirect
+	github.com/projectdiscovery/retryabledns v1.0.57 // indirect
 	github.com/quic-go/quic-go v0.37.7 // indirect
 	github.com/refraction-networking/utls v1.5.4 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
