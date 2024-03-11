@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/projectdiscovery/cvemap/pkg/types"
 	"github.com/projectdiscovery/retryablehttp-go"
 	"github.com/projectdiscovery/utils/env"
 	errorutil "github.com/projectdiscovery/utils/errors"
@@ -23,7 +22,7 @@ const (
 	RouteCveDetails       = "/cve/:id" // :id is cve-id (required)
 	RouteQueryCves        = "/cves"
 	RouteTextSearch       = "/cves/search"
-	RouteCPESearch        = "/cves/:cpe" // :cpe is cpestring (optional)
+	RouteCPESearch        = "/cpes/:cpe" // :cpe is cpestring (optional)
 )
 
 const (
@@ -44,6 +43,16 @@ var (
 // It uses the CveMapBaseUrl to construct the url
 func GetCveMapURL(path string) string {
 	return strings.TrimSuffix(CveMapBaseUrl, "/") + path + "/" + strings.TrimPrefix(path, "/")
+}
+
+// PaginationOpts contains the options for pagination
+type PaginationOpts struct {
+	// Fields is the fields to return
+	Fields []string `json:"fields"`
+	// Limit is the number of results to return
+	Limit int `json:"limit"`
+	// Offset is the offset to start from
+	Offset int `json:"offset"`
 }
 
 // Client is a client for the cvemap api
@@ -83,7 +92,7 @@ func NewClient(opts *Options) (*Client, error) {
 // GetSupportedFilters returns the supported filters for the cvemap api
 func (c *Client) GetSupportedFilters() (map[string]interface{}, error) {
 	var result map[string]interface{}
-	resp, err := c.get(RouteSupportedFilters, nil)
+	resp, err := c.get(RouteSupportedFilters, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -94,8 +103,8 @@ func (c *Client) GetSupportedFilters() (map[string]interface{}, error) {
 }
 
 // GetCve returns the details of a particular cve
-func (c *Client) GetCve(cveId string) (*types.CVEData, error) {
-	resp, err := c.get(strings.Replace(RouteCveDetails, ":id", cveId, -1), nil)
+func (c *Client) GetCve(cveId string) (*CVEData, error) {
+	resp, err := c.get(strings.Replace(RouteCveDetails, ":id", cveId, -1), nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -104,20 +113,69 @@ func (c *Client) GetCve(cveId string) (*types.CVEData, error) {
 		defer resp.Body.Close()
 	}
 	dec := json.NewDecoder(resp.Body)
-	var cve types.CVEData
+	var cve CVEData
 	if err := dec.Decode(&cve); err != nil {
 		return nil, errorutil.NewWithErr(err).Msgf("invalid cve received")
 	}
 	return &cve, nil
 }
 
+type multiCVERequest struct {
+	CVEs []string `json:"cves"`
+}
+
+// GetCVEs returns the details of a multiple cves
+// limited to 100 cves per request
+func (c *Client) GetCVEs(cveIds []string, pagi *PaginationOpts) ([]CVEData, error) {
+	m := multiCVERequest{CVEs: cveIds}
+	resp, err := c.postJSON(RouteQueryCves, m, pagi)
+	if err != nil {
+		return nil, err
+	}
+	var cves []CVEData
+	if resp.Body == nil {
+		return nil, errorutil.New("empty response")
+	}
+	defer resp.Body.Close()
+	bin, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errorutil.NewWithErr(err).Msgf("failed to read response body")
+	}
+	if err := json.Unmarshal(bin, &cves); err != nil {
+		return nil, errorutil.NewWithErr(err).Msgf("invalid cves received")
+	}
+	return cves, nil
+}
+
+// GetCpeData returns [CPEResponse] for the given cpe search
+// it accepts [CPEOptions] as input and at least one of Cpe, Product or Vendor must be set
+func (c *Client) GetCpeData(opts *CPEOptions) (*CPEResponse, error) {
+	if opts.Cpe == "" && opts.Product == "" && opts.Vendor == "" {
+		return nil, errorutil.New("at least one of cpe, product or vendor must be set")
+	}
+	resp, err := c.get(strings.Replace(RouteCPESearch, ":cpe", opts.Cpe, -1), nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	if resp.Body == nil {
+		return nil, errorutil.New("empty response")
+	}
+	defer resp.Body.Close()
+	dec := json.NewDecoder(resp.Body)
+	var cpe CPEResponse
+	if err := dec.Decode(&cpe); err != nil {
+		return nil, errorutil.NewWithErr(err).Msgf("invalid cpe received")
+	}
+	return &cpe, nil
+}
+
 // SearchCVEsByText returns the cves with the given text search
-func (c *Client) SearchCVEsByText(query string, params *urlutil.OrderedParams) ([]types.CVEData, error) {
+func (c *Client) SearchCVEsByText(query string, params *urlutil.OrderedParams, pagi *PaginationOpts) ([]CVEData, error) {
 	if params == nil {
 		params = urlutil.NewOrderedParams()
 	}
 	params.Add("q", query)
-	resp, err := c.get(RouteTextSearch, params)
+	resp, err := c.get(RouteTextSearch, params, pagi)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +184,7 @@ func (c *Client) SearchCVEsByText(query string, params *urlutil.OrderedParams) (
 		defer resp.Body.Close()
 	}
 	dec := json.NewDecoder(resp.Body)
-	var cves []types.CVEData
+	var cves []CVEData
 	if err := dec.Decode(&cves); err != nil {
 		return nil, errorutil.NewWithErr(err).Msgf("invalid cve received")
 	}
@@ -134,11 +192,11 @@ func (c *Client) SearchCVEsByText(query string, params *urlutil.OrderedParams) (
 }
 
 // SearchCvesWithFilters returns the cves with the given filters
-func (c *Client) SearchCvesWithFilters(params *urlutil.OrderedParams) ([]types.CVEData, error) {
+func (c *Client) SearchCvesWithFilters(params *urlutil.OrderedParams, pagi *PaginationOpts) ([]CVEData, error) {
 	if params == nil {
 		params = urlutil.NewOrderedParams()
 	}
-	resp, err := c.get(RouteQueryCves, params)
+	resp, err := c.get(RouteQueryCves, params, pagi)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +205,7 @@ func (c *Client) SearchCvesWithFilters(params *urlutil.OrderedParams) ([]types.C
 		defer resp.Body.Close()
 	}
 	dec := json.NewDecoder(resp.Body)
-	var cves []types.CVEData
+	var cves []CVEData
 	if err := dec.Decode(&cves); err != nil {
 		return nil, errorutil.NewWithErr(err).Msgf("invalid cve received")
 	}
@@ -155,7 +213,7 @@ func (c *Client) SearchCvesWithFilters(params *urlutil.OrderedParams) ([]types.C
 }
 
 // getCveDetails returns the details of a cve
-func (c *Client) get(path string, params *urlutil.OrderedParams) (*http.Response, error) {
+func (c *Client) get(path string, params *urlutil.OrderedParams, pagi *PaginationOpts) (*http.Response, error) {
 	parsed, err := urlutil.ParseAbsoluteURL(GetCveMapURL(path), false)
 	if err != nil {
 		return nil, err
@@ -166,12 +224,53 @@ func (c *Client) get(path string, params *urlutil.OrderedParams) (*http.Response
 			return true
 		})
 	}
-	// add metadata params
-	parsed.Params.Merge(updateutils.GetpdtmParams(CvemapVersion))
+	if pagi != nil {
+		if pagi.Limit > 0 {
+			parsed.Params.Add("limit", fmt.Sprintf("%d", pagi.Limit))
+		}
+		if pagi.Offset > 0 {
+			parsed.Params.Add("offset", fmt.Sprintf("%d", pagi.Offset))
+		}
+		if len(pagi.Fields) > 0 {
+			parsed.Params.Add("fields", strings.Join(pagi.Fields, ","))
+		}
+	}
 	req, err := retryablehttp.NewRequest("GET", GetCveMapURL(path), nil)
 	if err != nil {
 		return nil, err
 	}
+	return c.do(req)
+}
+
+// postJSON sends a post request with the given body
+func (c *Client) postJSON(path string, body interface{}, pagi *PaginationOpts) (*http.Response, error) {
+	parsed, err := urlutil.ParseAbsoluteURL(GetCveMapURL(path), false)
+	if err != nil {
+		return nil, err
+	}
+	if pagi != nil {
+		if pagi.Limit > 0 {
+			parsed.Params.Add("limit", fmt.Sprintf("%d", pagi.Limit))
+		}
+		if pagi.Offset > 0 {
+			parsed.Params.Add("offset", fmt.Sprintf("%d", pagi.Offset))
+		}
+		if len(pagi.Fields) > 0 {
+			parsed.Params.Add("fields", strings.Join(pagi.Fields, ","))
+		}
+	}
+	req, err := retryablehttp.NewRequest("POST", GetCveMapURL(path), body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	return c.do(req)
+}
+
+// do sends an HTTP request and returns an HTTP response
+func (c *Client) do(req *retryablehttp.Request) (*http.Response, error) {
+	// add metadata params
+	req.URL.Params.Merge(updateutils.GetpdtmParams(CvemapVersion))
 	req.Header.Set(AuthHeader, c.opts.ApiKey)
 	resp, err := c.client.Do(req)
 	if err != nil {
@@ -181,7 +280,7 @@ func (c *Client) get(path string, params *urlutil.OrderedParams) (*http.Response
 		return nil, ErrUnAuthorized
 	}
 	if resp.StatusCode == http.StatusBadRequest {
-		return nil, ErrBadRequest.Msgf(path)
+		return nil, ErrBadRequest.Msgf(req.URL.String())
 	}
 	if resp.StatusCode != http.StatusOK {
 		var bin []byte

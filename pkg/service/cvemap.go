@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/projectdiscovery/cvemap/pkg/types"
+	"github.com/projectdiscovery/cvemap"
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/retryablehttp-go"
 	errorutil "github.com/projectdiscovery/utils/errors"
@@ -40,13 +40,13 @@ func NewCvemap(baseUrl string, pdcpApiKey string) *Cvemap {
 	}
 }
 
-func (c *Cvemap) GetCvesByIds(cveIds []string) (*types.CVEBulkData, error) {
+func (c *Cvemap) GetCvesByIds(cveIds []string) (*cvemap.CVEBulkData, error) {
 	url := fmt.Sprintf("%s/cves", c.BaseUrl)
 	// send only 100 cve ids max
 	if len(cveIds) > 100 {
 		cveIds = cveIds[:100]
 	}
-	var cveIdList types.CVEIdList
+	var cveIdList cvemap.CVEIdList
 	cveIdList.Cves = append(cveIdList.Cves, cveIds...)
 	reqData, err := json.Marshal(cveIdList)
 	if err != nil {
@@ -69,7 +69,7 @@ func (c *Cvemap) GetCvesByIds(cveIds []string) (*types.CVEBulkData, error) {
 	if response.StatusCode != http.StatusOK {
 		return nil, errorutil.New("unexpected status code: %d", response.StatusCode)
 	}
-	var cvesInBulk types.CVEBulkData
+	var cvesInBulk cvemap.CVEBulkData
 	// Decode the JSON response into an array of CVEData structs
 	err = json.NewDecoder(response.Body).Decode(&cvesInBulk)
 	if err != nil {
@@ -78,7 +78,7 @@ func (c *Cvemap) GetCvesByIds(cveIds []string) (*types.CVEBulkData, error) {
 	return &cvesInBulk, nil
 }
 
-func (c *Cvemap) GetCvesByFilters(encodedParams string) (*types.CVEBulkData, error) {
+func (c *Cvemap) GetCvesByFilters(encodedParams string) (*cvemap.CVEBulkData, error) {
 	url := fmt.Sprintf("%s/cves?%s", c.BaseUrl, encodedParams)
 	// Send an HTTP GET request
 	response, err := c.makeGetRequest(url)
@@ -91,7 +91,7 @@ func (c *Cvemap) GetCvesByFilters(encodedParams string) (*types.CVEBulkData, err
 		return nil, errorutil.New("unexpected status code: %d", response.StatusCode)
 	}
 	// Create a variable to store the response data
-	var cvesInBulk types.CVEBulkData
+	var cvesInBulk cvemap.CVEBulkData
 	// Decode the JSON response into an array of CVEData structs
 	err = json.NewDecoder(response.Body).Decode(&cvesInBulk)
 	if err != nil {
@@ -100,7 +100,7 @@ func (c *Cvemap) GetCvesByFilters(encodedParams string) (*types.CVEBulkData, err
 	return &cvesInBulk, nil
 }
 
-func (c *Cvemap) GetCvesBySearchString(query string, limit, offset int) (*types.CVEBulkData, error) {
+func (c *Cvemap) GetCvesBySearchString(query string, limit, offset int) (*cvemap.CVEBulkData, error) {
 	u, err := url.Parse(fmt.Sprintf("%s/cves/search", c.BaseUrl))
 	if err != nil {
 		return nil, err
@@ -121,7 +121,7 @@ func (c *Cvemap) GetCvesBySearchString(query string, limit, offset int) (*types.
 		return nil, errorutil.New("unexpected status code: %d", response.StatusCode)
 	}
 	// Create a variable to store the response data
-	var cvesInBulk types.CVEBulkData
+	var cvesInBulk cvemap.CVEBulkData
 	// Decode the JSON response into an array of CVEData structs
 	err = json.NewDecoder(response.Body).Decode(&cvesInBulk)
 	if err != nil {
@@ -131,7 +131,7 @@ func (c *Cvemap) GetCvesBySearchString(query string, limit, offset int) (*types.
 }
 
 // all the root level fields are supported
-func (c *Cvemap) GetCvesForSpecificFields(fields []string, encodedParams string, limit, offset int) (*types.CVEBulkData, error) {
+func (c *Cvemap) GetCvesForSpecificFields(fields []string, encodedParams string, limit, offset int) (*cvemap.CVEBulkData, error) {
 	url := fmt.Sprintf("%s/cves?fields=%s&%s&limit=%v&offset=%v", c.BaseUrl, strings.Join(fields, ","), encodedParams, limit, offset)
 	// Send an HTTP GET request
 	response, err := c.makeGetRequest(url)
@@ -144,7 +144,7 @@ func (c *Cvemap) GetCvesForSpecificFields(fields []string, encodedParams string,
 		return nil, errorutil.New("unexpected status code: %d", response.StatusCode)
 	}
 	// Create a variable to store the response data
-	var cvesInBulk types.CVEBulkData
+	var cvesInBulk cvemap.CVEBulkData
 	// Decode the JSON response into an array of CVEData structs
 	err = json.NewDecoder(response.Body).Decode(&cvesInBulk)
 	if err != nil {
@@ -178,7 +178,7 @@ func (c *Cvemap) doRequest(req *retryablehttp.Request) (*http.Response, error) {
 			return nil, ErrUnAuthorized
 		}
 		if c.Debug {
-			var errResp types.ErrorMessage
+			var errResp cvemap.ErrorMessage
 			err = json.NewDecoder(resp.Body).Decode(&errResp)
 			if err == nil {
 				return nil, errorutil.New("error %d: %s\n", resp.StatusCode, errResp.Message)

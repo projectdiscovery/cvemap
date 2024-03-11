@@ -11,8 +11,8 @@ import (
 
 	"github.com/eiannone/keyboard"
 	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/projectdiscovery/cvemap"
 	"github.com/projectdiscovery/cvemap/pkg/service"
-	"github.com/projectdiscovery/cvemap/pkg/types"
 	"github.com/projectdiscovery/goflags"
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/gologger/levels"
@@ -257,7 +257,7 @@ func (r *Runner) Run() {
 	}
 }
 
-func (r *Runner) GetCves() (*types.CVEBulkData, error) {
+func (r *Runner) GetCves() (*cvemap.CVEBulkData, error) {
 	if len(r.Options.CveIds) > 0 {
 		return r.CvemapService.GetCvesByIds(r.Options.CveIds)
 	}
@@ -271,8 +271,8 @@ func (r *Runner) GetCves() (*types.CVEBulkData, error) {
 	return r.CvemapService.GetCvesByFilters(constructQueryParams(r.Options))
 }
 
-func (r *Runner) process() *types.CVEBulkData {
-	var cvesResp *types.CVEBulkData
+func (r *Runner) process() *cvemap.CVEBulkData {
+	var cvesResp *cvemap.CVEBulkData
 	var err error
 	cvesResp, err = r.GetCves()
 	if err != nil {
@@ -419,7 +419,7 @@ func renderTable(headers []string, rows [][]interface{}) {
 	t.Render()
 }
 
-func generateTableData(cves []types.CVEData, headers []string) ([]string, [][]interface{}) {
+func generateTableData(cves []cvemap.CVEData, headers []string) ([]string, [][]interface{}) {
 	dataRows := make([][]interface{}, len(cves))
 	for r, cve := range cves {
 		dataRows[r] = getRow(headers, cve)
@@ -427,7 +427,7 @@ func generateTableData(cves []types.CVEData, headers []string) ([]string, [][]in
 	return headers, dataRows
 }
 
-func getRow(headers []string, cve types.CVEData) []interface{} {
+func getRow(headers []string, cve cvemap.CVEData) []interface{} {
 	row := make([]interface{}, len(headers))
 	for i, header := range headers {
 		switch strings.ToLower(header) {
@@ -505,7 +505,7 @@ func getCellValueByLimit(cell interface{}) string {
 	return cellValue
 }
 
-func outputJson(cve []types.CVEData) {
+func outputJson(cve []cvemap.CVEData) {
 	json, err := json.MarshalIndent(cve, "", "  ")
 	if err != nil {
 		gologger.Error().Msgf("Error marshalling json: %s\n", err)
