@@ -10,7 +10,7 @@ require (
 	github.com/projectdiscovery/goflags v0.1.42
 	github.com/projectdiscovery/gologger v1.1.12
 	github.com/projectdiscovery/retryablehttp-go v1.0.50
-	github.com/projectdiscovery/utils v0.0.82
+	github.com/projectdiscovery/utils v0.0.83
 )
 
 require (
@@ -70,7 +70,7 @@ require (
 	github.com/projectdiscovery/hmap v0.0.41 // indirect
 	github.com/projectdiscovery/machineid v0.0.0-20240226150047-2e2c51e35983 // indirect
 	github.com/projectdiscovery/networkpolicy v0.0.7 // indirect
-	github.com/projectdiscovery/retryabledns v1.0.57 // indirect
+	github.com/projectdiscovery/retryabledns v1.0.58 // indirect
 	github.com/quic-go/quic-go v0.37.7 // indirect
 	github.com/refraction-networking/utls v1.5.4 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
