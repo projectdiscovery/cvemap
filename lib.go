@@ -37,12 +37,18 @@ var (
 	ErrBadRequest         = errorutil.NewWithFmt("failed to query cve due to incorrect filters : %v")
 	ErrUnAuthorized       = errorutil.New(`unauthorized: 401 (get your free api key from https://cloud.projectdiscovery.io)`)
 	ErrUnexpectedResponse = errorutil.NewWithFmt("unexpected response from cvemap api: %v : %v")
+	Err404NotFound        = errorutil.NewWithFmt("No result found: 404 : %v")
+)
+
+var (
+	// Mode of App (SDK or CLI)
+	IsSDK = true
 )
 
 // GetCveMapURL returns the url for the given path
 // It uses the CveMapBaseUrl to construct the url
 func GetCveMapURL(path string) string {
-	return strings.TrimSuffix(CveMapBaseUrl, "/") + path + "/" + strings.TrimPrefix(path, "/")
+	return strings.TrimSuffix(CveMapBaseUrl, "/") + BaseApiPath + "/" + strings.TrimPrefix(path, "/")
 }
 
 // PaginationOpts contains the options for pagination
@@ -271,7 +277,11 @@ func (c *Client) postJSON(path string, body interface{}, pagi *PaginationOpts) (
 func (c *Client) do(req *retryablehttp.Request) (*http.Response, error) {
 	// add metadata params
 	req.URL.Params.Merge(updateutils.GetpdtmParams(CvemapVersion))
+	if IsSDK {
+		req.URL.Params.Add("sdk", "true")
+	}
 	req.Header.Set(AuthHeader, c.opts.ApiKey)
+	req.URL.Update() // commit all query param updates
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return nil, err
@@ -281,6 +291,9 @@ func (c *Client) do(req *retryablehttp.Request) (*http.Response, error) {
 	}
 	if resp.StatusCode == http.StatusBadRequest {
 		return nil, ErrBadRequest.Msgf(req.URL.String())
+	}
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, Err404NotFound.Msgf(req.URL.String())
 	}
 	if resp.StatusCode != http.StatusOK {
 		var bin []byte
