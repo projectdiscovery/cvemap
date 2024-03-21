@@ -43,4 +43,5 @@ type Options struct {
 	Debug              bool
 	HealthCheck        bool
 	HTTPProxy          string
+	Output             string
 }
