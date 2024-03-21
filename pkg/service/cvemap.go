@@ -11,37 +11,57 @@ import (
 	"github.com/projectdiscovery/cvemap/pkg/types"
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/retryablehttp-go"
+	"github.com/projectdiscovery/utils/env"
 	errorutil "github.com/projectdiscovery/utils/errors"
 )
 
 const xPDCPHeaderKey = "X-PDCP-Key"
 
 var (
-	client          *retryablehttp.Client
+	BaseUrl         = env.GetEnvOrDefault("CVEMAP_API_URL", "https://cve.projectdiscovery.io/api/v1")
 	ErrUnAuthorized = errorutil.New(`unauthorized: 401 (get your free api key from https://cloud.projectdiscovery.io)`)
 )
 
-func init() {
-	opts := retryablehttp.DefaultOptionsSingle
-	opts.NoAdjustTimeout = true
-	client = retryablehttp.NewClient(opts)
-}
-
 type Cvemap struct {
-	BaseUrl    string
-	PDCPApiKey string
-	Debug      bool
+	opts   *Options
+	client *retryablehttp.Client
 }
 
-func NewCvemap(baseUrl string, pdcpApiKey string) *Cvemap {
-	return &Cvemap{
-		BaseUrl:    baseUrl,
-		PDCPApiKey: pdcpApiKey,
+type Options struct {
+	// ApiKey is the api key for the cvemap api
+	ApiKey string
+	// RetryableHttpOptions contains options for the http client (optional)
+	RetryableHttpOptions *retryablehttp.Options
+	// HttpClient is the http client to use (optional)
+	HttpClient *http.Client
+	// Debug is a flag that enables debugging output
+	Debug bool
+}
+
+func NewCvemap(opts *Options) (*Cvemap, error) {
+	if opts == nil {
+		return nil, fmt.Errorf("Options cannot be nil")
 	}
+	if opts.ApiKey == "" {
+		return nil, fmt.Errorf("api key cannot be empty")
+	}
+	clientOpts := retryablehttp.DefaultOptionsSingle
+	if opts.RetryableHttpOptions != nil {
+		clientOpts = *opts.RetryableHttpOptions
+	}
+	if opts.HttpClient != nil {
+		clientOpts.HttpClient = opts.HttpClient
+	}
+	httpClient := retryablehttp.NewClient(clientOpts)
+
+	return &Cvemap{
+		opts:   opts,
+		client: httpClient,
+	}, nil
 }
 
 func (c *Cvemap) GetCvesByIds(cveIds []string) (*types.CVEBulkData, error) {
-	url := fmt.Sprintf("%s/cves", c.BaseUrl)
+	url := fmt.Sprintf("%s/cves", BaseUrl)
 	// send only 100 cve ids max
 	if len(cveIds) > 100 {
 		cveIds = cveIds[:100]
@@ -58,7 +78,7 @@ func (c *Cvemap) GetCvesByIds(cveIds []string) (*types.CVEBulkData, error) {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set(xPDCPHeaderKey, c.PDCPApiKey)
+	req.Header.Set(xPDCPHeaderKey, c.opts.ApiKey)
 
 	response, err := c.doRequest(req)
 	if err != nil {
@@ -79,7 +99,7 @@ func (c *Cvemap) GetCvesByIds(cveIds []string) (*types.CVEBulkData, error) {
 }
 
 func (c *Cvemap) GetCvesByFilters(encodedParams string) (*types.CVEBulkData, error) {
-	url := fmt.Sprintf("%s/cves?%s", c.BaseUrl, encodedParams)
+	url := fmt.Sprintf("%s/cves?%s", BaseUrl, encodedParams)
 	// Send an HTTP GET request
 	response, err := c.makeGetRequest(url)
 	if err != nil {
@@ -101,7 +121,7 @@ func (c *Cvemap) GetCvesByFilters(encodedParams string) (*types.CVEBulkData, err
 }
 
 func (c *Cvemap) GetCvesBySearchString(query string, limit, offset int) (*types.CVEBulkData, error) {
-	u, err := url.Parse(fmt.Sprintf("%s/cves/search", c.BaseUrl))
+	u, err := url.Parse(fmt.Sprintf("%s/cves/search", BaseUrl))
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +152,7 @@ func (c *Cvemap) GetCvesBySearchString(query string, limit, offset int) (*types.
 
 // all the root level fields are supported
 func (c *Cvemap) GetCvesForSpecificFields(fields []string, encodedParams string, limit, offset int) (*types.CVEBulkData, error) {
-	url := fmt.Sprintf("%s/cves?fields=%s&%s&limit=%v&offset=%v", c.BaseUrl, strings.Join(fields, ","), encodedParams, limit, offset)
+	url := fmt.Sprintf("%s/cves?fields=%s&%s&limit=%v&offset=%v", BaseUrl, strings.Join(fields, ","), encodedParams, limit, offset)
 	// Send an HTTP GET request
 	response, err := c.makeGetRequest(url)
 	if err != nil {
@@ -158,12 +178,12 @@ func (c *Cvemap) makeGetRequest(url string) (*http.Response, error) {
 	if err != nil {
 		gologger.Fatal().Msgf("Error creating request: %s\n", err)
 	}
-	req.Header.Set(xPDCPHeaderKey, c.PDCPApiKey)
+	req.Header.Set(xPDCPHeaderKey, c.opts.ApiKey)
 	return c.doRequest(req)
 }
 
 func (c *Cvemap) doRequest(req *retryablehttp.Request) (*http.Response, error) {
-	if c.Debug {
+	if c.opts.Debug {
 		// dump request
 		dump, err := req.Dump()
 		if err != nil {
@@ -171,13 +191,13 @@ func (c *Cvemap) doRequest(req *retryablehttp.Request) (*http.Response, error) {
 		}
 		gologger.Print().Msgf("%s\n", string(dump))
 	}
-	resp, err := client.Do(req)
+	resp, err := c.client.Do(req)
 
 	if err == nil && resp.StatusCode != http.StatusOK {
 		if resp.StatusCode == http.StatusUnauthorized {
 			return nil, ErrUnAuthorized
 		}
-		if c.Debug {
+		if c.opts.Debug {
 			var errResp types.ErrorMessage
 			err = json.NewDecoder(resp.Body).Decode(&errResp)
 			if err == nil {
