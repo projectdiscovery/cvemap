@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/projectdiscovery/cvemap/pkg/types"
+	"github.com/projectdiscovery/cvemap"
 	fileutil "github.com/projectdiscovery/utils/file"
 )
 
@@ -43,7 +43,7 @@ func DoHealthCheck(opts Options) string {
 	return test.String()
 }
 
-func getLatestVersionCVSSScore(cvss types.CvssMetrics) float64 {
+func getLatestVersionCVSSScore(cvss cvemap.CvssMetrics) float64 {
 	var highestScore float64
 	if cvss.Cvss2 != nil {
 		highestScore = cvss.Cvss2.Score
