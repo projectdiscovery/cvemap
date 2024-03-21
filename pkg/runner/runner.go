@@ -137,6 +137,7 @@ func ParseOptions() *Options {
 		flagset.IntVarP(&options.Limit, "limit", "l", 50, "limit the number of results to display"),
 		flagset.IntVar(&options.Offset, "offset", 0, "offset the results to display"),
 		flagset.BoolVarP(&options.Json, "json", "j", false, "return output in json format"),
+		flagset.StringVarP(&options.Output, "output", "o", "", "output to file"),
 		// experimental
 		flagset.BoolVarP(&options.EnablePageKeys, "enable-page-keys", "epk", false, "enable page keys to navigate results"),
 	)
@@ -283,6 +284,10 @@ func (r *Runner) process() *types.CVEBulkData {
 	if r.Options.Json {
 		outputJson(cvesResp.Cves)
 		return cvesResp
+	}
+
+	if r.Options.Output != "" {
+		writeToFile(r.Options.Output, cvesResp.Cves)
 	}
 
 	nPages := cvesResp.TotalResults / r.Options.Limit
@@ -512,6 +517,23 @@ func outputJson(cve []types.CVEData) {
 		return
 	}
 	gologger.Silent().Msgf("%s\n", string(json))
+}
+
+func writeToFile(filename string, cves []types.CVEData) {
+	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		gologger.Fatal().Msgf("failed to open or create file: %v", err)
+	}
+	defer file.Close()
+	json, err := json.MarshalIndent(cves, "", "  ")
+	if err != nil {
+		gologger.Error().Msgf("Error marshalling json: %s\n", err)
+	}
+	// Write to the file
+	_, err = file.WriteString(string(json))
+	if err != nil {
+		gologger.Fatal().Msgf("failed to write to file: %v", err)
+	}
 }
 
 func constructQueryParams(opts *Options) string {
