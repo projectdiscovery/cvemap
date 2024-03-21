@@ -42,5 +42,6 @@ type Options struct {
 	Verbose            bool
 	Debug              bool
 	HealthCheck        bool
+	HTTPProxy          string
 	Output             string
 }

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -25,7 +27,6 @@ import (
 )
 
 var (
-	BaseUrl                  = env.GetEnvOrDefault("CVEMAP_API_URL", "https://cve.projectdiscovery.io/api/v1")
 	PDCPApiKey               = ""
 	DEFAULT_FEILD_CHAR_LIMIT = env.GetEnvOrDefault("DEFAULT_FEILD_CHAR_LIMIT", 20)
 )
@@ -96,6 +97,7 @@ func ParseOptions() *Options {
 
 	flagset.CreateGroup("config", "Config",
 		flagset.DynamicVar(&options.PdcpAuth, "auth", "true", "configure projectdiscovery cloud (pdcp) api key"),
+		flagset.StringVarP(&options.HTTPProxy, "proxy", "http-proxy", "", "http proxy to use (eg http://127.0.0.1:8080)"),
 	)
 
 	flagset.CreateGroup("OPTIONS", "options",
@@ -212,15 +214,29 @@ type Runner struct {
 	CvemapService *service.Cvemap
 }
 
-func New(options *Options) *Runner {
+func New(options *Options) (*Runner, error) {
+	serviceOpts := &service.Options{
+		ApiKey: PDCPApiKey,
+		Debug:  options.Debug,
+	}
+	if options.HTTPProxy != "" {
+		proxyURL, parseErr := url.Parse(options.HTTPProxy)
+		if parseErr != nil {
+			return nil, parseErr
+		}
+		serviceOpts.HttpClient = &http.Client{
+			Transport: &http.Transport{
+				Proxy: http.ProxyURL(proxyURL)}}
+	}
+	CvemapService, err := service.NewCvemap(serviceOpts)
+	if err != nil {
+		return nil, err
+	}
 	r := &Runner{
 		Options:       options,
-		CvemapService: service.NewCvemap(BaseUrl, PDCPApiKey),
+		CvemapService: CvemapService,
 	}
-	if r.Options.Debug {
-		r.CvemapService.Debug = true
-	}
-	return r
+	return r, nil
 }
 
 func (r *Runner) Run() {
