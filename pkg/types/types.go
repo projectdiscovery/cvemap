@@ -127,7 +127,7 @@ type OutputCpe struct {
 type KevObject struct {
 	AddedDate                  string `json:"added_date"`
 	DueDate                    string `json:"due_date"`
-	KnownRansomwareCampaignUse string `json:"known_ransomware_campaign_use"`
+	KnownRansomwareCampaignUse bool   `json:"known_ransomware_campaign_use"`
 }
 
 type OutputShodanData struct {
