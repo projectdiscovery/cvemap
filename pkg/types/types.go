@@ -87,17 +87,17 @@ type NucleiTemplates struct {
 }
 
 type OSS struct {
-	AllLanguages  map[string]int `json:"all_languages,omitempty"`
-	Description   string        `json:"description,omitempty"`
-	Forks         int           `json:"forks,omitempty"`
-	Language      string        `json:"language,omitempty"`
-	Stars         int           `json:"stars,omitempty"`
-	Subscribers   int           `json:"subscribers,omitempty"`
-	Topics        []string      `json:"topics,omitempty"`
-	PushedAt      CustomTime     `json:"pushed_at,omitempty"`
-	CreatedAt     CustomTime     `json:"created_at,omitempty"`
-	UpdatedAt     CustomTime     `json:"updated_at,omitempty"`
-	URL           string        `json:"url,omitempty"`
+	AllLanguages map[string]int `json:"all_languages,omitempty"`
+	Description  string         `json:"description,omitempty"`
+	Forks        int            `json:"forks,omitempty"`
+	Language     string         `json:"language,omitempty"`
+	Stars        int            `json:"stars,omitempty"`
+	Subscribers  int            `json:"subscribers,omitempty"`
+	Topics       []string       `json:"topics,omitempty"`
+	PushedAt     CustomTime     `json:"pushed_at,omitempty"`
+	CreatedAt    CustomTime     `json:"created_at,omitempty"`
+	UpdatedAt    CustomTime     `json:"updated_at,omitempty"`
+	URL          string         `json:"url,omitempty"`
 }
 
 type CustomTime struct {
@@ -125,8 +125,9 @@ type OutputCpe struct {
 }
 
 type KevObject struct {
-	AddedDate string `json:"added_date"`
-	DueDate   string `json:"due_date"`
+	AddedDate                  string `json:"added_date"`
+	DueDate                    string `json:"due_date"`
+	KnownRansomwareCampaignUse bool   `json:"known_ransomware_campaign_use"`
 }
 
 type OutputShodanData struct {
