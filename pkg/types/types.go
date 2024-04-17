@@ -42,7 +42,7 @@ type CVEData struct {
 		Rank  int `json:"rank"`
 		Count int `json:"count"`
 	} `json:"hackerone,omitempty"`
-	AgeInDays     int               `json:"age_in_days,omitempty"`
+	AgeInDays     int               `json:"age_in_days"`
 	VulnStatus    string            `json:"vuln_status,omitempty"`
 	IsPoc         bool              `json:"is_poc"`
 	IsRemote      bool              `json:"is_remote"`
