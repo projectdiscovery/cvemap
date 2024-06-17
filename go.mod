@@ -10,7 +10,7 @@ require (
 	github.com/projectdiscovery/goflags v0.1.56
 	github.com/projectdiscovery/gologger v1.1.12
 	github.com/projectdiscovery/retryablehttp-go v1.0.65
-	github.com/projectdiscovery/utils v0.1.3
+	github.com/projectdiscovery/utils v0.1.4-0.20240611113448-0e2f2d33fe1c
 )
 
 require (
@@ -68,7 +68,7 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/projectdiscovery/blackrock v0.0.1 // indirect
-	github.com/projectdiscovery/fastdialer v0.1.3 // indirect
+	github.com/projectdiscovery/fastdialer v0.1.4 // indirect
 	github.com/projectdiscovery/hmap v0.0.47 // indirect
 	github.com/projectdiscovery/machineid v0.0.0-20240226150047-2e2c51e35983 // indirect
 	github.com/projectdiscovery/networkpolicy v0.0.8 // indirect
