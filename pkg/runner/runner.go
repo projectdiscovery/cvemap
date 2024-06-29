@@ -368,13 +368,13 @@ func (r *Runner) processWithPageKeyEvents() {
 			}
 
 			switch key {
-			case keyboard.KeyArrowRight:
+			case keyboard.KeyPgdn:
 				if r.Options.Offset+r.Options.Limit < cveResp.TotalResults {
 					r.Options.Offset += r.Options.Limit
 					clearScreen()
 					cveResp = r.process()
 				}
-			case keyboard.KeyArrowLeft:
+			case keyboard.KeyPgup:
 				if r.Options.Offset-r.Options.Limit >= 0 {
 					r.Options.Offset -= r.Options.Limit
 					clearScreen()
