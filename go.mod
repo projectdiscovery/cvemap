@@ -7,7 +7,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.5.4
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/pkg/errors v0.9.1
-	github.com/projectdiscovery/goflags v0.1.56
+	github.com/projectdiscovery/goflags v0.1.57
 	github.com/projectdiscovery/gologger v1.1.13
 	github.com/projectdiscovery/retryablehttp-go v1.0.65
 	github.com/projectdiscovery/utils v0.1.5
