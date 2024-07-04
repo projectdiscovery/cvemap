@@ -199,12 +199,24 @@ func ParseOptions() *Options {
 		}
 	}
 
-	// convert cve-ids and cwe-ids to uppercase
+	// make fields case insensitive
 	for i, cveId := range options.CveIds {
 		options.CveIds[i] = strings.ToUpper(cveId)
 	}
 	for i, cweId := range options.CweIds {
 		options.CweIds[i] = strings.ToUpper(cweId)
+	}
+	for i, severity := range options.Severity {
+		options.Severity[i] = strings.ToLower(severity)
+	}
+	for i, vendor := range options.Vendor {
+		options.Vendor[i] = strings.ToLower(vendor)
+	}
+	for i, product := range options.Product {
+		options.Product[i] = strings.ToLower(product)
+	}
+	for i, eproduct := range options.Eproduct {
+		options.Eproduct[i] = strings.ToLower(eproduct)
 	}
 	return &options
 }
