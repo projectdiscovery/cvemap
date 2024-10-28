@@ -9,7 +9,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/projectdiscovery/goflags v0.1.64
 	github.com/projectdiscovery/gologger v1.1.29
-	github.com/projectdiscovery/retryablehttp-go v1.0.83
+	github.com/projectdiscovery/retryablehttp-go v1.0.84
 	github.com/projectdiscovery/utils v0.2.16
 )
 
