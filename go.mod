@@ -10,7 +10,7 @@ require (
 	github.com/projectdiscovery/goflags v0.1.64
 	github.com/projectdiscovery/gologger v1.1.30
 	github.com/projectdiscovery/retryablehttp-go v1.0.86
-	github.com/projectdiscovery/utils v0.2.17
+	github.com/projectdiscovery/utils v0.2.18
 )
 
 require (
