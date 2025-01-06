@@ -138,6 +138,7 @@ func ParseOptions() *Options {
 		flagset.BoolVarP(&options.ListId, "list-id", "lsi", false, "list only the cve ids in the output"),
 		flagset.IntVarP(&options.Limit, "limit", "l", 50, "limit the number of results to display"),
 		flagset.IntVar(&options.Offset, "offset", 0, "offset the results to display"),
+		flagset.BoolVarP(&options.Explain, "explain", "e", false, "explain the cve(s)"),
 		flagset.BoolVarP(&options.Json, "json", "j", false, "return output in json format"),
 		flagset.StringVarP(&options.Output, "output", "o", "", "output to file"),
 		// experimental
@@ -307,6 +308,11 @@ func (r *Runner) process() *types.CVEBulkData {
 	if err != nil {
 		gologger.Fatal().Msgf("Error getting CVEs: %s\n", err)
 		return nil
+	}
+
+	if r.Options.Explain {
+		outputCveExplained(cvesResp.Cves)
+		return cvesResp
 	}
 
 	if r.Options.Json {
@@ -536,6 +542,50 @@ func getCellValueByLimit(cell interface{}) string {
 		cellValue = cellValue[:DEFAULT_FEILD_CHAR_LIMIT] + "..."
 	}
 	return cellValue
+}
+
+func outputCveExplained(cves []types.CVEData) {
+	for _,cve := range cves {
+			// using gologger.Silent() to allow users to combine -explain and -silent flags
+			gologger.Silent().Msgf("CVE ID: %s", cve.CveID)
+			gologger.Silent().Msgf("Description: %s", cve.CveDescription)
+			gologger.Silent().Msgf("CVSS Score: %.1f", cve.CvssScore)
+			gologger.Silent().Msgf("Severity: %s", cve.Severity)
+			if len(cve.Weaknesses) != 0 {
+					for _,cwe := range cve.Weaknesses {
+							gologger.Silent().Msgf("CWE Info: %s(%s)", cwe.CWEID, cwe.CWEName)
+					}
+			}
+			gologger.Silent().Msgf("Age: %d", cve.AgeInDays)
+			gologger.Silent().Msgf("Vulnerability Status: %s", cve.VulnStatus)
+			gologger.Silent().Msgf("Exploited Remotely: %t", cve.IsRemote)
+			gologger.Silent().Msgf("POC Available: %t", cve.IsPoc)
+			if cve.IsPoc == true {
+					gologger.Silent().Msgf("POC(s):")
+					for _,poc := range cve.Poc {
+							gologger.Silent().Msgf("\t%s - %s", poc.Source, poc.URL)
+					}
+			}
+			if len(cve.Patch) != 0 {
+					gologger.Silent().Msgf("Available Patch(es):")
+					for _,patch := range cve.Patch {
+							gologger.Silent().Msgf("\t- %s", patch)
+					}
+			}
+			if cve.IsTemplate == true {
+					gologger.Silent().Msgf("Nuclei Template:")
+					gologger.Silent().Msgf("\tPath: %s", cve.NucleiTemplates.TemplatePath)
+					gologger.Silent().Msgf("\tURL: %s", cve.NucleiTemplates.TemplateURL)
+			}
+			if len(cve.Reference) != 0 {
+					gologger.Silent().Msgf("Reference(s):")
+					for _,ref := range cve.Reference {
+							gologger.Silent().Msgf("\t- %s", ref)
+					}
+			}
+			gologger.Silent().Msgf("\n")
+	}
+	gologger.Silent().Msgf("For all CVE data, output to JSON using -j/-json")
 }
 
 func outputJson(cve []types.CVEData) {

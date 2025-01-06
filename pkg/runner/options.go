@@ -33,6 +33,7 @@ type Options struct {
 	Search             string
 	RemotlyExploitable string
 	EnablePageKeys     bool
+	Explain            bool
 	Json               bool
 	Limit              int
 	Offset             int
