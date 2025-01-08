@@ -553,7 +553,7 @@ func outputCveExplained(cves []types.CVEData) {
 			gologger.Silent().Msgf("Severity: %s", cve.Severity)
 			if len(cve.Weaknesses) != 0 {
 					for _,cwe := range cve.Weaknesses {
-							if strings.Compare(cwe.CVEID, "NVD-CWE-noinfo") {
+							if strings.Compare(cwe.CWEID, "NVD-CWE-noinfo") != 0 {
 								gologger.Silent().Msgf("CWE Info: %s (%s)", cwe.CWEID, cwe.CWEName)
 							}
 					}
