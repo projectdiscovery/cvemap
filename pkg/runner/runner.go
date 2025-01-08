@@ -562,7 +562,7 @@ func outputCveExplained(cves []types.CVEData) {
 			gologger.Silent().Msgf("Vulnerability Status: %s", cve.VulnStatus)
 			gologger.Silent().Msgf("Exploited Remotely: %t", cve.IsRemote)
 			gologger.Silent().Msgf("POC Available: %t", cve.IsPoc)
-			if cve.IsPoc == true {
+			if cve.IsPoc {
 					gologger.Silent().Msgf("POC(s):")
 					for _,poc := range cve.Poc {
 							gologger.Silent().Msgf("\t%s - %s", poc.Source, poc.URL)
@@ -574,7 +574,7 @@ func outputCveExplained(cves []types.CVEData) {
 							gologger.Silent().Msgf("\t- %s", patch)
 					}
 			}
-			if cve.IsTemplate == true {
+			if cve.IsTemplate {
 					gologger.Silent().Msgf("Nuclei Template:")
 					gologger.Silent().Msgf("\tPath: %s", cve.NucleiTemplates.TemplatePath)
 					gologger.Silent().Msgf("\tURL: %s", cve.NucleiTemplates.TemplateURL)
