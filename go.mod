@@ -8,9 +8,9 @@ require (
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/projectdiscovery/goflags v0.1.69
-	github.com/projectdiscovery/gologger v1.1.41
-	github.com/projectdiscovery/retryablehttp-go v1.0.96
-	github.com/projectdiscovery/utils v0.4.8
+	github.com/projectdiscovery/gologger v1.1.42
+	github.com/projectdiscovery/retryablehttp-go v1.0.97
+	github.com/projectdiscovery/utils v0.4.9
 )
 
 require (
