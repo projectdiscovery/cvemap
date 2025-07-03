@@ -21,3 +21,4 @@
 go.work
 /cvemap
 /cmd/cvemap/cvemap
+/dist
