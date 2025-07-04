@@ -79,7 +79,7 @@ type Vulnerability struct {
 	Author   []string       `json:"author,omitempty"`
 	Digest   string         `json:"digest,omitempty"`
 	Metadata map[string]any `json:"metadata,omitempty"`
-	Raw      string         `json:"raw,omitempty" yaml:"nuclei_template"`
+	Raw      string         `json:"raw,omitempty" yaml:"nuclei_template,omitempty"`
 	Tags     []string       `json:"tags,omitempty"`
 	Type     string         `json:"type,omitempty"`
 
