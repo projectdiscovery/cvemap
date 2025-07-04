@@ -17,6 +17,11 @@ import (
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/gologger/levels"
 	"github.com/projectdiscovery/retryablehttp-go"
+
+	"os"
+
+	"github.com/mark3labs/mcp-go/server"
+	"github.com/projectdiscovery/cvemap/pkg/tools"
 )
 
 //go:embed banner.txt
@@ -53,10 +58,57 @@ var (
 		Use:   "vulnsh",
 		Short: "vulnsh — The Swiss Army knife for vulnerability intel",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if !silent {
+			// Do not print the banner when running the "mcp" sub-command as it
+			// can interfere with clients expecting clean JSON output.
+			if cmd.Name() != "mcp" && !silent {
 				showBanner()
 			}
 			return ensureCvemapClientInitialized(cmd)
+		},
+	}
+
+	mcpCmd = &cobra.Command{
+		Use:   "mcp",
+		Short: "Start MCP server for vulnsh (ProjectDiscovery vulnerability.sh) tools",
+		Run: func(cmd *cobra.Command, args []string) {
+			mode, _ := cmd.Flags().GetString("mode")
+			port, _ := cmd.Flags().GetInt("port")
+			if debug {
+				fmt.Fprintln(os.Stderr, "\nProjectDiscovery vulnerability.sh (vulnsh) MCP server mode\n----------------------------------------------")
+			}
+			s := server.NewMCPServer(
+				"ProjectDiscovery vulnerability.sh (vulnsh)",
+				"1.0.0",
+				server.WithToolCapabilities(false),
+				server.WithRecovery(),
+			)
+			for _, tool := range tools.AllMCPTools(cvemapClient) {
+				s.AddTool(tool.MCPToolSpec(), tool.MCPHandler(cvemapClient))
+			}
+			switch mode {
+			case "stdio":
+				if err := server.ServeStdio(s); err != nil {
+					fmt.Fprintf(os.Stderr, "Server error: %v\n", err)
+				}
+			case "sse":
+				addr := fmt.Sprintf(":%d", port)
+				if debug {
+					fmt.Fprintf(os.Stderr, "Starting MCP SSE server on %s...\n", addr)
+				}
+				// TODO: Integrate proper SSE handler from MCP server package when available
+				handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusNotImplemented)
+					w.Write([]byte("SSE mode is not yet implemented in this build. Please update the MCP server package or implement SSE handler."))
+				})
+				if err := http.ListenAndServe(addr, handler); err != nil {
+					fmt.Fprintf(os.Stderr, "SSE server error: %v\n", err)
+				}
+			case "http":
+				fmt.Fprintln(os.Stderr, "HTTP mode is not supported in this build. Use --mode stdio or --mode sse.")
+				os.Exit(1)
+			default:
+				fmt.Fprintf(os.Stderr, "Unknown mode: %s\n", mode)
+			}
 		},
 	}
 )
@@ -98,6 +150,10 @@ func init() {
 		}
 		return defaultUsageFunc(cmd)
 	})
+
+	mcpCmd.Flags().String("mode", "stdio", "MCP server mode: stdio or sse")
+	mcpCmd.Flags().Int("port", 8080, "Port to listen on for SSE mode (default 8080)")
+	rootCmd.AddCommand(mcpCmd)
 }
 
 // Execute executes the root command

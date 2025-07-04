@@ -2,7 +2,9 @@ package filters
 
 import (
 	"context"
+	"encoding/json"
 
+	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/projectdiscovery/cvemap"
 )
 
@@ -28,4 +30,26 @@ func NewHandler(client *cvemap.Client) *Handler {
 // using a background context.
 func (h *Handler) List() ([]cvemap.VulnerabilityFilter, error) {
 	return h.client.GetVulnerabilityFilters(context.Background())
+}
+
+// MCPToolSpec returns the MCP tool spec for registration.
+func (h *Handler) MCPToolSpec() mcp.Tool {
+	return mcp.NewTool("vulnsh_fields_list",
+		mcp.WithDescription("List all available fields in the ProjectDiscovery vulnerability.sh API. NOTE: Call this tool ONLY when the `agent_vulnx` tool explicitly instructs you to do so, or when the user directly requests it; otherwise do not invoke it."),
+	)
+}
+
+// MCPHandler returns the MCP handler for this tool.
+func (h *Handler) MCPHandler(client *cvemap.Client) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		filters, err := h.List()
+		if err != nil {
+			return mcp.NewToolResultError("ProjectDiscovery vulnsh: " + err.Error()), nil
+		}
+		b, err := json.MarshalIndent(filters, "", "  ")
+		if err != nil {
+			return mcp.NewToolResultError("ProjectDiscovery vulnsh: failed to marshal fields: " + err.Error()), nil
+		}
+		return mcp.NewToolResultText("ProjectDiscovery vulnerability.sh (vulnsh) fields:\n" + string(b)), nil
+	}
 }

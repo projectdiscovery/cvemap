@@ -2,9 +2,11 @@ package groupby
 
 import (
 	"context"
+	"encoding/json"
 	"strconv"
 	"strings"
 
+	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/projectdiscovery/cvemap"
 )
 
@@ -29,7 +31,7 @@ type Params struct {
 	// "field=size" syntax (e.g. "severity=5").
 	Fields []string
 
-	// Query is an optional Lucene-style query that filters the documents
+	// Query is an optional Bleve query expression that filters the documents
 	// before the facet aggregation is executed.
 	Query *string
 
@@ -99,4 +101,56 @@ func (h *Handler) GroupBy(params Params) (cvemap.SearchResponse, error) {
 	}
 
 	return h.client.SearchVulnerabilities(context.Background(), sp)
+}
+
+// MCPToolSpec returns the MCP tool spec for registration.
+func (h *Handler) MCPToolSpec() mcp.Tool {
+	return mcp.NewTool("vulnsh_groupby",
+		mcp.WithDescription("Aggregate vulnerabilities (GROUP BY/facets) over selected fields. NOTE: Use this tool ONLY when instructed by `agent_vulnx` or when the user explicitly asks for a group-by; do NOT call it otherwise."),
+		mcp.WithArray("fields",
+			mcp.Description("Facet/group-by expressions. Example: ['severity=5', 'vendor=10']. Each entry is either just the field name or 'field=size' to override bucket count (max 200)."),
+			mcp.Items(map[string]any{"type": "string"}),
+			mcp.Required(),
+		),
+		mcp.WithString("query",
+			mcp.Description("Optional Bleve-inspired query filter (use '&&', '||' for logical operations) applied before aggregation. Combine field names and operators to narrow the data set (see 'vulnsh_fields_list' for valid fields)."),
+		),
+		mcp.WithNumber("facet_size",
+			mcp.Description("Default bucket count when 'field=size' is not provided. Max 200."),
+		),
+	)
+}
+
+// MCPHandler returns the MCP handler for this tool.
+func (h *Handler) MCPHandler(client *cvemap.Client) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		fields, err := request.RequireStringSlice("fields")
+		if err != nil || len(fields) == 0 {
+			return mcp.NewToolResultError("ProjectDiscovery vulnsh: 'fields' is required and must be a string array."), nil
+		}
+		query := request.GetString("query", "")
+		var queryPtr *string
+		if query != "" {
+			queryPtr = &query
+		}
+		facetSize := request.GetInt("facet_size", 0)
+		var facetSizePtr *int
+		if facetSize > 0 {
+			facetSizePtr = &facetSize
+		}
+		params := Params{
+			Fields:    fields,
+			Query:     queryPtr,
+			FacetSize: facetSizePtr,
+		}
+		resp, err := h.GroupBy(params)
+		if err != nil {
+			return mcp.NewToolResultError("ProjectDiscovery vulnsh: " + err.Error()), nil
+		}
+		b, err := json.MarshalIndent(resp, "", "  ")
+		if err != nil {
+			return mcp.NewToolResultError("ProjectDiscovery vulnsh: failed to marshal groupby result: " + err.Error()), nil
+		}
+		return mcp.NewToolResultText("ProjectDiscovery vulnerability.sh (vulnsh) groupby result:\n" + string(b)), nil
+	}
 }
