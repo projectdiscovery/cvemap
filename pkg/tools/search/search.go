@@ -2,7 +2,9 @@ package search
 
 import (
 	"context"
+	"encoding/json"
 
+	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/projectdiscovery/cvemap"
 )
 
@@ -37,4 +39,93 @@ func NewHandler(client *cvemap.Client) *Handler {
 // context.
 func (h *Handler) Search(params cvemap.SearchParams) (cvemap.SearchResponse, error) {
 	return h.client.SearchVulnerabilities(context.Background(), params)
+}
+
+// MCPToolSpec returns the MCP tool spec for registration.
+func (h *Handler) MCPToolSpec() mcp.Tool {
+	return mcp.NewTool("vulnsh_search",
+		mcp.WithDescription(`Powerful full-text and fielded search over the entire ProjectDiscovery vulnerability.sh (vulnsh) knowledge-base. Use it to discover CVEs or Nuclei templates matching arbitrary criteria before drilling into a specific record with 'vulnsh_get_by_id'.
+
+• Accepts Lucene-style syntax with boolean operators, wildcards, ranges, fuzzy terms, proximity, etc. Every field returned by 'vulnsh_fields_list' can be queried or combined in filters.
+• Supports pagination via limit/offset (max 100 per call) so you can walk large result sets.
+• Field selection: by default the response is trimmed to a compact subset (cve_id, description, severity, cvss_score, epss_score) to minimise token usage. Provide the optional 'fields' array to customise the payload or an *empty* array [] to request the full document.
+• Sorting: use 'sort_asc' / 'sort_desc' to order results by any sortable field (see 'vulnsh_fields_list').
+
+If this tool returns an error or zero results, the calling chain **must** invoke the 'vulnsh_search_review' prompt template next to iteratively refine the query.`),
+		mcp.WithString("query",
+			mcp.Required(),
+			mcp.Description("Lucene-style search expression (e.g. 'severity:critical AND product:atlassian'). Combine any fields from 'vulnsh_fields_list'."),
+		),
+		mcp.WithNumber("limit",
+			mcp.Description("Maximum results per call (default 5, cap 100)."),
+		),
+		mcp.WithNumber("offset",
+			mcp.Description("Starting index for pagination (default 0)."),
+		),
+		mcp.WithArray("fields",
+			mcp.Description("Optional list of fields to include in the response. Omit for defaults, [] for full payload."),
+			mcp.Items(map[string]any{"type": "string"}),
+		),
+		mcp.WithString("sort_asc",
+			mcp.Description("Field name to sort ascending."),
+		),
+		mcp.WithString("sort_desc",
+			mcp.Description("Field name to sort descending."),
+		),
+	)
+}
+
+// MCPHandler returns the MCP handler for this tool.
+func (h *Handler) MCPHandler(client *cvemap.Client) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		query, err := request.RequireString("query")
+		if err != nil || query == "" {
+			return mcp.NewToolResultError("ProjectDiscovery vulnsh: 'query' is required and must be a string."), nil
+		}
+		limit := request.GetInt("limit", 5)
+		if limit > 100 {
+			limit = 100
+		}
+		offset := request.GetInt("offset", 0)
+
+		// Prepare base search parameters
+		params := cvemap.SearchParams{
+			Query:  &query,
+			Limit:  &limit,
+			Offset: &offset,
+		}
+
+		// Handle optional 'fields' array
+		fields := request.GetStringSlice("fields", nil)
+		defaultFields := []string{"cve_id", "description", "severity", "cvss_score", "epss_score"}
+		switch {
+		case fields == nil:
+			// No parameter provided – apply defaults to reduce payload size
+			params.Fields = defaultFields
+		case len(fields) == 0:
+			// Explicit empty array means no field filtering (full document)
+		default:
+			params.Fields = fields
+		}
+
+		// Sorting parameters (optional)
+		sortAsc := request.GetString("sort_asc", "")
+		if sortAsc != "" {
+			params.SortAsc = &sortAsc
+		}
+		sortDesc := request.GetString("sort_desc", "")
+		if sortDesc != "" {
+			params.SortDesc = &sortDesc
+		}
+
+		resp, err := h.Search(params)
+		if err != nil {
+			return mcp.NewToolResultError("ProjectDiscovery vulnsh: " + err.Error()), nil
+		}
+		b, err := json.MarshalIndent(resp, "", "  ")
+		if err != nil {
+			return mcp.NewToolResultError("ProjectDiscovery vulnsh: failed to marshal search result: " + err.Error()), nil
+		}
+		return mcp.NewToolResultText("ProjectDiscovery vulnerability.sh (vulnsh) search result:\n" + string(b)), nil
+	}
 }
