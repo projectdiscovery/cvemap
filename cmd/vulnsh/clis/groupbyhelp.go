@@ -46,22 +46,32 @@ Example invocations:
                 -q 'template_coverage:planned || template_coverage:covered'
 `
 
-					// Use a pager when available
-		w, closePager, err := utils.OpenPager(noPager)
-		if err != nil {
-			w = nopWriteCloser{Writer: cmd.OutOrStdout()}
-			closePager = func() error { return nil }
-		}
-		defer func() { _ = closePager() }()
+			// Use a pager when available
+			w, closePager, err := utils.OpenPager(noPager)
+			if err != nil {
+				w = nopWriteCloser{Writer: cmd.OutOrStdout()}
+				closePager = func() error { return nil }
+			}
+			defer func() { _ = closePager() }()
 
 			// Print overview
-			fmt.Fprintln(w, overview)
-			fmt.Fprintln(w, strings.Repeat("-", 120))
+			if _, err := fmt.Fprintln(w, overview); err != nil {
+				gologger.Error().Msgf("Failed to write overview: %s", err)
+			}
+			if _, err := fmt.Fprintln(w, strings.Repeat("-", 120)); err != nil {
+				gologger.Error().Msgf("Failed to write separator: %s", err)
+			}
 
 			// Print command usage & flags (default Cobra output) before examples
-			fmt.Fprintln(w, "COMMAND USAGE & FLAGS")
-			fmt.Fprintln(w, strings.Repeat("-", 120))
-			fmt.Fprintln(w, cmd.UsageString())
+			if _, err := fmt.Fprintln(w, "COMMAND USAGE & FLAGS"); err != nil {
+				gologger.Error().Msgf("Failed to write command usage: %s", err)
+			}
+			if _, err := fmt.Fprintln(w, strings.Repeat("-", 120)); err != nil {
+				gologger.Error().Msgf("Failed to write separator: %s", err)
+			}
+			if _, err := fmt.Fprintln(w, cmd.UsageString()); err != nil {
+				gologger.Error().Msgf("Failed to write usage string: %s", err)
+			}
 
 			// Fetch filters via handler
 			h := filters.NewHandler(cvemapClient)

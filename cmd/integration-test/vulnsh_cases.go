@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/projectdiscovery/gologger"
 )
 
 // VulnshTestCase represents a test case for vulnsh
@@ -22,19 +23,19 @@ func (v *VulnshTestCase) Execute() error {
 	if err != nil && !v.ShouldFail {
 		return errors.Wrapf(err, "vulnsh test '%s' failed unexpectedly", v.Name)
 	}
-	
+
 	if err == nil && v.ShouldFail {
 		return errors.Errorf("vulnsh test '%s' should have failed but succeeded", v.Name)
 	}
-	
+
 	if v.ExpectedOut != "" {
 		outputStr := strings.Join(output, " ")
 		if !strings.Contains(outputStr, v.ExpectedOut) {
-			return errors.Errorf("vulnsh test '%s' output doesn't contain expected string '%s'. Got: %s", 
+			return errors.Errorf("vulnsh test '%s' output doesn't contain expected string '%s'. Got: %s",
 				v.Name, v.ExpectedOut, outputStr)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -44,7 +45,9 @@ func runVulnshBinaryAndGetResults(vulnshBinary string, debug bool, args []string
 	cmdLine := fmt.Sprintf(`./%s `, vulnshBinary)
 	cmdLine += strings.Join(args, " ")
 	if debug {
-		os.Setenv("DEBUG", "1")
+		if err := os.Setenv("DEBUG", "1"); err != nil {
+			gologger.Error().Msgf("Failed to set DEBUG env: %s", err)
+		}
 		cmd.Stderr = os.Stderr
 	}
 	cmd.Args = append(cmd.Args, cmdLine)

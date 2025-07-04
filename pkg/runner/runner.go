@@ -115,7 +115,7 @@ func ParseOptions() *Options {
 		flagset.StringVar(&options.Age, "age", "", "cve to list published by given age in days"),
 		flagset.StringSliceVarP(&options.Assignees, "assignee", "a", nil, "cve to list for given publisher assignee", goflags.CommaSeparatedStringSliceOptions),
 		//flagset.StringSliceVarP(&options.vulnType, "type", "vt", nil, "cve to list for given vulnerability type", goflags.CommaSeparatedStringSliceOptions),
-		flagset.EnumVarP(&options.VulnStatus, "vstatus", "vs", goflags.EnumVariable(-1), strings.Replace(fmt.Sprintf("cve to list for given vulnerability status in cli output. supported: %s", allowedVstatus.String()), " ,", "", -1), allowedVstatus),
+		flagset.EnumVarP(&options.VulnStatus, "vstatus", "vs", goflags.EnumVariable(-1), strings.ReplaceAll(fmt.Sprintf("cve to list for given vulnerability status in cli output. supported: %s", allowedVstatus.String()), " ,", ""), allowedVstatus),
 	)
 
 	flagset.CreateGroup("update", "Update",
@@ -133,8 +133,8 @@ func ParseOptions() *Options {
 	)
 
 	flagset.CreateGroup("OUTPUT", "output",
-		flagset.EnumSliceVarP(&options.IncludeColumns, "field", "f", []goflags.EnumVariable{goflags.EnumVariable(-1)}, strings.Replace(fmt.Sprintf("fields to display in cli output. supported: %s", allowedHeaderString), " ,", "", -1), allowedHeader),
-		flagset.EnumSliceVarP(&options.ExcludeColumns, "exclude", "fe", []goflags.EnumVariable{goflags.EnumVariable(-1)}, strings.Replace(fmt.Sprintf("fields to exclude from cli output. supported: %s", allowedHeaderString), " ,", "", -1), allowedHeader),
+		flagset.EnumSliceVarP(&options.IncludeColumns, "field", "f", []goflags.EnumVariable{goflags.EnumVariable(-1)}, strings.ReplaceAll(fmt.Sprintf("fields to display in cli output. supported: %s", allowedHeaderString), " ,", ""), allowedHeader),
+		flagset.EnumSliceVarP(&options.ExcludeColumns, "exclude", "fe", []goflags.EnumVariable{goflags.EnumVariable(-1)}, strings.ReplaceAll(fmt.Sprintf("fields to exclude from cli output. supported: %s", allowedHeaderString), " ,", ""), allowedHeader),
 		flagset.BoolVarP(&options.ListId, "list-id", "lsi", false, "list only the cve ids in the output"),
 		flagset.IntVarP(&options.Limit, "limit", "l", 50, "limit the number of results to display"),
 		flagset.IntVar(&options.Offset, "offset", 0, "offset the results to display"),
@@ -363,7 +363,11 @@ func (r *Runner) processWithPageKeyEvents() {
 	if err != nil {
 		panic(err)
 	}
-	defer keyboard.Close()
+	defer func() {
+		if err := keyboard.Close(); err != nil {
+			gologger.Error().Msgf("Failed to close keyboard: %s", err)
+		}
+	}()
 	waitGroup := sync.WaitGroup{}
 	waitGroup.Add(1)
 
@@ -552,7 +556,11 @@ func writeToFile(filename string, cves []types.CVEData) {
 	if err != nil {
 		gologger.Fatal().Msgf("failed to open or create file: %v", err)
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			gologger.Error().Msgf("Failed to close file: %s", err)
+		}
+	}()
 	json, err := json.MarshalIndent(cves, "", "  ")
 	if err != nil {
 		gologger.Error().Msgf("Error marshalling json: %s\n", err)
@@ -576,10 +584,11 @@ func constructQueryParams(opts *Options) string {
 		var cvsKey string
 		for _, cvssScore := range opts.CvssScore {
 			cvsKey = "cvss_score"
-			if cvssScore[0] == '>' {
+			switch cvssScore[0] {
+			case '>':
 				cvsKey = "cvss_score_gte"
 				cvssScore = strings.TrimSpace(cvssScore[1:])
-			} else if cvssScore[0] == '<' {
+			case '<':
 				cvsKey = "cvss_score_lte"
 				cvssScore = strings.TrimSpace(cvssScore[1:])
 			}
@@ -589,10 +598,11 @@ func constructQueryParams(opts *Options) string {
 
 	if len(opts.Age) > 0 {
 		ageKey := "age_in_days"
-		if opts.Age[0] == '>' {
+		switch opts.Age[0] {
+		case '>':
 			ageKey = "age_in_days_gte"
 			opts.Age = strings.TrimSpace(opts.Age[1:])
-		} else if opts.Age[0] == '<' {
+		case '<':
 			ageKey = "age_in_days_lte"
 			opts.Age = strings.TrimSpace(opts.Age[1:])
 		}
@@ -606,10 +616,11 @@ func constructQueryParams(opts *Options) string {
 	}
 	if len(opts.EpssScore) > 0 {
 		epssKey := "epss.epss_score"
-		if opts.EpssScore[0] == '>' {
+		switch opts.EpssScore[0] {
+		case '>':
 			epssKey = "epss.epss_score_gte"
 			opts.EpssScore = strings.TrimSpace(opts.EpssScore[1:])
-		} else if opts.EpssScore[0] == '<' {
+		case '<':
 			epssKey = "epss.epss_score_lte"
 			opts.EpssScore = strings.TrimSpace(opts.EpssScore[1:])
 		}
@@ -619,10 +630,11 @@ func constructQueryParams(opts *Options) string {
 		var epKey string
 		for _, ep := range opts.EpssPercentile {
 			epKey = "epss.epss_percentile"
-			if ep[0] == '>' {
+			switch ep[0] {
+			case '>':
 				epKey = "epss.epss_percentile_gte"
 				ep = strings.TrimSpace(ep[1:])
-			} else if ep[0] == '<' {
+			case '<':
 				epKey = "epss.epss_percentile_lte"
 				ep = strings.TrimSpace(ep[1:])
 			}
@@ -644,19 +656,22 @@ func constructQueryParams(opts *Options) string {
 	if len(opts.Vendor) > 0 {
 		addQueryParams(queryParams, "cpe.vendor", opts.Vendor)
 	}
-	if opts.Kev == "true" {
+	switch opts.Kev {
+	case "true":
 		queryParams.Add("is_exploited", "true")
-	} else if opts.Kev == "false" {
+	case "false":
 		queryParams.Add("is_exploited", "false")
 	}
-	if opts.HasNucleiTemplate == "true" {
+	switch opts.HasNucleiTemplate {
+	case "true":
 		queryParams.Add("is_template", "true")
-	} else if opts.HasNucleiTemplate == "false" {
+	case "false":
 		queryParams.Add("is_template", "false")
 	}
-	if opts.HasPoc == "true" {
+	switch opts.HasPoc {
+	case "true":
 		queryParams.Add("is_poc", "true")
-	} else if opts.HasPoc == "false" {
+	case "false":
 		queryParams.Add("is_poc", "false")
 	}
 	if opts.RemotlyExploitable == "true" {
@@ -712,10 +727,11 @@ func constructQueryByOptions(opts Options) string {
 		var cvsKey string
 		for _, cvssScore := range opts.CvssScore {
 			cvsKey = "cvss_score"
-			if cvssScore[0] == '>' {
+			switch cvssScore[0] {
+			case '>':
 				cvsKey = "cvss_score_gte"
 				cvssScore = strings.TrimSpace(cvssScore[1:])
-			} else if cvssScore[0] == '<' {
+			case '<':
 				cvsKey = "cvss_score_lte"
 				cvssScore = strings.TrimSpace(cvssScore[1:])
 			}
@@ -724,10 +740,11 @@ func constructQueryByOptions(opts Options) string {
 	}
 	if len(opts.EpssScore) > 0 {
 		epssKey := "epss.epss_score"
-		if opts.EpssScore[0] == '>' {
+		switch opts.EpssScore[0] {
+		case '>':
 			epssKey = "epss.epss_score_gte"
 			opts.EpssScore = strings.TrimSpace(opts.EpssScore[1:])
-		} else if opts.EpssScore[0] == '<' {
+		case '<':
 			epssKey = "epss.epss_score_lte"
 			opts.EpssScore = strings.TrimSpace(opts.EpssScore[1:])
 		}
@@ -737,10 +754,11 @@ func constructQueryByOptions(opts Options) string {
 		var epKey string
 		for _, ep := range opts.EpssPercentile {
 			epKey = "epss.epss_percentile"
-			if ep[0] == '>' {
+			switch ep[0] {
+			case '>':
 				epKey = "epss.epss_percentile_gte"
 				ep = strings.TrimSpace(ep[1:])
-			} else if ep[0] == '<' {
+			case '<':
 				epKey = "epss.epss_percentile_lte"
 				ep = strings.TrimSpace(ep[1:])
 			}
@@ -755,10 +773,11 @@ func constructQueryByOptions(opts Options) string {
 	}
 	if len(opts.Age) > 0 {
 		ageKey := "age_in_days"
-		if opts.Age[0] == '>' {
+		switch opts.Age[0] {
+		case '>':
 			ageKey = "age_in_days_gte"
 			opts.Age = strings.TrimSpace(opts.Age[1:])
-		} else if opts.Age[0] == '<' {
+		case '<':
 			ageKey = "age_in_days_lte"
 			opts.Age = strings.TrimSpace(opts.Age[1:])
 		}
@@ -770,19 +789,22 @@ func constructQueryByOptions(opts Options) string {
 	if len(opts.VulnStatus) > 0 {
 		query = fmt.Sprintf("%s vuln_status:%s", query, strings.ToLower(opts.VulnStatus))
 	}
-	if opts.Kev == "true" {
+	switch opts.Kev {
+	case "true":
 		query = fmt.Sprintf("%s is_exploited:true", query)
-	} else if opts.Kev == "false" {
+	case "false":
 		query = fmt.Sprintf("%s is_exploited:false", query)
 	}
-	if opts.HasNucleiTemplate == "true" {
+	switch opts.HasNucleiTemplate {
+	case "true":
 		query = fmt.Sprintf("%s is_template:true", query)
-	} else if opts.HasNucleiTemplate == "false" {
+	case "false":
 		query = fmt.Sprintf("%s is_template:false", query)
 	}
-	if opts.HasPoc == "true" {
+	switch opts.HasPoc {
+	case "true":
 		query = fmt.Sprintf("%s is_poc:true", query)
-	} else if opts.HasPoc == "false" {
+	case "false":
 		query = fmt.Sprintf("%s is_poc:false", query)
 	}
 	if opts.Hackerone == "true" {

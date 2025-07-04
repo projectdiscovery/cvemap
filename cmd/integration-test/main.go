@@ -9,6 +9,7 @@ import (
 	"github.com/logrusorgru/aurora"
 	"github.com/pkg/errors"
 	"github.com/projectdiscovery/cvemap/pkg/testutils"
+	"github.com/projectdiscovery/gologger"
 )
 
 var (
@@ -23,8 +24,12 @@ var (
 func main() {
 	flag.Parse()
 	SetupMockServer()
-	os.Setenv("CVEMAP_API_URL", "http://localhost:8080/api/v1")
-	os.Setenv("PDCP_API_KEY", xPDCPHeaderTestKey)
+	if err := os.Setenv("CVEMAP_API_URL", "http://localhost:8080/api/v1"); err != nil {
+		gologger.Error().Msgf("Failed to set CVEMAP_API_URL: %s", err)
+	}
+	if err := os.Setenv("PDCP_API_KEY", xPDCPHeaderTestKey); err != nil {
+		gologger.Error().Msgf("Failed to set PDCP_API_KEY: %s", err)
+	}
 	if err := runIntegrationTests(); err != nil {
 		fmt.Println("Error running integration tests:", err)
 	}
@@ -60,7 +65,7 @@ func runIntegrationTests() error {
 			fmt.Printf("%s CVEMap Test \"%s\" passed!\n", success, testName)
 		}
 	}
-	
+
 	// Run vulnsh tests if binary is provided
 	if currentVulnshBinary != nil && *currentVulnshBinary != "" {
 		fmt.Println("\nRunning Vulnsh integration tests...")
@@ -74,6 +79,6 @@ func runIntegrationTests() error {
 	} else {
 		fmt.Println("\nSkipping Vulnsh tests (no binary provided)")
 	}
-	
+
 	return nil
 }

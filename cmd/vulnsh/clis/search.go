@@ -148,7 +148,11 @@ vulnsh search \
 					if err != nil {
 						gologger.Fatal().Msgf("Failed to create output file: %s", err)
 					}
-					defer f.Close()
+					defer func() {
+						if err := f.Close(); err != nil {
+							gologger.Error().Msgf("Failed to close output file: %s", err)
+						}
+					}()
 					if _, err := f.Write(jsonBytes); err != nil {
 						gologger.Fatal().Msgf("Failed to write to output file: %s", err)
 					}
@@ -156,8 +160,12 @@ vulnsh search \
 					return
 				}
 				// Print to stdout
-				os.Stdout.Write(jsonBytes)
-				os.Stdout.Write([]byte("\n"))
+				if _, err := os.Stdout.Write(jsonBytes); err != nil {
+					gologger.Error().Msgf("Failed to write JSON output: %s", err)
+				}
+				if _, err := os.Stdout.Write([]byte("\n")); err != nil {
+					gologger.Error().Msgf("Failed to write newline: %s", err)
+				}
 				return
 			}
 
@@ -174,29 +182,29 @@ func validateSearchInputs() error {
 	if searchLimit < 0 || searchLimit > 10000 {
 		return fmt.Errorf("limit must be between 0 and 10000")
 	}
-	
+
 	// Validate offset
 	if searchOffset < 0 {
 		return fmt.Errorf("offset must be non-negative")
 	}
-	
+
 	// Validate conflicting sort options
 	if searchSortAsc != "" && searchSortDesc != "" {
 		return fmt.Errorf("cannot specify both --sort-asc and --sort-desc")
 	}
-	
+
 	// Validate facet size
 	if searchFacetSize < 1 || searchFacetSize > 1000 {
 		return fmt.Errorf("facet-size must be between 1 and 1000")
 	}
-	
+
 	// Validate output file path if specified
 	if outputFile != "" {
 		if !strings.HasSuffix(outputFile, ".json") {
 			return fmt.Errorf("output file must have .json extension")
 		}
 	}
-	
+
 	return nil
 }
 
@@ -211,8 +219,6 @@ func init() { // Register flags and add command to rootCmd
 	searchCmd.Flags().BoolVar(&searchHighlight, "highlight", false, "Return search highlights where supported")
 	searchCmd.Flags().IntVar(&searchFacetSize, "facet-size", 10, "Number of facet buckets to return")
 	searchCmd.SetHelpFunc(searchHelpCmd.Run)
-
-
 
 	rootCmd.AddCommand(searchCmd)
 }

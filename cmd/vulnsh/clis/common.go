@@ -98,7 +98,9 @@ var (
 				// TODO: Integrate proper SSE handler from MCP server package when available
 				handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusNotImplemented)
-					w.Write([]byte("SSE mode is not yet implemented in this build. Please update the MCP server package or implement SSE handler."))
+					if _, err := w.Write([]byte("SSE mode is not yet implemented in this build. Please update the MCP server package or implement SSE handler.")); err != nil {
+						gologger.Error().Msgf("Failed to write SSE not implemented message: %s", err)
+					}
 				})
 				if err := http.ListenAndServe(addr, handler); err != nil {
 					fmt.Fprintf(os.Stderr, "SSE server error: %v\n", err)

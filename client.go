@@ -43,6 +43,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/retryablehttp-go"
 	"github.com/projectdiscovery/utils/auth/pdcp"
 	"github.com/projectdiscovery/utils/errkit"
@@ -291,7 +292,11 @@ func (c *Client) do(req *http.Request, out any) error {
 	if c.debugResponse != nil {
 		c.debugResponse(resp)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			gologger.Error().Msgf("Failed to close response body: %s", err)
+		}
+	}()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return c.handleAPIError(resp)

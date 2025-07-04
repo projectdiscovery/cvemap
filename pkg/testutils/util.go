@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/projectdiscovery/gologger"
 )
 
 // RunCvemapßBinaryAndGetResults returns a list of the results
@@ -13,7 +15,9 @@ func RunCvemapBinaryAndGetResults(cvemapBinary string, debug bool, args []string
 	cmdLine := fmt.Sprintf(`./%s `, cvemapBinary)
 	cmdLine += strings.Join(args, " ")
 	if debug {
-		os.Setenv("DEBUG", "1")
+		if err := os.Setenv("DEBUG", "1"); err != nil {
+			gologger.Error().Msgf("Failed to set DEBUG env: %s", err)
+		}
 		cmd.Stderr = os.Stderr
 	}
 	cmd.Args = append(cmd.Args, cmdLine)

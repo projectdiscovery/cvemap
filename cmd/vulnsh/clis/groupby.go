@@ -91,28 +91,38 @@ Global flags:
 					if err != nil {
 						gologger.Fatal().Msgf("Failed to create output file: %s", err)
 					}
-					defer f.Close()
+					defer func() {
+						if err := f.Close(); err != nil {
+							gologger.Error().Msgf("Failed to close output file: %s", err)
+						}
+					}()
 					if _, err := f.Write(jsonBytes); err != nil {
 						gologger.Fatal().Msgf("Failed to write to output file: %s", err)
 					}
 					gologger.Info().Msgf("Wrote output to file: %s", outputFile)
 					return
 				}
-				os.Stdout.Write(jsonBytes)
-				os.Stdout.Write([]byte("\n"))
+				if _, err := os.Stdout.Write(jsonBytes); err != nil {
+					gologger.Error().Msgf("Failed to write JSON to stdout: %s", err)
+				}
+				if _, err := os.Stdout.Write([]byte("\n")); err != nil {
+					gologger.Error().Msgf("Failed to write newline to stdout: %s", err)
+				}
 				return
 			}
 
-					// Render facet tables
-		w, closePager, err := utils.OpenPager(noPager)
-		if err != nil {
-			w = os.Stdout
-			closePager = func() error { return nil }
-		}
-		defer func() { _ = closePager() }()
+			// Render facet tables
+			w, closePager, err := utils.OpenPager(noPager)
+			if err != nil {
+				w = os.Stdout
+				closePager = func() error { return nil }
+			}
+			defer func() { _ = closePager() }()
 
 			for facetName, facetAny := range resp.Facets {
-				fmt.Fprintf(w, "\nField: %s\n", facetName)
+				if _, err := fmt.Fprintf(w, "\nField: %s\n", facetName); err != nil {
+					gologger.Error().Msgf("Failed to write facet name: %s", err)
+				}
 
 				tbl := table.NewWriter()
 				tbl.SetOutputMirror(w)
@@ -177,19 +187,19 @@ func validateGroupbyInputs() error {
 	if len(groupbyFields) == 0 {
 		return fmt.Errorf("at least one --fields value is required")
 	}
-	
+
 	// Validate facet size
 	if groupbyFacetSize < 1 || groupbyFacetSize > 1000 {
 		return fmt.Errorf("facet-size must be between 1 and 1000")
 	}
-	
+
 	// Validate output file path if specified
 	if outputFile != "" {
 		if !strings.HasSuffix(outputFile, ".json") {
 			return fmt.Errorf("output file must have .json extension")
 		}
 	}
-	
+
 	return nil
 }
 

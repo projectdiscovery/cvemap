@@ -51,23 +51,33 @@ Below is a list of all fields that can be used in search queries. Fields marked
 as "Facet" support term/range faceting. Fields marked "Sortable" can be used
 with --sort-asc/--sort-desc.`
 
-					// Use a pager when available
-		w, closePager, err := utils.OpenPager(noPager)
-		if err != nil {
-			// Fallback to stdout wrapped as io.WriteCloser
-			w = nopWriteCloser{Writer: cmd.OutOrStdout()}
-			closePager = func() error { return nil }
-		}
-		defer func() { _ = closePager() }()
+			// Use a pager when available
+			w, closePager, err := utils.OpenPager(noPager)
+			if err != nil {
+				// Fallback to stdout wrapped as io.WriteCloser
+				w = nopWriteCloser{Writer: cmd.OutOrStdout()}
+				closePager = func() error { return nil }
+			}
+			defer func() { _ = closePager() }()
 
 			// Print overview
-			fmt.Fprintln(w, overview)
-			fmt.Fprintln(w, strings.Repeat("-", 120))
+			if _, err := fmt.Fprintln(w, overview); err != nil {
+				gologger.Error().Msgf("Failed to write overview: %s", err)
+			}
+			if _, err := fmt.Fprintln(w, strings.Repeat("-", 120)); err != nil {
+				gologger.Error().Msgf("Failed to write separator: %s", err)
+			}
 
 			// Print command usage & flags (default Cobra output) before field table
-			fmt.Fprintln(w, "COMMAND USAGE & FLAGS")
-			fmt.Fprintln(w, strings.Repeat("-", 120))
-			fmt.Fprintln(w, cmd.UsageString())
+			if _, err := fmt.Fprintln(w, "COMMAND USAGE & FLAGS"); err != nil {
+				gologger.Error().Msgf("Failed to write section header: %s", err)
+			}
+			if _, err := fmt.Fprintln(w, strings.Repeat("-", 120)); err != nil {
+				gologger.Error().Msgf("Failed to write separator: %s", err)
+			}
+			if _, err := fmt.Fprintln(w, cmd.UsageString()); err != nil {
+				gologger.Error().Msgf("Failed to write usage string: %s", err)
+			}
 
 			// 2. Fetch filters via handler
 			h := filters.NewHandler(cvemapClient)
@@ -96,18 +106,28 @@ with --sort-asc/--sort-desc.`
 			tbl.Render()
 
 			// 4. Detailed sections for enum_values / examples
-			fmt.Fprintln(w, "\nADDITIONAL FIELD DETAILS")
-			fmt.Fprintln(w, strings.Repeat("-", 120))
+			if _, err := fmt.Fprintln(w, "\nADDITIONAL FIELD DETAILS"); err != nil {
+				gologger.Error().Msgf("Failed to write section header: %s", err)
+			}
+			if _, err := fmt.Fprintln(w, strings.Repeat("-", 120)); err != nil {
+				gologger.Error().Msgf("Failed to write separator: %s", err)
+			}
 			for _, f := range fltrs {
 				if len(f.EnumValues) == 0 && len(f.Examples) == 0 {
 					continue
 				}
-				fmt.Fprintf(w, "\n%s\n", strings.ToUpper(f.Field))
+				if _, err := fmt.Fprintf(w, "\n%s\n", strings.ToUpper(f.Field)); err != nil {
+					gologger.Error().Msgf("Failed to write field name: %s", err)
+				}
 				if len(f.EnumValues) > 0 {
-					fmt.Fprintf(w, "  Enum Values : %s\n", strings.Join(f.EnumValues, ", "))
+					if _, err := fmt.Fprintf(w, "  Enum Values : %s\n", strings.Join(f.EnumValues, ", ")); err != nil {
+						gologger.Error().Msgf("Failed to write enum values: %s", err)
+					}
 				}
 				if len(f.Examples) > 0 {
-					fmt.Fprintf(w, "  Examples    : %s\n", strings.Join(f.Examples, ", "))
+					if _, err := fmt.Fprintf(w, "  Examples    : %s\n", strings.Join(f.Examples, ", ")); err != nil {
+						gologger.Error().Msgf("Failed to write examples: %s", err)
+					}
 				}
 			}
 		},
