@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/projectdiscovery/cvemap/pkg/tools/id"
+	"github.com/projectdiscovery/cvemap/pkg/utils"
 )
 
 var ( //nolint
@@ -29,7 +30,7 @@ var ( //nolint
 				gologger.Fatal().Msgf("Failed to fetch vulnerability: %s", err)
 			}
 			header := fmt.Sprintf("Vulnerability ID: %s", vulnID)
-			if err := PrintColorYAML(vuln, header); err != nil {
+			if err := utils.PrintColorYAML(vuln, header); err != nil {
 				gologger.Fatal().Msgf("Failed to print colorized YAML: %s", err)
 			}
 		},
