@@ -14,6 +14,8 @@ endif
 all: build
 build:
 	$(GOBUILD) $(GOFLAGS) -ldflags '$(LDFLAGS)' -o "cvemap" cmd/cvemap/main.go
+build-vulnsh:
+	$(GOBUILD) $(GOFLAGS) -ldflags '$(LDFLAGS)' -o "vulnsh" cmd/vulnsh/main.go
 integration:
 	cd cmd/integration-test; bash run.sh
 tidy:

@@ -95,6 +95,9 @@ type Client struct {
 	apiKey    string
 	httpc     *retryablehttp.Client
 	userAgent string
+	// Optional debug hooks
+	debugRequest  func(*http.Request)
+	debugResponse func(*http.Response)
 }
 
 // New returns a new *Client* configured by the supplied *Option*s. At least one
@@ -169,6 +172,20 @@ func WithBaseURL(url string) Option {
 func WithRetryableHTTPOptions(clientOpts retryablehttp.Options) Option {
 	return func(c *Client) {
 		c.httpc = retryablehttp.NewClient(clientOpts)
+	}
+}
+
+// WithDebugRequest sets a callback that is invoked with the *http.Request before it is sent.
+func WithDebugRequest(cb func(*http.Request)) Option {
+	return func(c *Client) {
+		c.debugRequest = cb
+	}
+}
+
+// WithDebugResponse sets a callback that is invoked with the *http.Response after it is received (before decoding).
+func WithDebugResponse(cb func(*http.Response)) Option {
+	return func(c *Client) {
+		c.debugResponse = cb
 	}
 }
 
@@ -264,9 +281,15 @@ func (c *Client) newRequest(ctx context.Context, method, path string, query url.
 
 // do executes the HTTP request and decodes the JSON response.
 func (c *Client) do(req *http.Request, out any) error {
+	if c.debugRequest != nil {
+		c.debugRequest(req)
+	}
 	resp, err := c.httpc.HTTPClient.Do(req)
 	if err != nil {
 		return errkit.Append(ErrRequestFailed, err)
+	}
+	if c.debugResponse != nil {
+		c.debugResponse(resp)
 	}
 	defer resp.Body.Close()
 
