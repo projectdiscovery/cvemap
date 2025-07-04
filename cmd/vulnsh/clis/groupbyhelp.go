@@ -46,13 +46,13 @@ Example invocations:
                 -q 'template_coverage:planned || template_coverage:covered'
 `
 
-			// Use a pager when available
-			w, closePager, err := utils.OpenPager(noPager)
-			if err != nil {
-				w = nopWriteCloser{Writer: cmd.OutOrStdout()}
-				closePager = func() error { return nil }
-			}
-			defer closePager()
+					// Use a pager when available
+		w, closePager, err := utils.OpenPager(noPager)
+		if err != nil {
+			w = nopWriteCloser{Writer: cmd.OutOrStdout()}
+			closePager = func() error { return nil }
+		}
+		defer func() { _ = closePager() }()
 
 			// Print overview
 			fmt.Fprintln(w, overview)

@@ -103,13 +103,13 @@ Global flags:
 				return
 			}
 
-			// Render facet tables
-			w, closePager, err := utils.OpenPager(noPager)
-			if err != nil {
-				w = os.Stdout
-				closePager = func() error { return nil }
-			}
-			defer closePager()
+					// Render facet tables
+		w, closePager, err := utils.OpenPager(noPager)
+		if err != nil {
+			w = os.Stdout
+			closePager = func() error { return nil }
+		}
+		defer func() { _ = closePager() }()
 
 			for facetName, facetAny := range resp.Facets {
 				fmt.Fprintf(w, "\nField: %s\n", facetName)
