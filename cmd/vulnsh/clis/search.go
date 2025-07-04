@@ -212,5 +212,7 @@ func init() { // Register flags and add command to rootCmd
 	searchCmd.Flags().IntVar(&searchFacetSize, "facet-size", 10, "Number of facet buckets to return")
 	searchCmd.SetHelpFunc(searchHelpCmd.Run)
 
+
+
 	rootCmd.AddCommand(searchCmd)
 }

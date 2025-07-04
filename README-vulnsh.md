@@ -1,586 +1,232 @@
-# vulnsh - The Swiss Army Knife for Vulnerability Intel
+# vulnsh - The Swiss Army Knife for Vulnerability Intelligence
+
+> **Modern CLI for exploring CVE data with powerful search, filtering, and analysis capabilities**
 
 <p align="center">
-  <img src="static/cvemap.png" alt="vulnsh" width="300px">
+  <img src="static/cvemap.png" alt="vulnsh" width="200px">
 </p>
 
-**vulnsh** is a modern, powerful command-line interface for navigating and exploring vulnerability data from the ProjectDiscovery Vulnerability Database. It provides intuitive commands for searching, filtering, and analyzing CVE information with support for advanced faceted search, aggregations, and multiple output formats.
-
-## Table of Contents
-
-- [Features](#features)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Commands](#commands)
-  - [search](#search-command)
-  - [id](#id-command)
-  - [groupby](#groupby-command)
-  - [auth](#auth-command)
-  - [version](#version-command)
-  - [healthcheck](#healthcheck-command)
-- [Global Flags](#global-flags)
-- [Examples](#examples)
-- [Output Formats](#output-formats)
-- [Advanced Usage](#advanced-usage)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-
-## Features
-
-- **🔍 Advanced Search**: Powerful Lucene-style query syntax with faceted search capabilities
-- **📊 Aggregations**: Group vulnerabilities by any field using the `groupby` command
-- **🎯 Precise Lookups**: Get detailed information for specific CVEs using the `id` command
-- **🔄 Multiple Output Formats**: Support for both human-readable YAML and machine-readable JSON
-- **📄 Pagination**: Handle large result sets with offset and limit controls
-- **🎨 Rich Terminal Output**: Colorized YAML output with paging support
-- **🔧 Flexible Configuration**: Extensive flag support for customizing behavior
-- **📋 Comprehensive Help**: Detailed help system with dynamic field information
-
-## Installation
-
-### From Source
+## Quick Start
 
 ```bash
-# Clone the repository
-git clone https://github.com/projectdiscovery/cvemap.git
-cd cvemap
+# 1. Get vulnsh
+go install github.com/projectdiscovery/cvemap/cmd/vulnsh@latest
 
-# Build vulnsh
-make build-vulnsh
+# 2. Explore commands (no API key needed for help)
+vulnsh --help
+vulnsh search --help
 
-# Move to PATH (optional)
-sudo mv vulnsh /usr/local/bin/
+# 3. Set up your API key (free at https://cloud.projectdiscovery.io)
+vulnsh auth
+
+# 4. Start exploring vulnerabilities
+vulnsh search apache
+vulnsh id CVE-2021-44228
 ```
 
-### Using Go Install
+## What vulnsh Does
 
+**Search vulnerabilities with precision:**
 ```bash
-go install github.com/projectdiscovery/cvemap/cmd/vulnsh@latest
+vulnsh search severity:critical is_remote:true
+vulnsh search "apache OR nginx" --limit 20
+vulnsh search cvss_score:>8.0 cve_created_at:2024
+```
+
+**Get detailed vulnerability info:**
+```bash
+vulnsh id CVE-2021-44228
+vulnsh id CVE-2024-1234 --json
+```
+
+**Analyze vulnerability patterns:**
+```bash
+vulnsh groupby --fields severity
+vulnsh groupby --fields affected_products.vendor
+```
+
+## Core Commands
+
+| Command | Purpose | Example |
+|---------|---------|---------|
+| `search` | Find vulnerabilities with advanced filters | `vulnsh search apache severity:high` |
+| `id` | Get details for specific CVE | `vulnsh id CVE-2021-44228` |
+| `groupby` | Aggregate data by fields | `vulnsh groupby -f severity` |
+| `auth` | Configure API access | `vulnsh auth` |
+| `version` | Show version info | `vulnsh version` |
+| `healthcheck` | Test connectivity | `vulnsh healthcheck` |
+
+## Essential Options
+
+**Output formats:**
+```bash
+vulnsh search apache --json              # Machine-readable JSON
+vulnsh search apache --output results.json  # Save to file
+vulnsh search apache --silent            # Quiet output
+```
+
+**Search control:**
+```bash
+vulnsh search apache --limit 50          # Get 50 results
+vulnsh search apache --sort-desc cvss_score  # Sort by CVSS score
+vulnsh search apache --fields cve_id,severity  # Specific fields only
+```
+
+**Advanced search:**
+```bash
+vulnsh search --term-facets severity=5,tags=10 apache
+vulnsh search --range-facets numeric:cvss_score:high:8:10 remote
+```
+
+## Common Search Patterns
+
+**Find high-risk vulnerabilities:**
+```bash
+vulnsh search severity:critical is_remote:true is_kev:true
+```
+
+**Search by technology:**
+```bash
+vulnsh search apache                     # Apache vulnerabilities  
+vulnsh search "apache OR nginx"          # Multiple technologies
+vulnsh search affected_products.vendor:microsoft  # By vendor
+```
+
+**Filter by severity and scores:**
+```bash
+vulnsh search severity:high              # High severity
+vulnsh search cvss_score:>7.0            # CVSS score above 7
+vulnsh search epss_score:>0.8            # High EPSS score
+```
+
+**Time-based searches:**
+```bash
+vulnsh search cve_created_at:2024        # Published in 2024
+vulnsh search cve_created_at:[2024-01-01 TO 2024-06-30]  # Date range
+```
+
+**Find exploitable vulnerabilities:**
+```bash
+vulnsh search is_poc:true                # Has proof of concept
+vulnsh search is_kev:true                # Known exploited vulns
+vulnsh search is_template:true           # Has Nuclei templates
+```
+
+## Useful Field Names
+
+| Field | Description | Example Values |
+|-------|-------------|----------------|
+| `severity` | Vulnerability severity | `low`, `medium`, `high`, `critical` |
+| `cvss_score` | CVSS score (0-10) | `7.5`, `>8.0`, `[7 TO 9]` |
+| `cve_id` | CVE identifier | `CVE-2021-44228` |
+| `is_remote` | Remotely exploitable | `true`, `false` |
+| `is_kev` | Known exploited vuln | `true`, `false` |
+| `is_poc` | Has proof of concept | `true`, `false` |
+| `affected_products.vendor` | Vendor name | `apache`, `microsoft` |
+| `affected_products.product` | Product name | `tomcat`, `windows` |
+| `cve_created_at` | Publication date | `2024`, `2024-01-01` |
+
+## Query Syntax
+
+**Basic searches:**
+```bash
+vulnsh search apache                     # Simple term
+vulnsh search "remote code execution"    # Phrase search
+vulnsh search severity:critical          # Field search
+```
+
+**Boolean logic:**
+```bash
+vulnsh search apache AND nginx           # Both terms
+vulnsh search apache OR nginx            # Either term  
+vulnsh search apache NOT tomcat          # Exclude term
+vulnsh search "(apache OR nginx) AND severity:high"  # Grouped
+```
+
+**Ranges and wildcards:**
+```bash
+vulnsh search cvss_score:>8.0            # Greater than
+vulnsh search cvss_score:[7 TO 9]        # Range
+vulnsh search apache*                    # Wildcard
 ```
 
 ## Configuration
 
-vulnsh requires a ProjectDiscovery Cloud Platform (PDCP) API key to access the vulnerability database.
-
-### Environment Variable
-
+**Set up authentication:**
 ```bash
-export PDCP_API_KEY="your-api-key-here"
+vulnsh auth                              # Interactive setup
+export PDCP_API_KEY="your-key-here"     # Environment variable
 ```
 
-### Getting an API Key
-
-1. Sign up at [ProjectDiscovery Cloud Platform](https://cloud.projectdiscovery.io/)
-2. Navigate to your dashboard
-3. Generate a new API key
-4. Export it as the `PDCP_API_KEY` environment variable
-
-## Commands
-
-### search Command
-
-The `search` command provides powerful full-text and faceted search across the vulnerability database.
-
+**Global options:**
 ```bash
-vulnsh search [query] [flags]
-```
-
-#### Search Flags
-
-| Flag | Short | Description | Example |
-|------|-------|-------------|---------|
-| `--limit` | `-n` | Number of results to return | `--limit 50` |
-| `--offset` | | Offset for pagination | `--offset 100` |
-| `--sort-asc` | | Field to sort ascending | `--sort-asc cvss_score` |
-| `--sort-desc` | | Field to sort descending | `--sort-desc cve_created_at` |
-| `--fields` | | Fields to include in response | `--fields cve_id,severity,cvss_score` |
-| `--term-facets` | | Term facets to calculate | `--term-facets severity=5,tags=10` |
-| `--range-facets` | | Range facets to calculate | `--range-facets numeric:cvss_score:high:8:10` |
-| `--highlight` | | Return search highlights | `--highlight` |
-| `--facet-size` | | Number of facet buckets | `--facet-size 20` |
-
-#### Search Examples
-
-```bash
-# Basic search for KEV vulnerabilities
-vulnsh search is_kev:true
-
-# Search with pagination
-vulnsh search --limit 20 --offset 40 apache
-
-# Search with sorting
-vulnsh search --sort-desc cvss_score --limit 10 severity:critical
-
-# Search with facets
-vulnsh search --term-facets severity=5,tags=10 is_template:true
-
-# Complex query with range facets
-vulnsh search --range-facets numeric:cvss_score:high:8:10 "apache AND remote"
-```
-
-### id Command
-
-Get detailed information about a specific vulnerability by its ID.
-
-```bash
-vulnsh id <vulnerability-id>
-```
-
-#### ID Examples
-
-```bash
-# Get details for a specific CVE
-vulnsh id CVE-2024-1234
-
-# Get details with JSON output
-vulnsh id --json CVE-2024-1234
-
-# Save details to file
-vulnsh id --output vuln-details.json CVE-2024-1234
-```
-
-### groupby Command
-
-Perform GROUP BY-style aggregations on vulnerability data using term facets.
-
-```bash
-vulnsh groupby [flags]
-```
-
-#### Groupby Flags
-
-| Flag | Short | Description | Example |
-|------|-------|-------------|---------|
-| `--fields` | `-f` | Fields to group by (required) | `--fields severity,tags` |
-| `--facet-size` | | Number of buckets per facet | `--facet-size 15` |
-| `--query` | `-q` | Filter query before grouping | `--query "is_template:true"` |
-
-#### Groupby Examples
-
-```bash
-# Group by severity
-vulnsh groupby --fields severity
-
-# Group by multiple fields
-vulnsh groupby --fields severity,tags --facet-size 5
-
-# Group with pre-filtering
-vulnsh groupby --fields affected_products.vendor --query "is_kev:true"
-```
-
-### auth Command
-
-Configure your ProjectDiscovery Cloud Platform API key interactively.
-
-```bash
-vulnsh auth
-```
-
-#### Auth Examples
-
-```bash
-# Configure API key interactively
-vulnsh auth
-
-# The command will prompt you to enter your API key
-# and validate it with the ProjectDiscovery API
-```
-
-### version Command
-
-Show vulnsh version and check for updates.
-
-```bash
-vulnsh version [flags]
-```
-
-#### Version Flags
-
-| Flag | Description |
-|------|-------------|
-| `--disable-update-check` | Disable automatic update check |
-
-#### Version Examples
-
-```bash
-# Show version and check for updates
-vulnsh version
-
-# Show version without update check
-vulnsh version --disable-update-check
-```
-
-### healthcheck Command
-
-Check vulnsh health and connectivity to the API.
-
-```bash
-vulnsh healthcheck
-```
-
-#### Healthcheck Examples
-
-```bash
-# Run health check
-vulnsh healthcheck
-
-# Short alias
-vulnsh hc
-
-# Run with verbose output
-vulnsh healthcheck --verbose
-```
-
-## Global Flags
-
-These flags are available for all commands:
-
-| Flag | Short | Description | Default |
-|------|-------|-------------|---------|
-| `--json` | `-j` | Output raw JSON | `false` |
-| `--output` | `-o` | Write output to file | |
-| `--silent` | | Suppress banner and non-essential output | `false` |
-| `--verbose` | `-v` | Enable verbose logging | `false` |
-| `--debug` | `-d` | Enable debug logging | `false` |
-| `--no-pager` | | Disable pager for output | `false` |
-| `--proxy` | | HTTP proxy URL | |
-| `--timeout` | | HTTP request timeout | `30s` |
-| `--debug-req` | | Dump HTTP requests | `false` |
-| `--debug-resp` | | Dump HTTP responses | `false` |
-
-## Examples
-
-### Basic Usage
-
-```bash
-# Configure API key (first time setup)
-vulnsh auth
-
-# Check system health
-vulnsh healthcheck
-
-# Search for critical vulnerabilities
-vulnsh search severity:critical
-
-# Get all Apache vulnerabilities from 2024
-vulnsh search apache AND cve_created_at:2024
-
-# Find remote exploitable vulnerabilities
-vulnsh search is_remote:true AND is_poc:true
-
-# Check version
-vulnsh version
-```
-
-### Advanced Queries
-
-```bash
-# Search with complex Boolean logic
-vulnsh search "(apache OR nginx) AND severity:high AND is_kev:true"
-
-# Search with CVSS score range
-vulnsh search cvss_score:>8.0 AND cvss_score:<=10.0
-
-# Search by specific fields
-vulnsh search --fields cve_id,severity,cvss_score,description severity:critical
-```
-
-### Faceted Search
-
-```bash
-# Get severity distribution
-vulnsh search --term-facets severity=10 is_template:true
-
-# Get vulnerability counts by year
-vulnsh search --range-facets date:cve_created_at:2020:2024 
-
-# Multiple facets with filtering
-vulnsh search --term-facets severity=5,tags=10 \
-              --range-facets numeric:cvss_score:high:8:10 \
-              is_remote:true
-```
-
-### Aggregations
-
-```bash
-# Group vulnerabilities by severity
-vulnsh groupby -f severity
-
-# Group by vendor and product
-vulnsh groupby -f affected_products.vendor,affected_products.product
-
-# Group with filtering
-vulnsh groupby -f severity -q "cve_created_at:2024 AND is_kev:true"
-```
-
-### Output Formats
-
-```bash
-# Human-readable YAML (default)
-vulnsh search apache
-
-# Machine-readable JSON
-vulnsh search --json apache
-
-# Save to file
-vulnsh search --output apache-vulns.json apache
-
-# Suppress banner for scripting
-vulnsh search --silent --json apache
-```
-
-## Output Formats
-
-### YAML Output (Default)
-
-vulnsh provides colorized, human-readable YAML output by default:
-
-```yaml
-count: 1247
-vulnerabilities:
-  - cve_id: CVE-2024-1234
-    severity: critical
-    cvss_score: 9.8
-    description: "Remote code execution vulnerability..."
-    # ... more fields
-```
-
-### JSON Output
-
-Use `--json` flag for machine-readable JSON output:
-
-```json
-{
-  "count": 1247,
-  "vulnerabilities": [
-    {
-      "cve_id": "CVE-2024-1234",
-      "severity": "critical",
-      "cvss_score": 9.8,
-      "description": "Remote code execution vulnerability..."
-    }
-  ]
-}
-```
-
-## Advanced Usage
-
-### Pagination
-
-Handle large result sets with pagination:
-
-```bash
-# Get first 50 results
-vulnsh search --limit 50 apache
-
-# Get next 50 results
-vulnsh search --limit 50 --offset 50 apache
-
-# Get results 201-250
-vulnsh search --limit 50 --offset 200 apache
-```
-
-### Field Selection
-
-Optimize payload size by selecting specific fields:
-
-```bash
-# Only get essential fields
-vulnsh search --fields cve_id,severity,cvss_score apache
-
-# Get all fields (default behavior)
-vulnsh search apache
-```
-
-### Sorting
-
-Sort results by any sortable field:
-
-```bash
-# Sort by CVSS score (descending)
-vulnsh search --sort-desc cvss_score apache
-
-# Sort by creation date (ascending)
-vulnsh search --sort-asc cve_created_at apache
-```
-
-### Proxy Support
-
-Use vulnsh behind a proxy:
-
-```bash
-# HTTP proxy
-vulnsh --proxy http://proxy.example.com:8080 search apache
-
-# HTTPS proxy
-vulnsh --proxy https://proxy.example.com:8080 search apache
-```
-
-### Debug Mode
-
-Enable debug mode for troubleshooting:
-
-```bash
-# Enable debug logging
-vulnsh --debug search apache
-
-# Dump HTTP requests and responses
-vulnsh --debug-req --debug-resp search apache
+vulnsh --json search apache              # JSON output
+vulnsh --silent search apache            # No banner
+vulnsh --no-pager search apache          # No paging
+vulnsh --timeout 60s search apache       # Custom timeout
 ```
 
 ## Troubleshooting
 
-### Common Issues
-
-#### Authentication Error
-
+**API key issues:**
 ```
-Error: unauthorized: invalid or missing API key
+Error: api key is required
+→ Run: vulnsh auth
 ```
 
-**Solution**: Ensure your PDCP API key is properly set:
+**Help commands requiring API key:**
+```
+Error: api key is required (when running vulnsh search --help)
+→ This is a known limitation. Either:
+  1. Set up API key first: vulnsh auth
+  2. Use this documentation for command help
+```
+
+**No results:**
 ```bash
-export PDCP_API_KEY="your-api-key-here"
+vulnsh search is_kev:true --limit 1      # Test with known results
+vulnsh healthcheck                       # Check connectivity
 ```
 
-#### Connection Timeout
-
-```
-Error: request failed: context deadline exceeded
-```
-
-**Solution**: Increase timeout or check network connectivity:
+**Large result sets:**
 ```bash
-vulnsh --timeout 60s search apache
+vulnsh search apache --limit 100         # Increase limit
+vulnsh search apache --offset 100        # Pagination
+vulnsh search --fields cve_id,severity apache  # Fewer fields
 ```
 
-#### Large Result Sets
-
-For very large result sets, consider:
-- Using pagination with `--limit` and `--offset`
-- Filtering with more specific queries
-- Using `--fields` to reduce payload size
-
-#### Output File Exists
-
-```
-Error: Output file already exists: results.json
-```
-
-**Solution**: vulnsh prevents accidental overwrites. Remove the existing file first:
+**Connection issues:**
 ```bash
-rm results.json
-vulnsh search --output results.json apache
+vulnsh --timeout 60s search apache       # Increase timeout
+vulnsh --proxy http://proxy:8080 search apache  # Use proxy
+vulnsh --debug search apache             # Debug mode
 ```
 
-### Getting Help
+## Getting Help
 
+**Main help (no API key required):**
 ```bash
-# General help
-vulnsh --help
-
-# Command-specific help
-vulnsh search --help
-vulnsh id --help
-vulnsh groupby --help
-
-# Detailed search help with available fields
-vulnsh search help
+vulnsh --help                           # All commands overview
+vulnsh version --disable-update-check   # Version info
 ```
 
-## Query Syntax
-
-vulnsh supports Lucene-style query syntax:
-
-### Basic Queries
-
+**Command help (requires API key):**
 ```bash
-# Simple term search
-vulnsh search apache
-
-# Phrase search
-vulnsh search "remote code execution"
-
-# Field-specific search
-vulnsh search severity:critical
+vulnsh search --help                    # Search command help  
+vulnsh id --help                        # ID command help
+vulnsh groupby --help                   # Groupby command help
+vulnsh search help                      # Detailed search fields
+vulnsh groupby help                     # Available groupby fields
 ```
 
-### Boolean Operators
+> **Note:** Currently, command-specific help requires API authentication. Run `vulnsh auth` first to set up your API key.
 
-```bash
-# AND operator
-vulnsh search apache AND nginx
+## Tips
 
-# OR operator
-vulnsh search apache OR nginx
+- Start with broad searches, then narrow down with filters
+- Use `--json` for scripting and automation
+- Combine multiple filters for precise results
+- Use `groupby` to understand data patterns
+- Save frequently used queries as shell aliases
 
-# NOT operator
-vulnsh search apache NOT nginx
-
-# Grouping with parentheses
-vulnsh search "(apache OR nginx) AND severity:high"
-```
-
-### Range Queries
-
-```bash
-# Numeric ranges
-vulnsh search cvss_score:>8.0
-vulnsh search cvss_score:[7.0 TO 9.0]
-
-# Date ranges
-vulnsh search cve_created_at:2024
-vulnsh search cve_created_at:[2024-01-01 TO 2024-12-31]
-```
-
-### Wildcard Queries
-
-```bash
-# Wildcard matching
-vulnsh search apache*
-vulnsh search *injection*
-
-# Single character wildcard
-vulnsh search apach?
-```
-
-## Common Field Names
-
-Here are some commonly used field names for queries:
-
-- `cve_id` - CVE identifier
-- `severity` - Vulnerability severity (low, medium, high, critical)
-- `cvss_score` - CVSS score (0.0-10.0)
-- `description` - Vulnerability description
-- `is_kev` - Known Exploited Vulnerability (true/false)
-- `is_remote` - Remotely exploitable (true/false)
-- `is_poc` - Proof of concept available (true/false)
-- `is_template` - Nuclei template available (true/false)
-- `cve_created_at` - CVE creation date
-- `affected_products.vendor` - Affected product vendor
-- `affected_products.product` - Affected product name
-- `tags` - Associated tags
-
-For a complete list of available fields, use:
-```bash
-vulnsh search help
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Support
-
-- 🐛 Report bugs: [GitHub Issues](https://github.com/projectdiscovery/cvemap/issues)
-- 💬 Get help: [Discord Community](https://discord.gg/projectdiscovery)
-- 📖 Documentation: [docs.projectdiscovery.io](https://docs.projectdiscovery.io)
-- 🔗 Website: [projectdiscovery.io](https://projectdiscovery.io)
+For advanced usage patterns and examples, see [USAGE.md](USAGE.md).
