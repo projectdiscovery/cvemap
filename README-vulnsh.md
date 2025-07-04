@@ -15,6 +15,9 @@
   - [search](#search-command)
   - [id](#id-command)
   - [groupby](#groupby-command)
+  - [auth](#auth-command)
+  - [version](#version-command)
+  - [healthcheck](#healthcheck-command)
 - [Global Flags](#global-flags)
 - [Examples](#examples)
 - [Output Formats](#output-formats)
@@ -165,6 +168,69 @@ vulnsh groupby --fields severity,tags --facet-size 5
 vulnsh groupby --fields affected_products.vendor --query "is_kev:true"
 ```
 
+### auth Command
+
+Configure your ProjectDiscovery Cloud Platform API key interactively.
+
+```bash
+vulnsh auth
+```
+
+#### Auth Examples
+
+```bash
+# Configure API key interactively
+vulnsh auth
+
+# The command will prompt you to enter your API key
+# and validate it with the ProjectDiscovery API
+```
+
+### version Command
+
+Show vulnsh version and check for updates.
+
+```bash
+vulnsh version [flags]
+```
+
+#### Version Flags
+
+| Flag | Description |
+|------|-------------|
+| `--disable-update-check` | Disable automatic update check |
+
+#### Version Examples
+
+```bash
+# Show version and check for updates
+vulnsh version
+
+# Show version without update check
+vulnsh version --disable-update-check
+```
+
+### healthcheck Command
+
+Check vulnsh health and connectivity to the API.
+
+```bash
+vulnsh healthcheck
+```
+
+#### Healthcheck Examples
+
+```bash
+# Run health check
+vulnsh healthcheck
+
+# Short alias
+vulnsh hc
+
+# Run with verbose output
+vulnsh healthcheck --verbose
+```
+
 ## Global Flags
 
 These flags are available for all commands:
@@ -187,6 +253,12 @@ These flags are available for all commands:
 ### Basic Usage
 
 ```bash
+# Configure API key (first time setup)
+vulnsh auth
+
+# Check system health
+vulnsh healthcheck
+
 # Search for critical vulnerabilities
 vulnsh search severity:critical
 
@@ -195,6 +267,9 @@ vulnsh search apache AND cve_created_at:2024
 
 # Find remote exploitable vulnerabilities
 vulnsh search is_remote:true AND is_poc:true
+
+# Check version
+vulnsh version
 ```
 
 ### Advanced Queries

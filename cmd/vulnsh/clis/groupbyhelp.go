@@ -98,9 +98,4 @@ Example invocations:
 	}
 )
 
-// Re-use nopWriteCloser from searchhelp.go when no pager is used.
-// If the type has already been declared in another file within the same
-// package, the compiler will merge the definitions.
-
-// Ensure we satisfy the io.WriteCloser interface when needed.
-func init() {} // intentionally empty to keep go vet happy
+// Note: nopWriteCloser is defined in searchhelp.go and reused here
