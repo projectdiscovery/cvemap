@@ -113,7 +113,7 @@ vulnsh search \
 				return
 			}
 
-			if err := utils.PrintYaml(resp); err != nil {
+			if err := utils.PrintYaml(resp, noPager); err != nil {
 				gologger.Fatal().Msgf("Failed to render YAML: %s", err)
 			}
 		},

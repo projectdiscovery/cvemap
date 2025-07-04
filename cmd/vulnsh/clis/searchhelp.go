@@ -36,7 +36,6 @@ ProjectDiscovery Vulnerability Database. It supports:
   • Field selection to minimise payload size
   • Term facets for categorical aggregations (e.g. tags, severity)
   • Range facets for numeric/date buckets (e.g. epss_score, cve_created_at)
-  • Optional result highlighting via --highlight
 
 Example invocations:
   # Top 20 remote, exploitable KEV vulns published in 2024
@@ -53,7 +52,7 @@ as "Facet" support term/range faceting. Fields marked "Sortable" can be used
 with --sort-asc/--sort-desc.`
 
 			// Use a pager when available
-			w, closePager, err := utils.OpenPager()
+			w, closePager, err := utils.OpenPager(noPager)
 			if err != nil {
 				// Fallback to stdout wrapped as io.WriteCloser
 				w = nopWriteCloser{Writer: cmd.OutOrStdout()}

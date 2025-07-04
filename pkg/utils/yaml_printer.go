@@ -82,8 +82,8 @@ func PrintColorYAMLTo(w io.Writer, v any, header ...string) error {
 // The first page shows summary (count/total/facets); each subsequent page shows
 // one vulnerability. Page boundaries are separated using the form-feed
 // `pageBreak` so pagers like `less` clear the screen between sections.
-func PrintYaml(resp cvemap.SearchResponse) error {
-	w, closePager, err := OpenPager()
+func PrintYaml(resp cvemap.SearchResponse, disablePager bool) error {
+	w, closePager, err := OpenPager(disablePager)
 	if err != nil {
 		w = os.Stdout
 		closePager = func() error { return nil }

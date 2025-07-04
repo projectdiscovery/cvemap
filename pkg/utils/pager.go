@@ -19,9 +19,9 @@ const pageBreak = "\f"
 // If paging is not possible (stdout is not a terminal or the pager cannot be
 // launched) the function degrades gracefully and simply returns os.Stdout so
 // the caller can continue writing directly to the console.
-func OpenPager() (io.WriteCloser, func() error, error) {
-	// If stdout isn't a terminal (piped to file/program) don't page.
-	if !isatty.IsTerminal(os.Stdout.Fd()) {
+func OpenPager(disablePager bool) (io.WriteCloser, func() error, error) {
+	// If pager is disabled or stdout isn't a terminal (piped to file/program) don't page.
+	if disablePager || !isatty.IsTerminal(os.Stdout.Fd()) {
 		return os.Stdout, func() error { return nil }, nil
 	}
 

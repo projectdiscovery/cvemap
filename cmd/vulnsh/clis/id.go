@@ -30,8 +30,14 @@ var ( //nolint
 				gologger.Fatal().Msgf("Failed to fetch vulnerability: %s", err)
 			}
 			header := fmt.Sprintf("Vulnerability ID: %s", vulnID)
-			if err := utils.PrintColorYAML(vuln, header); err != nil {
-				gologger.Fatal().Msgf("Failed to print colorized YAML: %s", err)
+			var printErr error
+			if noPager {
+				printErr = utils.PrintColorYAMLNoPager(vuln, header)
+			} else {
+				printErr = utils.PrintColorYAML(vuln, header)
+			}
+			if printErr != nil {
+				gologger.Fatal().Msgf("Failed to print colorized YAML: %s", printErr)
 			}
 		},
 	}

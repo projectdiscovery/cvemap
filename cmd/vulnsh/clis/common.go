@@ -32,6 +32,9 @@ var (
 	debugReq  bool
 	debugResp bool
 
+	// Add global noPager flag
+	noPager bool
+
 	rootCmd = &cobra.Command{
 		Use:   "vulnsh",
 		Short: "vulnsh — The Swiss Army knife for vulnerability intel",
@@ -52,6 +55,9 @@ func init() {
 
 	rootCmd.PersistentFlags().BoolVar(&debugReq, "debug-req", false, "Dump HTTP requests to stdout")
 	rootCmd.PersistentFlags().BoolVar(&debugResp, "debug-resp", false, "Dump HTTP responses to stdout")
+
+	// Add persistent no-pager flag
+	rootCmd.PersistentFlags().BoolVar(&noPager, "no-pager", false, "Disable use of pager for output")
 }
 
 // Execute executes the root command
