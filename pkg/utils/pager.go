@@ -25,6 +25,14 @@ func OpenPager(disablePager bool) (io.WriteCloser, func() error, error) {
 		return os.Stdout, func() error { return nil }, nil
 	}
 
+	// Check for required binaries: 'sh' and 'less'
+	if _, err := exec.LookPath("sh"); err != nil {
+		return os.Stdout, func() error { return nil }, nil
+	}
+	if _, err := exec.LookPath("less"); err != nil {
+		return os.Stdout, func() error { return nil }, nil
+	}
+
 	pager := os.Getenv("PAGER")
 	if pager == "" {
 		// -R keep colours, -N add line numbers, -M verbose status line

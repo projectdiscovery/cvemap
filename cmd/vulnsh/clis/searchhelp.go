@@ -60,8 +60,14 @@ with --sort-asc/--sort-desc.`
 			}
 			defer closePager()
 
+			// Print overview
 			fmt.Fprintln(w, overview)
 			fmt.Fprintln(w, strings.Repeat("-", 120))
+
+			// Print command usage & flags (default Cobra output) before field table
+			fmt.Fprintln(w, "COMMAND USAGE & FLAGS")
+			fmt.Fprintln(w, strings.Repeat("-", 120))
+			fmt.Fprintln(w, cmd.UsageString())
 
 			// 2. Fetch filters via handler
 			h := filters.NewHandler(cvemapClient)

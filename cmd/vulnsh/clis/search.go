@@ -37,7 +37,7 @@ Global flags:
 `,
 		Example: `
 # Search help
-vulnsh search help
+vulnsh help search
 
 # Basic search for only KEV vulnerabilities
 vulnsh search is_kev:true
