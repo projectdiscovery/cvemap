@@ -3,6 +3,7 @@ package clis
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 
@@ -69,6 +70,11 @@ vulnsh search \
 		Run: func(cmd *cobra.Command, args []string) {
 			query := strings.Join(args, " ")
 			query = strings.TrimSpace(query)
+
+			// Input validation
+			if err := validateSearchInputs(); err != nil {
+				gologger.Fatal().Msgf("Invalid input: %s", err)
+			}
 
 			params := cvemap.SearchParams{}
 
@@ -162,6 +168,38 @@ vulnsh search \
 	}
 )
 
+// validateSearchInputs performs input validation for search command
+func validateSearchInputs() error {
+	// Validate limit
+	if searchLimit < 0 || searchLimit > 10000 {
+		return fmt.Errorf("limit must be between 0 and 10000")
+	}
+	
+	// Validate offset
+	if searchOffset < 0 {
+		return fmt.Errorf("offset must be non-negative")
+	}
+	
+	// Validate conflicting sort options
+	if searchSortAsc != "" && searchSortDesc != "" {
+		return fmt.Errorf("cannot specify both --sort-asc and --sort-desc")
+	}
+	
+	// Validate facet size
+	if searchFacetSize < 1 || searchFacetSize > 1000 {
+		return fmt.Errorf("facet-size must be between 1 and 1000")
+	}
+	
+	// Validate output file path if specified
+	if outputFile != "" {
+		if !strings.HasSuffix(outputFile, ".json") {
+			return fmt.Errorf("output file must have .json extension")
+		}
+	}
+	
+	return nil
+}
+
 func init() { // Register flags and add command to rootCmd
 	searchCmd.Flags().IntVarP(&searchLimit, "limit", "n", 10, "Number of results to return (0 = server default)")
 	searchCmd.Flags().IntVar(&searchOffset, "offset", 0, "Offset for pagination (start position)")
@@ -173,6 +211,8 @@ func init() { // Register flags and add command to rootCmd
 	searchCmd.Flags().BoolVar(&searchHighlight, "highlight", false, "Return search highlights where supported")
 	searchCmd.Flags().IntVar(&searchFacetSize, "facet-size", 10, "Number of facet buckets to return")
 	searchCmd.SetHelpFunc(searchHelpCmd.Run)
+
+
 
 	rootCmd.AddCommand(searchCmd)
 }

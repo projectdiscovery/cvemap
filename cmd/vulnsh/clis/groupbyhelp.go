@@ -46,13 +46,13 @@ Example invocations:
                 -q 'template_coverage:planned || template_coverage:covered'
 `
 
-			// Use a pager when available
-			w, closePager, err := utils.OpenPager(noPager)
-			if err != nil {
-				w = nopWriteCloser{Writer: cmd.OutOrStdout()}
-				closePager = func() error { return nil }
-			}
-			defer closePager()
+					// Use a pager when available
+		w, closePager, err := utils.OpenPager(noPager)
+		if err != nil {
+			w = nopWriteCloser{Writer: cmd.OutOrStdout()}
+			closePager = func() error { return nil }
+		}
+		defer func() { _ = closePager() }()
 
 			// Print overview
 			fmt.Fprintln(w, overview)
@@ -98,9 +98,4 @@ Example invocations:
 	}
 )
 
-// Re-use nopWriteCloser from searchhelp.go when no pager is used.
-// If the type has already been declared in another file within the same
-// package, the compiler will merge the definitions.
-
-// Ensure we satisfy the io.WriteCloser interface when needed.
-func init() {} // intentionally empty to keep go vet happy
+// Note: nopWriteCloser is defined in searchhelp.go and reused here

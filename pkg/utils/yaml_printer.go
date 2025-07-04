@@ -88,7 +88,7 @@ func PrintYaml(resp cvemap.SearchResponse, disablePager bool) error {
 		w = os.Stdout
 		closePager = func() error { return nil }
 	}
-	defer closePager()
+	defer func() { _ = closePager() }()
 
 	// 1. Summary page
 	summary := struct {

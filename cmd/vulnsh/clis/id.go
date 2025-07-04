@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/projectdiscovery/cvemap"
 	"github.com/projectdiscovery/gologger"
@@ -38,6 +39,12 @@ vulnsh id --output vuln.json CVE-2024-1234
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			vulnID := args[0]
+			
+			// Input validation
+			if err := validateIDInputs(vulnID); err != nil {
+				gologger.Fatal().Msgf("Invalid input: %s", err)
+			}
+			
 			// Use the global cvemapClient
 			handler := id.NewHandler(cvemapClient)
 			vuln, err := handler.Get(vulnID)
@@ -89,6 +96,28 @@ vulnsh id --output vuln.json CVE-2024-1234
 		},
 	}
 )
+
+// validateIDInputs performs input validation for id command
+func validateIDInputs(vulnID string) error {
+	// Basic CVE ID format validation
+	if vulnID == "" {
+		return fmt.Errorf("vulnerability ID cannot be empty")
+	}
+	
+	// Check for reasonable length
+	if len(vulnID) < 3 || len(vulnID) > 50 {
+		return fmt.Errorf("vulnerability ID length must be between 3 and 50 characters")
+	}
+	
+	// Validate output file path if specified
+	if outputFile != "" {
+		if !strings.HasSuffix(outputFile, ".json") {
+			return fmt.Errorf("output file must have .json extension")
+		}
+	}
+	
+	return nil
+}
 
 func init() {
 	rootCmd.AddCommand(idCmd)

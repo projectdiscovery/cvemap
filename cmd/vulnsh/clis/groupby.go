@@ -52,8 +52,9 @@ Global flags:
 				return
 			}
 
-			if len(groupbyFields) == 0 {
-				gologger.Fatal().Msg("At least one --fields value is required")
+			// Input validation
+			if err := validateGroupbyInputs(); err != nil {
+				gologger.Fatal().Msgf("Invalid input: %s", err)
 			}
 
 			params := groupbytool.Params{
@@ -102,13 +103,13 @@ Global flags:
 				return
 			}
 
-			// Render facet tables
-			w, closePager, err := utils.OpenPager(noPager)
-			if err != nil {
-				w = os.Stdout
-				closePager = func() error { return nil }
-			}
-			defer closePager()
+					// Render facet tables
+		w, closePager, err := utils.OpenPager(noPager)
+		if err != nil {
+			w = os.Stdout
+			closePager = func() error { return nil }
+		}
+		defer func() { _ = closePager() }()
 
 			for facetName, facetAny := range resp.Facets {
 				fmt.Fprintf(w, "\nField: %s\n", facetName)
@@ -169,6 +170,28 @@ Global flags:
 		},
 	}
 )
+
+// validateGroupbyInputs performs input validation for groupby command
+func validateGroupbyInputs() error {
+	// Validate fields
+	if len(groupbyFields) == 0 {
+		return fmt.Errorf("at least one --fields value is required")
+	}
+	
+	// Validate facet size
+	if groupbyFacetSize < 1 || groupbyFacetSize > 1000 {
+		return fmt.Errorf("facet-size must be between 1 and 1000")
+	}
+	
+	// Validate output file path if specified
+	if outputFile != "" {
+		if !strings.HasSuffix(outputFile, ".json") {
+			return fmt.Errorf("output file must have .json extension")
+		}
+	}
+	
+	return nil
+}
 
 func init() { // Register flags and add command to rootCmd
 	groupbyCmd.Flags().StringSliceVarP(&groupbyFields, "fields", "f", nil, "Fields to calculate (comma-separated)")

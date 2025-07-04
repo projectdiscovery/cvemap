@@ -51,14 +51,14 @@ Below is a list of all fields that can be used in search queries. Fields marked
 as "Facet" support term/range faceting. Fields marked "Sortable" can be used
 with --sort-asc/--sort-desc.`
 
-			// Use a pager when available
-			w, closePager, err := utils.OpenPager(noPager)
-			if err != nil {
-				// Fallback to stdout wrapped as io.WriteCloser
-				w = nopWriteCloser{Writer: cmd.OutOrStdout()}
-				closePager = func() error { return nil }
-			}
-			defer closePager()
+					// Use a pager when available
+		w, closePager, err := utils.OpenPager(noPager)
+		if err != nil {
+			// Fallback to stdout wrapped as io.WriteCloser
+			w = nopWriteCloser{Writer: cmd.OutOrStdout()}
+			closePager = func() error { return nil }
+		}
+		defer func() { _ = closePager() }()
 
 			// Print overview
 			fmt.Fprintln(w, overview)
