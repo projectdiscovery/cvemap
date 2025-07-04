@@ -5,11 +5,11 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/projectdiscovery/cvemap"
+	"github.com/projectdiscovery/cvemap/pkg/tools/agentvulnx"
 	"github.com/projectdiscovery/cvemap/pkg/tools/filters"
 	"github.com/projectdiscovery/cvemap/pkg/tools/groupby"
 	"github.com/projectdiscovery/cvemap/pkg/tools/id"
 	"github.com/projectdiscovery/cvemap/pkg/tools/search"
-	"github.com/projectdiscovery/cvemap/pkg/tools/templates"
 )
 
 // MCPTool is the interface all tools must implement for MCP support.
@@ -27,10 +27,11 @@ func AllMCPTools(client *cvemap.Client) []MCPTool {
 		groupby.NewHandler(client),
 		id.NewHandler(client),
 		search.NewHandler(client),
+		agentvulnx.NewHandler(client),
 	}
 }
 
-// AllMCPPrompts returns all prompt templates for ProjectDiscovery vulnerability.sh (vulnsh) MCP integration.
-func AllMCPPrompts(client *cvemap.Client) []templates.PromptTemplate {
-	return templates.AllPromptTemplates(client)
-}
+// // AllMCPPrompts returns all prompt templates for ProjectDiscovery vulnerability.sh (vulnsh) MCP integration.
+// func AllMCPPrompts(client *cvemap.Client) []templates.PromptTemplate {
+// 	return templates.AllPromptTemplates(client)
+// }

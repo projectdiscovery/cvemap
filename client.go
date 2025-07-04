@@ -327,19 +327,19 @@ func (c *Client) handleAPIError(resp *http.Response) error {
 	if unmarshalErr == nil {
 		// Check for common error message keys
 		if errMsg, ok := errorBody["error"]; ok {
-			detailedErr = errkit.New("api error (%s): %v", resp.Status, errMsg)
+			detailedErr = errkit.New("api error", "status_code", resp.StatusCode, "error", errMsg)
 		} else if errMsg, ok := errorBody["msg"]; ok {
-			detailedErr = errkit.New("api error (%s): %v", resp.Status, errMsg)
+			detailedErr = errkit.New("api error", "status_code", resp.StatusCode, "error", errMsg)
 		} else if errMsg, ok := errorBody["message"]; ok {
-			detailedErr = errkit.New("api error (%s): %v", resp.Status, errMsg)
+			detailedErr = errkit.New("api error", "status_code", resp.StatusCode, "error", errMsg)
 		} else if errMsg, ok := errorBody["cause"]; ok {
-			detailedErr = errkit.New("api error (%s): %v", resp.Status, errMsg)
+			detailedErr = errkit.New("api error", "status_code", resp.StatusCode, "error", errMsg)
 		}
 	}
 
 	if detailedErr == nil {
 		// Fallback to raw body if no specific keys found or unmarshalling failed
-		detailedErr = errkit.New("api error (%s): %s", resp.Status, strings.TrimSpace(string(bodyBytes)))
+		detailedErr = errkit.New("api error", "status_code", resp.StatusCode, "error", strings.TrimSpace(string(bodyBytes)))
 	}
 
 	switch resp.StatusCode {

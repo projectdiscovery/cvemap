@@ -31,7 +31,7 @@ type Params struct {
 	// "field=size" syntax (e.g. "severity=5").
 	Fields []string
 
-	// Query is an optional Lucene-style query that filters the documents
+	// Query is an optional Bleve query expression that filters the documents
 	// before the facet aggregation is executed.
 	Query *string
 
@@ -106,21 +106,14 @@ func (h *Handler) GroupBy(params Params) (cvemap.SearchResponse, error) {
 // MCPToolSpec returns the MCP tool spec for registration.
 func (h *Handler) MCPToolSpec() mcp.Tool {
 	return mcp.NewTool("vulnsh_groupby",
-		mcp.WithDescription(`Aggregate vulnerabilities into buckets (facets) over any string or boolean field exposed by the ProjectDiscovery vulnerability.sh (vulnsh) API. Think of this as "GROUP BY" in SQL or "aggregations" in Elasticsearch—perfect for quickly answering questions like "Top 10 affected products", "How many critical CVEs per vendor?", or "Distribution of exploitability flags".
-
-• Accepts multiple facet expressions with optional per-facet bucket limits using the "field=size" syntax (e.g. "severity=5").
-• Supports an optional Lucene-style filter query so you can slice the data before aggregation.
-• Caps facet sizes at 200 to keep responses manageable.
-• Returns the raw JSON from the vulnsh API, which includes the aggregation buckets and counts.
-
-Invoke this tool whenever a prompt involves summaries, counts, top-N lists, distributions, histograms, or any "group by" style analysis over the vulnerability dataset. If you're unsure about field names, call 'vulnsh_fields_list' first.`),
+		mcp.WithDescription("Aggregate vulnerabilities (GROUP BY/facets) over selected fields. NOTE: Use this tool ONLY when instructed by `agent_vulnx` or when the user explicitly asks for a group-by; do NOT call it otherwise."),
 		mcp.WithArray("fields",
 			mcp.Description("Facet/group-by expressions. Example: ['severity=5', 'vendor=10']. Each entry is either just the field name or 'field=size' to override bucket count (max 200)."),
 			mcp.Items(map[string]any{"type": "string"}),
 			mcp.Required(),
 		),
 		mcp.WithString("query",
-			mcp.Description("Optional Lucene-style filter applied before aggregation. Combine field names and operators to narrow the data set (see 'vulnsh_fields_list' for valid fields)."),
+			mcp.Description("Optional Bleve-inspired query filter (use '&&', '||' for logical operations) applied before aggregation. Combine field names and operators to narrow the data set (see 'vulnsh_fields_list' for valid fields)."),
 		),
 		mcp.WithNumber("facet_size",
 			mcp.Description("Default bucket count when 'field=size' is not provided. Max 200."),

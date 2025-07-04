@@ -31,18 +31,7 @@ func (h *Handler) Get(id string) (*cvemap.Vulnerability, error) {
 // MCPToolSpec returns the MCP tool spec for registration.
 func (h *Handler) MCPToolSpec() mcp.Tool {
 	return mcp.NewTool("vulnsh_get_by_id",
-		mcp.WithDescription(`Retrieve the COMPLETE vulnerability record for a given identifier from the ProjectDiscovery vulnerability.sh (vulnsh) API.
-
-• Accepts both CVE identifiers (e.g. "CVE-2023-4863") and Nuclei Template IDs (short unique identifiers such as "php-xdebug-rce", NOT full repository paths).
-• For CVEs: the returned JSON includes metadata, CVSS metrics, references, exploit information, tags, vendor/product fields, etc.
-• For Nuclei templates: the response contains the rendered template metadata plus the original YAML template body so users can copy-paste it directly into a scanner. This is ideal when the prompt asks to "download", "show", or "inspect" a particular template.
-
-Use this tool whenever a prompt asks for full details about a specific vulnerability or template. If the user is unsure of the exact ID, first invoke 'vulnsh_search' to find candidates, then feed the chosen ID here.
-
-Typical triggers:
- • "Tell me everything about CVE-2024-1234"
- • "Show the nuclei template for php-xdebug-rce"
- • "Download the YAML for CVE-2021-44228 exploitation template".`),
+		mcp.WithDescription("Retrieve a full vulnerability or template record by ID (CVE or Nuclei). NOTE: Invoke only when `agent_vulnx` instructs or the user explicitly requests it; otherwise do not call this tool."),
 		mcp.WithString("id",
 			mcp.Required(),
 			mcp.Description("The CVE ID or Nuclei Template ID to retrieve (e.g. 'CVE-2024-1234' or 'php-xdebug-rce')."),

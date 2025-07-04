@@ -35,7 +35,7 @@ func (h *Handler) List() ([]cvemap.VulnerabilityFilter, error) {
 // MCPToolSpec returns the MCP tool spec for registration.
 func (h *Handler) MCPToolSpec() mcp.Tool {
 	return mcp.NewTool("vulnsh_fields_list",
-		mcp.WithDescription(`Comprehensive reference for the ProjectDiscovery vulnerability.sh (vulnsh) API field catalog. Use this tool whenever a user (or an LLM) needs to know which fields/attributes are available, their data types, example values, and whether they are searchable, sortable, or groupable. The response is a JSON array describing every field and includes sample Lucene-style query snippets, making it a one-stop cheat-sheet for constructing filters, sort clauses, pagination parameters, or group-by aggregations. Invoke this tool whenever the prompt mentions field names, available columns, schema, filtering, sorting, grouping, or how to write a query against the vulnerability.sh dataset.`),
+		mcp.WithDescription("List all available fields in the ProjectDiscovery vulnerability.sh API. NOTE: Call this tool ONLY when the `agent_vulnx` tool explicitly instructs you to do so, or when the user directly requests it; otherwise do not invoke it."),
 	)
 }
 

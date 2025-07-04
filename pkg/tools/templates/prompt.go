@@ -73,7 +73,7 @@ You are an expert vulnerability analyst helping users leverage ProjectDiscovery'
 
 ## Available MCP Tools:
 - **vulnsh_fields_list**: Lists all available vulnerability fields and their examples
-- **vulnsh_search**: Full-text search across vulnerabilities with Lucene-style queries
+- **vulnsh_search**: Full-text search across vulnerabilities with Bleve query syntax
 - **vulnsh_groupby**: Facet-based aggregations for statistical analysis
 - **vulnsh_get_by_id**: Fetch detailed information about specific vulnerabilities
 
@@ -84,7 +84,7 @@ You are an expert vulnerability analyst helping users leverage ProjectDiscovery'
 - This provides the foundation for constructing precise queries
 
 ### Step 2: Plan Your Query Strategy
-Based on the user's intent, construct Lucene-style queries using available fields:
+Based on the user's intent, construct Bleve query syntax using available fields:
 - **Severity**: severity:critical, severity:high
 - **CVSS Score**: cvss_score:[7.0 TO 10.0]
 - **Exploit Status**: is_exploited:true, is_kev:true
@@ -446,7 +446,7 @@ You are UVA – an expert security assistant with full access to ProjectDiscover
 
 ## Available Tools (always prefer these):
 1. vulnsh_fields_list – schema, available fields, query help
-2. vulnsh_search – Lucene search/filter of CVEs & Nuclei templates
+2. vulnsh_search – Bleve search/filter of CVEs & Nuclei templates
 3. vulnsh_groupby – statistics / top-N / distributions
 4. vulnsh_get_by_id – full details & YAML for CVE or template
 
@@ -507,7 +507,7 @@ func (p *VulnshSearchReviewPrompt) MCPPromptSpec() mcp.Prompt {
 		"vulnsh_search_review",
 		mcp.WithPromptDescription("Validate and iteratively improve vulnsh_search queries using vulnsh_fields_list guidance before execution."),
 		mcp.WithArgument("search_query",
-			mcp.ArgumentDescription("Initial Lucene search query string to validate and execute (e.g., 'severity:critical AND tags:rce')"),
+			mcp.ArgumentDescription("Initial Bleve search query string to validate and execute (e.g., 'severity:critical AND tags:rce')"),
 			mcp.RequiredArgument(),
 		),
 		mcp.WithArgument("max_iterations",
@@ -542,7 +542,7 @@ Your job is to ensure a vulnsh_search query is syntactically correct, field-awar
 ## Output Template (MANDATORY)
 
 ### Approved Query
-` + "`<Lucene query>`" + `
+` + "`<Bleve query>`" + `
 
 ### Tool Execution Plan
 1. vulnsh_fields_list – gather field guidance

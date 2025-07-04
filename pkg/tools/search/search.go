@@ -44,17 +44,10 @@ func (h *Handler) Search(params cvemap.SearchParams) (cvemap.SearchResponse, err
 // MCPToolSpec returns the MCP tool spec for registration.
 func (h *Handler) MCPToolSpec() mcp.Tool {
 	return mcp.NewTool("vulnsh_search",
-		mcp.WithDescription(`Powerful full-text and fielded search over the entire ProjectDiscovery vulnerability.sh (vulnsh) knowledge-base. Use it to discover CVEs or Nuclei templates matching arbitrary criteria before drilling into a specific record with 'vulnsh_get_by_id'.
-
-• Accepts Lucene-style syntax with boolean operators, wildcards, ranges, fuzzy terms, proximity, etc. Every field returned by 'vulnsh_fields_list' can be queried or combined in filters.
-• Supports pagination via limit/offset (max 100 per call) so you can walk large result sets.
-• Field selection: by default the response is trimmed to a compact subset (cve_id, description, severity, cvss_score, epss_score) to minimise token usage. Provide the optional 'fields' array to customise the payload or an *empty* array [] to request the full document.
-• Sorting: use 'sort_asc' / 'sort_desc' to order results by any sortable field (see 'vulnsh_fields_list').
-
-If this tool returns an error or zero results, the calling chain **must** invoke the 'vulnsh_search_review' prompt template next to iteratively refine the query.`),
+		mcp.WithDescription("Search vulnerabilities with Bleve-inspired query syntax (use '&&' and '||' instead of 'AND', 'OR'). NOTE: Use this tool ONLY when `agent_vulnx` explicitly instructs you or when the user directly asks for a search; otherwise do not invoke it."),
 		mcp.WithString("query",
 			mcp.Required(),
-			mcp.Description("Lucene-style search expression (e.g. 'severity:critical AND product:atlassian'). Combine any fields from 'vulnsh_fields_list'."),
+			mcp.Description("Bleve-inspired query expression (e.g. 'severity:critical && product:atlassian'). Combine any fields from 'vulnsh_fields_list'."),
 		),
 		mcp.WithNumber("limit",
 			mcp.Description("Maximum results per call (default 5, cap 100)."),
@@ -97,7 +90,7 @@ func (h *Handler) MCPHandler(client *cvemap.Client) func(ctx context.Context, re
 
 		// Handle optional 'fields' array
 		fields := request.GetStringSlice("fields", nil)
-		defaultFields := []string{"cve_id", "description", "severity", "cvss_score", "epss_score"}
+		defaultFields := []string{"cve_id", "name", "remediation", "cve_created_at", "poc_count", "doc_type", "updated_at", "impact", "description", "severity", "cvss_score", "epss_score", "is_kev", "is_vkev", "is_oss", "is_patch_available", "is_poc", "is_remote"}
 		switch {
 		case fields == nil:
 			// No parameter provided – apply defaults to reduce payload size
