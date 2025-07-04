@@ -36,68 +36,7 @@ var (
 		Use:   "vulnsh",
 		Short: "vulnsh — The Swiss Army knife for vulnerability intel",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if verbose {
-				gologger.DefaultLogger.SetMaxLevel(levels.LevelInfo)
-			}
-			if debug {
-				gologger.DefaultLogger.SetMaxLevel(levels.LevelDebug)
-				debugReq = true
-				debugResp = true
-			}
-
-			// Initialize global cvemap client if not already done
-			if cvemapClient == nil {
-				transport := &http.Transport{}
-				if httpProxy != "" {
-					proxyURL, err := url.Parse(httpProxy)
-					if err != nil {
-						return fmt.Errorf("invalid proxy URL: %w", err)
-					}
-					transport.Proxy = http.ProxyURL(proxyURL)
-				} else {
-					transport.Proxy = http.ProxyFromEnvironment
-				}
-				httpClient := &http.Client{
-					Transport: transport,
-					Timeout:   httpTimeout,
-				}
-				retryOpts := retryablehttp.DefaultOptionsSingle
-				retryOpts.HttpClient = httpClient
-				retryOpts.Verbose = debug
-
-				var opts []cvemap.Option
-				opts = append(opts, cvemap.WithKeyFromEnv(), cvemap.WithRetryableHTTPOptions(retryOpts))
-				if debugReq {
-					opts = append(opts, cvemap.WithDebugRequest(func(req *http.Request) {
-						dump, err := httputil.DumpRequestOut(req, true)
-						if err == nil {
-							var sb strings.Builder
-							sb.WriteString("--- HTTP REQUEST ---\n")
-							sb.Write(dump)
-							sb.WriteString("--------------------\n")
-							gologger.Debug().MsgFunc(sb.String)
-						}
-					}))
-				}
-				if debugResp {
-					opts = append(opts, cvemap.WithDebugResponse(func(resp *http.Response) {
-						dump, err := httputil.DumpResponse(resp, true)
-						if err == nil {
-							var sb strings.Builder
-							sb.WriteString("--- HTTP RESPONSE ---\n")
-							sb.Write(dump)
-							sb.WriteString("---------------------\n")
-							gologger.Debug().MsgFunc(sb.String)
-						}
-					}))
-				}
-				client, err := cvemap.New(opts...)
-				if err != nil {
-					return fmt.Errorf("failed to initialize cvemap client: %w", err)
-				}
-				cvemapClient = client
-			}
-			return nil
+			return ensureCvemapClientInitialized(cmd)
 		},
 	}
 )
@@ -118,4 +57,69 @@ func init() {
 // Execute executes the root command
 func Execute() error {
 	return rootCmd.Execute()
+}
+
+// ensureCvemapClientInitialized initializes the global cvemapClient if it is nil.
+func ensureCvemapClientInitialized(cmd *cobra.Command) error {
+	if cvemapClient == nil {
+		if verbose {
+			gologger.DefaultLogger.SetMaxLevel(levels.LevelInfo)
+		}
+		if debug {
+			gologger.DefaultLogger.SetMaxLevel(levels.LevelDebug)
+			debugReq = true
+			debugResp = true
+		}
+
+		transport := &http.Transport{}
+		if httpProxy != "" {
+			proxyURL, err := url.Parse(httpProxy)
+			if err != nil {
+				return fmt.Errorf("invalid proxy URL: %w", err)
+			}
+			transport.Proxy = http.ProxyURL(proxyURL)
+		} else {
+			transport.Proxy = http.ProxyFromEnvironment
+		}
+		httpClient := &http.Client{
+			Transport: transport,
+			Timeout:   httpTimeout,
+		}
+		retryOpts := retryablehttp.DefaultOptionsSingle
+		retryOpts.HttpClient = httpClient
+		retryOpts.Verbose = debug
+
+		var opts []cvemap.Option
+		opts = append(opts, cvemap.WithKeyFromEnv(), cvemap.WithRetryableHTTPOptions(retryOpts))
+		if debugReq {
+			opts = append(opts, cvemap.WithDebugRequest(func(req *http.Request) {
+				dump, err := httputil.DumpRequestOut(req, true)
+				if err == nil {
+					var sb strings.Builder
+					sb.WriteString("--- HTTP REQUEST ---\n")
+					sb.Write(dump)
+					sb.WriteString("--------------------\n")
+					gologger.Debug().MsgFunc(sb.String)
+				}
+			}))
+		}
+		if debugResp {
+			opts = append(opts, cvemap.WithDebugResponse(func(resp *http.Response) {
+				dump, err := httputil.DumpResponse(resp, true)
+				if err == nil {
+					var sb strings.Builder
+					sb.WriteString("--- HTTP RESPONSE ---\n")
+					sb.Write(dump)
+					sb.WriteString("---------------------\n")
+					gologger.Debug().MsgFunc(sb.String)
+				}
+			}))
+		}
+		client, err := cvemap.New(opts...)
+		if err != nil {
+			return fmt.Errorf("failed to initialize cvemap client: %w", err)
+		}
+		cvemapClient = client
+	}
+	return nil
 }
