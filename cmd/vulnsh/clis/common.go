@@ -10,6 +10,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 
+	_ "embed"
 	"strings"
 
 	"github.com/projectdiscovery/cvemap"
@@ -17,6 +18,9 @@ import (
 	"github.com/projectdiscovery/gologger/levels"
 	"github.com/projectdiscovery/retryablehttp-go"
 )
+
+//go:embed banner.txt
+var vulnshBanner string
 
 var (
 	verbose bool
@@ -39,10 +43,19 @@ var (
 	jsonOutput bool
 	outputFile string
 
+	// Add global silent flag
+	silent bool
+
+	// Track if the banner has already been shown for this invocation
+	bannerShown bool
+
 	rootCmd = &cobra.Command{
 		Use:   "vulnsh",
 		Short: "vulnsh — The Swiss Army knife for vulnerability intel",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			if !silent {
+				showBanner()
+			}
 			return ensureCvemapClientInitialized(cmd)
 		},
 	}
@@ -66,15 +79,36 @@ func init() {
 	// Add persistent json and output flags
 	rootCmd.PersistentFlags().BoolVarP(&jsonOutput, "json", "j", false, "Output raw JSON (for piping, disables YAML output)")
 	rootCmd.PersistentFlags().StringVarP(&outputFile, "output", "o", "", "Write output to file in JSON format (error if file exists)")
+
+	// Add persistent silent flag
+	rootCmd.PersistentFlags().BoolVar(&silent, "silent", false, "Silent mode (suppress banner and non-essential output)")
+
+	// Custom help and usage to always show banner
+	defaultHelpFunc := rootCmd.HelpFunc()
+	rootCmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
+		if !silent {
+			showBanner()
+		}
+		defaultHelpFunc(cmd, args)
+	})
+	defaultUsageFunc := rootCmd.UsageFunc()
+	rootCmd.SetUsageFunc(func(cmd *cobra.Command) error {
+		if !silent {
+			showBanner()
+		}
+		return defaultUsageFunc(cmd)
+	})
 }
 
 // Execute executes the root command
 func Execute() error {
+	// Reset bannerShown for each top-level execution
+	bannerShown = false
 	return rootCmd.Execute()
 }
 
 // ensureCvemapClientInitialized initializes the global cvemapClient if it is nil.
-func ensureCvemapClientInitialized(cmd *cobra.Command) error {
+func ensureCvemapClientInitialized(_ *cobra.Command) error {
 	if cvemapClient == nil {
 		if verbose {
 			gologger.DefaultLogger.SetMaxLevel(levels.LevelInfo)
@@ -136,4 +170,12 @@ func ensureCvemapClientInitialized(cmd *cobra.Command) error {
 		cvemapClient = client
 	}
 	return nil
+}
+
+func showBanner() {
+	if bannerShown || silent {
+		return
+	}
+	gologger.Print().Msgf("%s\n", vulnshBanner)
+	bannerShown = true
 }
