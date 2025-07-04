@@ -35,6 +35,10 @@ var (
 	// Add global noPager flag
 	noPager bool
 
+	// Add global json and output flags
+	jsonOutput bool
+	outputFile string
+
 	rootCmd = &cobra.Command{
 		Use:   "vulnsh",
 		Short: "vulnsh — The Swiss Army knife for vulnerability intel",
@@ -58,6 +62,10 @@ func init() {
 
 	// Add persistent no-pager flag
 	rootCmd.PersistentFlags().BoolVar(&noPager, "no-pager", false, "Disable use of pager for output")
+
+	// Add persistent json and output flags
+	rootCmd.PersistentFlags().BoolVarP(&jsonOutput, "json", "j", false, "Output raw JSON (for piping, disables YAML output)")
+	rootCmd.PersistentFlags().StringVarP(&outputFile, "output", "o", "", "Write output to file in JSON format (error if file exists)")
 }
 
 // Execute executes the root command
