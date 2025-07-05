@@ -87,9 +87,9 @@ var vulnshTestCases = map[string]*VulnshTestCase{
 		Args:        []string{"--help"},
 		ExpectedOut: "vulnsh — The Swiss Army knife for vulnerability intel",
 	},
-	"Groupby Command": {
-		Name:        "Groupby Command",
-		Args:        []string{"groupby", "--fields", "severity", "--json", "--silent"},
+	"Analyze Command": {
+		Name:        "Analyze Command",
+		Args:        []string{"analyze", "--fields", "severity", "--json", "--silent"},
 		ExpectedOut: "facets",
 	},
 }

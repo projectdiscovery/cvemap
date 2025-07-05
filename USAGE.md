@@ -10,7 +10,7 @@
 | **Get Apache RCE vulns** | `vulnsh search apache "remote code execution"` |
 | **High CVSS with exploits** | `vulnsh search cvss_score:>8.0 is_poc:true` |
 | **Known exploited vulns** | `vulnsh search is_kev:true` |
-| **Analyze by vendor** | `vulnsh groupby -f affected_products.vendor` |
+| **Analyze by vendor** | `vulnsh analyze -f affected_products.vendor` |
 
 ## Search Strategies
 
@@ -76,7 +76,7 @@ vulnsh search cve_created_at:[2024-11-01 TO 2024-11-30]
 
 # Historical vulnerability patterns
 vulnsh search cve_created_at:2023 --term-facets severity=10
-vulnsh groupby -f severity -q "cve_created_at:2023"
+vulnsh analyze -f severity -q "cve_created_at:2023"
 
 # Quarterly assessments
 vulnsh search cve_created_at:[2024-01-01 TO 2024-03-31] --limit 1000
@@ -107,7 +107,7 @@ vulnsh search affected_products.vendor:microsoft cve_created_at:2024
 
 # Apache ecosystem
 vulnsh search affected_products.vendor:apache --term-facets severity=5
-vulnsh groupby -f affected_products.product -q "affected_products.vendor:apache"
+vulnsh analyze -f affected_products.product -q "affected_products.vendor:apache"
 
 # Open source project monitoring
 vulnsh search is_oss:true severity:high cve_created_at:2024
@@ -119,13 +119,13 @@ vulnsh search is_oss:true severity:high cve_created_at:2024
 
 ```bash
 # Overall severity distribution
-vulnsh groupby -f severity
+vulnsh analyze -f severity
 
 # Vendor risk assessment
-vulnsh groupby -f affected_products.vendor --facet-size 20
+vulnsh analyze -f affected_products.vendor --facet-size 20
 
 # Product vulnerability counts
-vulnsh groupby -f affected_products.product -q "severity:critical"
+vulnsh analyze -f affected_products.product -q "severity:critical"
 
 # CVE publication trends
 vulnsh search cve_created_at:2024 --term-facets severity=10,tags=15
@@ -135,12 +135,12 @@ vulnsh search cve_created_at:2024 --term-facets severity=10,tags=15
 
 ```bash
 # Web application security
-vulnsh groupby -f affected_products.product -q "is_remote:true"
+vulnsh analyze -f affected_products.product -q "is_remote:true"
 vulnsh search "web application" severity:high --limit 100
 
 # Infrastructure components
 vulnsh search "(router OR firewall OR switch)" --limit 50
-vulnsh groupby -f affected_products.vendor -q "affected_products.product:router"
+vulnsh analyze -f affected_products.vendor -q "affected_products.product:router"
 
 # Cloud service vulnerabilities
 vulnsh search "(aws OR azure OR gcp)" severity:high
@@ -228,7 +228,7 @@ vulnsh search apache severity:critical  # Better than filtering later
 ```bash
 # Cache frequently used data
 vulnsh search is_kev:true --json --output kev_cache.json
-vulnsh groupby -f severity --json --output severity_stats.json
+vulnsh analyze -f severity --json --output severity_stats.json
 
 # Daily data snapshots
 DATE=$(date +%Y-%m-%d)
@@ -322,7 +322,7 @@ vulnsh search affected_products.vendor:microsoft cve_created_at:2024 \
   --output microsoft_2024_vulns.json
 
 # Risk assessment data
-vulnsh groupby -f severity -q "is_remote:true"
+vulnsh analyze -f severity -q "is_remote:true"
 vulnsh search severity:critical --fields cve_id,cvss_score,epss_score
 ```
 

@@ -24,7 +24,7 @@ var (
 	groupbyQuery     string
 
 	groupbyCmd = &cobra.Command{
-		Use:   "groupby",
+		Use:   "analyze",
 		Short: "Group vulnerabilities by one or more fields using term facets",
 		Long: `Group vulnerabilities by one or more fields using term facets.
 
@@ -35,10 +35,10 @@ operations.
 
 Examples:
   # Group by severity
-  vulnsh groupby -f severity
+  vulnsh analyze -f severity
 
   # Group by vendor & product but only for templates with planned/covered coverage
-  vulnsh groupby -f affected_products.vendor,affected_products.product -q 'template_coverage:planned || template_coverage:covered'
+  vulnsh analyze -f affected_products.vendor,affected_products.product -q 'template_coverage:planned || template_coverage:covered'
 
 Global flags:
   --json / -j   Output raw JSON (for piping, disables YAML output)
@@ -46,7 +46,7 @@ Global flags:
 `,
 		Args: cobra.ArbitraryArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			// Support 'vulnsh groupby help' by delegating to the dedicated help command.
+			// Support 'vulnsh analyze help' by delegating to the dedicated help command.
 			if len(args) > 0 && strings.ToLower(args[0]) == "help" {
 				groupbyHelpCmd.Run(cmd, args)
 				return

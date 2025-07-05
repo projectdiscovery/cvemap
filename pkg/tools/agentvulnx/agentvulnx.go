@@ -26,7 +26,7 @@ import (
 //      the referenced MCP tools.
 //
 // NOTE: This tool is the **only** component authorised to instruct calls to
-// vulnsh_fields_list, vulnsh_search, vulnsh_groupby, and vulnsh_get_by_id unless
+// vulnsh_fields_list, vulnsh_search, vulnsh_analyze, and vulnsh_get_by_id unless
 // the user explicitly demands those tools.
 //
 // Input Parameters (JSON Schema):
@@ -56,7 +56,7 @@ When to use this tool:
 - When another tool or the system needs an explicit, step-by-step plan before invoking vulnsh_* tools.
 
 Key features:
-- Breaks the problem into ordered tool calls (fields_list → search → groupby → get_by_id).
+- Breaks the problem into ordered tool calls (fields_list → search → analyze → get_by_id).
 - Provides rationale for each step and optional clarification questions.
 - Encourages iterative refinement, branching, and hypothesis verification like sequentialthinking.
 - Emits a Markdown skeleton that downstream agents can fill out.
@@ -90,7 +90,7 @@ Start with Field Discovery to identify all available fields and examples. Use in
    - Assess result counts and their relevance. Make necessary iterative adjustments to queries, focusing on precision and discovering meaningful insights.
 
 5. **Aggregation or Detail**:
-   - For statistical analysis or trend visualization, use *vulnsh_groupby*. For deeper insights into specific vulnerabilities, use *vulnsh_get_by_id*.
+   - For statistical analysis or trend visualization, use *vulnsh_analyze*. For deeper insights into specific vulnerabilities, use *vulnsh_get_by_id*.
 
 6. **Completion**:
    - Summarize the analysis, capturing key findings, associated risks, remediation proposals, and suggested next steps.

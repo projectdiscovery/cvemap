@@ -15,8 +15,8 @@ import (
 var (
 	groupbyHelpCmd = &cobra.Command{
 		Use:     "help",
-		Aliases: []string{"groupby:help", "groupbyhelp"},
-		Short:   "Detailed help for the 'groupby' command with facet-capable fields",
+		Aliases: []string{"analyze:help", "analyzehelp"},
+		Short:   "Detailed help for the 'analyze' command with facet-capable fields",
 		Run: func(cmd *cobra.Command, args []string) {
 			// Defensive: ensure cvemapClient is initialized if not already
 			if cvemapClient == nil {
@@ -25,9 +25,9 @@ var (
 				}
 			}
 
-			overview := `GROUPBY COMMAND — OVERVIEW
+			overview := `ANALYZE COMMAND — OVERVIEW
 
-The groupby command provides a convenient shorthand for performing
+The analyze command provides a convenient shorthand for performing
 "GROUP BY"-style aggregations over the ProjectDiscovery Vulnerability Database.
 It leverages the Search API's term-facet capability internally, automatically
 setting 'fields' to 'doc_id' and 'limit' to 1.
@@ -39,10 +39,10 @@ It supports:
 
 Example invocations:
   # Group by severity (top 5 buckets)
-  vulnsh groupby -f severity=5
+  vulnsh analyze -f severity=5
 
   # Group by vendor and product for templates with planned / covered coverage
-  vulnsh groupby -f affected_products.vendor,affected_products.product \
+  vulnsh analyze -f affected_products.vendor,affected_products.product \
                 -q 'template_coverage:planned || template_coverage:covered'
 `
 

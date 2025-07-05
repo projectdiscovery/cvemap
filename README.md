@@ -41,8 +41,8 @@ vulnsh id CVE-2024-1234 --json
 
 **Analyze vulnerability patterns:**
 ```bash
-vulnsh groupby --fields severity
-vulnsh groupby --fields affected_products.vendor
+vulnsh analyze --fields severity
+vulnsh analyze --fields affected_products.vendor
 ```
 
 ## Core Commands
@@ -51,7 +51,7 @@ vulnsh groupby --fields affected_products.vendor
 |---------|---------|---------|
 | `search` | Find vulnerabilities with advanced filters | `vulnsh search apache severity:high` |
 | `id` | Get details for specific CVE | `vulnsh id CVE-2021-44228` |
-| `groupby` | Aggregate data by fields | `vulnsh groupby -f severity` |
+| `analyze` | Aggregate data by fields | `vulnsh analyze -f severity` |
 | `auth` | Configure API access | `vulnsh auth` |
 | `version` | Show version info | `vulnsh version` |
 | `healthcheck` | Test connectivity | `vulnsh healthcheck` |
@@ -214,9 +214,9 @@ vulnsh version --disable-update-check   # Version info
 ```bash
 vulnsh search --help                    # Search command help  
 vulnsh id --help                        # ID command help
-vulnsh groupby --help                   # Groupby command help
+vulnsh analyze --help                   # Analyze command help
 vulnsh search help                      # Detailed search fields
-vulnsh groupby help                     # Available groupby fields
+vulnsh analyze help                     # Available analyze fields
 ```
 
 > **Note:** Currently, command-specific help requires API authentication. Run `vulnsh auth` first to set up your API key.
@@ -226,7 +226,7 @@ vulnsh groupby help                     # Available groupby fields
 - Start with broad searches, then narrow down with filters
 - Use `--json` for scripting and automation
 - Combine multiple filters for precise results
-- Use `groupby` to understand data patterns
+- Use `analyze` to understand data patterns
 - Save frequently used queries as shell aliases
 
 For advanced usage patterns and examples, see [USAGE.md](USAGE.md).
