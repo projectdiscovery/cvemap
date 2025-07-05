@@ -85,7 +85,7 @@ func (h *Handler) GroupBy(params Params) (cvemap.SearchResponse, error) {
 				}
 			}
 		}
-		cappedFields[i] = f
+		cappedFields[i] = strings.ReplaceAll(f, "=", ":")
 	}
 
 	sp := cvemap.SearchParams{
@@ -127,6 +127,12 @@ func (h *Handler) MCPHandler(client *cvemap.Client) func(ctx context.Context, re
 		fields, err := request.RequireStringSlice("fields")
 		if err != nil || len(fields) == 0 {
 			return mcp.NewToolResultError("ProjectDiscovery vulnsh: 'fields' is required and must be a string array."), nil
+		}
+		// fix request fields format
+		for i, f := range fields {
+			if strings.Contains(f, "=") {
+				fields[i] = strings.ReplaceAll(f, "=", ":")
+			}
 		}
 		query := request.GetString("query", "")
 		var queryPtr *string
