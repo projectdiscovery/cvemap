@@ -237,26 +237,6 @@ func (c *ColorConfig) ColorExposure(exposure string) string {
 	return c.Colorize(exposure, c.Number)
 }
 
-// ColorRiskIndicator colors risk indicators based on multiple factors
-func (c *ColorConfig) ColorRiskIndicator(riskLevel string) string {
-	if !c.Enabled {
-		return riskLevel
-	}
-
-	switch strings.ToLower(riskLevel) {
-	case "critical":
-		return c.Colorize(riskLevel, Bold+BrightRed)
-	case "high":
-		return c.Colorize(riskLevel, Bold+Red)
-	case "medium":
-		return c.Colorize(riskLevel, Bold+Yellow)
-	case "low":
-		return c.Colorize(riskLevel, Bold+Green)
-	default:
-		return c.Colorize(riskLevel, c.Unknown)
-	}
-}
-
 // ColorExploitAvailability colors exploit availability with urgency
 func (c *ColorConfig) ColorExploitAvailability(available bool, pocCount int, kevStatus bool) string {
 	if !c.Enabled {
@@ -340,21 +320,6 @@ func (c *ColorConfig) ColorKEVStatus(isKEV bool) string {
 		return c.Colorize("🚨 KEV LISTED", Bold+BrightRed)
 	}
 	return c.Colorize("✘", c.Error)
-}
-
-// colorRiskLevels colors risk level indicators in the text
-func (c *ColorConfig) colorRiskLevels(text string) string {
-	if !c.Enabled {
-		return text
-	}
-
-	// Color risk levels with specific patterns
-	text = strings.ReplaceAll(text, "Risk: CRITICAL", "Risk: "+c.ColorRiskIndicator("CRITICAL"))
-	text = strings.ReplaceAll(text, "Risk: HIGH", "Risk: "+c.ColorRiskIndicator("HIGH"))
-	text = strings.ReplaceAll(text, "Risk: MEDIUM", "Risk: "+c.ColorRiskIndicator("MEDIUM"))
-	text = strings.ReplaceAll(text, "Risk: LOW", "Risk: "+c.ColorRiskIndicator("LOW"))
-
-	return text
 }
 
 // colorPriorityLevels colors priority levels in the text

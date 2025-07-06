@@ -146,63 +146,6 @@ func exploitSeen(entry *Entry) bool {
 	return false
 }
 
-// calculateRiskLevel calculates overall risk level based on multiple factors
-func calculateRiskLevel(entry *Entry) string {
-	score := 0
-
-	// CVSS Score weight (40%)
-	if entry.CvssScore >= 9.0 {
-		score += 40
-	} else if entry.CvssScore >= 7.0 {
-		score += 30
-	} else if entry.CvssScore >= 4.0 {
-		score += 20
-	} else {
-		score += 10
-	}
-
-	// EPSS Score weight (20%)
-	if entry.EpssScore >= 0.7 {
-		score += 20
-	} else if entry.EpssScore >= 0.4 {
-		score += 15
-	} else if entry.EpssScore >= 0.1 {
-		score += 10
-	} else {
-		score += 5
-	}
-
-	// KEV Status weight (15%)
-	if entry.IsKev {
-		score += 15
-	}
-
-	// Exploit availability weight (15%)
-	if exploitSeen(entry) || entry.PocCount > 0 {
-		score += 15
-	}
-
-	// Age factor weight (10%)
-	if entry.AgeInDays <= 7 {
-		score += 10
-	} else if entry.AgeInDays <= 30 {
-		score += 8
-	} else if entry.AgeInDays <= 90 {
-		score += 5
-	}
-
-	// Determine risk level
-	if score >= 80 {
-		return "CRITICAL"
-	} else if score >= 60 {
-		return "HIGH"
-	} else if score >= 40 {
-		return "MEDIUM"
-	} else {
-		return "LOW"
-	}
-}
-
 // getExploitStatus returns exploit availability status
 func getExploitStatus(entry *Entry) string {
 	if exploitSeen(entry) || entry.PocCount > 0 || entry.IsKev {
@@ -230,37 +173,6 @@ func getResearchPriority(entry *Entry) string {
 	}
 
 	return "LOW"
-}
-
-// getActionItems returns suggested action items for security professionals
-func getActionItems(entry *Entry) []string {
-	var actions []string
-
-	if entry.IsKev {
-		actions = append(actions, "🚨 Apply patches immediately (KEV listed)")
-	}
-
-	if entry.CvssScore >= 9.0 {
-		actions = append(actions, "🔥 Critical vulnerability - prioritize patching")
-	}
-
-	if exploitSeen(entry) || entry.PocCount > 0 {
-		actions = append(actions, "⚠️ Active exploits - implement compensating controls")
-	}
-
-	if entry.EpssScore >= 0.7 {
-		actions = append(actions, "📊 High exploitation probability - monitor closely")
-	}
-
-	if entry.AgeInDays <= 7 {
-		actions = append(actions, "🚨 Newly disclosed - assess impact quickly")
-	}
-
-	if !entry.IsPatchAvailable {
-		actions = append(actions, "🛡️ No patch available - implement workarounds")
-	}
-
-	return actions
 }
 
 // formatAgeUrgency formats age with urgency indicators

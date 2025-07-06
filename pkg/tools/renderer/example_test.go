@@ -27,7 +27,7 @@ func ExampleRender() {
 		},
 		{
 			"line": 4,
-			"format": "↳ Patch: {patch} | POCs: {poc_count} | KEV: {kev} | Nuclei Template: {template} | Exploit Seen: {exploit_seen} | HackerOne: {hackerone}",
+			"format": "↳ Patch: {patch} | POCs: {poc_count} | KEV: {kev_enhanced} | Nuclei Template: {template} | Exploit Seen: {exploit_seen} | HackerOne: {hackerone}",
 			"omit_if": []
 		},
 		{

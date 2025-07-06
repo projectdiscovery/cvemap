@@ -77,7 +77,7 @@ func TestRender(t *testing.T) {
 	result := RenderWithColors(entries, layout, 1, 1, NoColorConfig())
 
 	expected := `[placeholder-id] High - Placeholder Vulnerability Title
-  ↳ Priority: HIGH | EXPLOITS AVAILABLE | Vuln Age: 123d
+  ↳ Priority: IMMEDIATE | EXPLOITS AVAILABLE | Vuln Age: 123d
   ↳ CVSS: 8.8 | EPSS: 0.0042 | KEV: ✔ (CISA)
   ↳ Exposure: ~42.1K | Vendors: vendor1, vendor2 +1 | Products: product1, product2 +1
   ↳ Patch: ✔ | POCs: 3 | Nuclei Template: ✔ | HackerOne: ✔
