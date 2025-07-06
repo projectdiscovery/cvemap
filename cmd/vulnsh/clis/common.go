@@ -51,6 +51,9 @@ var (
 	// Add global silent flag
 	silent bool
 
+	// Add global no-color flag
+	noColor bool
+
 	// Track if the banner has already been shown for this invocation
 	bannerShown bool
 
@@ -136,6 +139,9 @@ func init() {
 
 	// Add persistent silent flag
 	rootCmd.PersistentFlags().BoolVar(&silent, "silent", false, "Silent mode (suppress banner and non-essential output)")
+
+	// Add persistent no-color flag
+	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "Disable colored output")
 
 	// Custom help and usage to always show banner
 	defaultHelpFunc := rootCmd.HelpFunc()

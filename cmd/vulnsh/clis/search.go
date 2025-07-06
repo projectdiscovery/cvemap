@@ -11,8 +11,8 @@ import (
 	"github.com/projectdiscovery/gologger"
 	"github.com/spf13/cobra"
 
+	"github.com/projectdiscovery/cvemap/pkg/tools/renderer"
 	searchtool "github.com/projectdiscovery/cvemap/pkg/tools/search"
-	"github.com/projectdiscovery/cvemap/pkg/utils"
 )
 
 var (
@@ -27,14 +27,49 @@ var (
 	searchHighlight   bool
 	searchFacetSize   int
 
+	// Security-focused layout for CLI rendering
+	defaultLayoutJSON = `[
+		{
+			"line": 1,
+			"format": "[{doc_id}] {severity} - {title}",
+			"omit_if": []
+		},
+		{
+			"line": 2,
+			"format": "  ↳ Priority: {research_priority} | {exploit_status} | Vuln Age: {age_urgency}",
+			"omit_if": []
+		},
+		{
+			"line": 3,
+			"format": "  ↳ CVSS: {cvss_enhanced} | EPSS: {epss_enhanced} | KEV: {kev_enhanced}",
+			"omit_if": ["cvss_score == 0", "epss_score == 0"]
+		},
+		{
+			"line": 4,
+			"format": "  ↳ Exposure: {exposure} | Vendors: {vendors} | Products: {products}",
+			"omit_if": ["exposure == 0", "vendors.length == 0", "products.length == 0"]
+		},
+		{
+			"line": 5,
+			"format": "  ↳ Patch: {patch} | POCs: {poc_count} | Nuclei Template: {template} | HackerOne: {hackerone}",
+			"omit_if": []
+		},
+		{
+			"line": 6,
+			"format": "  ↳ Template Authors: {authors}",
+			"omit_if": ["authors.length == 0"]
+		}
+	]`
+
 	searchCmd = &cobra.Command{
 		Use:   "search <query>",
 		Short: "Search vulnerabilities using the Vulnerability search API",
 		Long: `Search vulnerabilities using the Vulnerability search API.
 
 Global flags:
-  --json     Output raw JSON (for piping, disables YAML output)
-  --output   Write output to file in JSON format (error if file exists)
+  --json      Output raw JSON (for piping, disables CLI output)
+  --output    Write output to file in JSON format (error if file exists)
+  --no-color  Disable colored output (colors are auto-disabled for non-terminal output)
 `,
 		Example: `
 # Search help
@@ -169,9 +204,32 @@ vulnsh search \
 				return
 			}
 
-			if err := utils.PrintYaml(resp, noPager); err != nil {
-				gologger.Fatal().Msgf("Failed to render YAML: %s", err)
+			// Default CLI renderer format
+			layout, err := renderer.ParseLayout([]byte(defaultLayoutJSON))
+			if err != nil {
+				gologger.Fatal().Msgf("Failed to parse layout: %s", err)
 			}
+
+			// Convert vulnerabilities to entries
+			entries := make([]*renderer.Entry, 0, len(resp.Results))
+			for _, vuln := range resp.Results {
+				entry := renderer.FromVulnerability(&vuln)
+				if entry != nil {
+					entries = append(entries, entry)
+				}
+			}
+
+			// Configure colors based on flags and terminal detection
+			var colors *renderer.ColorConfig
+			if noColor || !renderer.IsTerminal() {
+				colors = renderer.NoColorConfig()
+			} else {
+				colors = renderer.DefaultColorConfig()
+			}
+
+			// Render output with colors
+			output := renderer.RenderWithColors(entries, layout, resp.Total, resp.Count, colors)
+			fmt.Print(output)
 		},
 	}
 )

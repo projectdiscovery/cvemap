@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/projectdiscovery/cvemap/pkg/tools/id"
-	"github.com/projectdiscovery/cvemap/pkg/utils"
+	"github.com/projectdiscovery/cvemap/pkg/tools/renderer"
 )
 
 var ( //nolint
@@ -23,8 +23,9 @@ var ( //nolint
 		Long: `Get vulnerability details by ID.
 
 Global flags:
-  --json     Output raw JSON (for piping, disables YAML output)
+  --json     Output raw JSON (for piping, disables CLI output)
   --output   Write output to file in JSON format (error if file exists)
+  --no-color Disable colored output (colors are auto-disabled for non-terminal output)
 `,
 		Example: `
 # Get details for a specific vulnerability
@@ -35,6 +36,9 @@ vulnsh id --json CVE-2024-1234
 
 # Write output to a file (JSON)
 vulnsh id --output vuln.json CVE-2024-1234
+
+# Disable colors
+vulnsh id --no-color CVE-2024-1234
 `,
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -91,16 +95,23 @@ vulnsh id --output vuln.json CVE-2024-1234
 				return
 			}
 
-			header := fmt.Sprintf("Vulnerability ID: %s", vulnID)
-			var printErr error
-			if noPager {
-				printErr = utils.PrintColorYAMLNoPager(vuln, header)
+			// Use detailed CLI renderer instead of YAML
+			entry := renderer.FromVulnerability(vuln)
+			if entry == nil {
+				gologger.Fatal().Msgf("Failed to convert vulnerability data")
+			}
+
+			// Determine color configuration
+			var colors *renderer.ColorConfig
+			if noColor || !renderer.IsTerminal() {
+				colors = renderer.NoColorConfig()
 			} else {
-				printErr = utils.PrintColorYAML(vuln, header)
+				colors = renderer.DefaultColorConfig()
 			}
-			if printErr != nil {
-				gologger.Fatal().Msgf("Failed to print colorized YAML: %s", printErr)
-			}
+
+			// Render detailed output
+			result := renderer.RenderDetailed(entry, colors)
+			fmt.Println(result)
 		},
 	}
 )
