@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
 	"github.com/projectdiscovery/cvemap"
 	"github.com/projectdiscovery/gologger"
+	fileutil "github.com/projectdiscovery/utils/file"
 	"github.com/spf13/cobra"
 
 	"github.com/projectdiscovery/cvemap/pkg/tools/id"
@@ -16,11 +18,19 @@ import (
 )
 
 var ( //nolint
+	// ID command flags
+	idFile string
 
 	idCmd = &cobra.Command{
-		Use:   "id <vulnID>",
+		Use:   "id [vulnID...]",
 		Short: "Get vulnerability details by ID",
 		Long: `Get vulnerability details by ID.
+
+Supports multiple input methods:
+• Command line arguments: vulnx id CVE-2024-1234 CVE-2024-5678
+• Command line (comma-separated): vulnx id CVE-2024-1234,CVE-2024-5678
+• File input: vulnx id --file ids.txt
+• Stdin input: echo "CVE-2024-1234" | vulnx id
 
 Global flags:
   --json     Output raw JSON (for piping, disables CLI output)
@@ -31,6 +41,19 @@ Global flags:
 # Get details for a specific vulnerability
 vulnx id CVE-2024-1234
 
+# Get details for multiple vulnerabilities
+vulnx id CVE-2024-1234 CVE-2024-5678
+
+# Comma-separated IDs
+vulnx id CVE-2024-1234,CVE-2024-5678,CVE-2023-9999
+
+# Read IDs from file (one per line or comma-separated)
+vulnx id --file ids.txt
+
+# Read from stdin
+echo "CVE-2024-1234" | vulnx id
+cat ids.txt | vulnx id
+
 # Output as JSON for piping
 vulnx id --json CVE-2024-1234
 
@@ -40,31 +63,99 @@ vulnx id --output vuln.json CVE-2024-1234
 # Disable colors
 vulnx id --no-color CVE-2024-1234
 `,
-		Args: cobra.ExactArgs(1),
+		Args: cobra.ArbitraryArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			vulnID := args[0]
+			var vulnIDs []string
+
+			// Collect IDs from various sources
+			// 1. Command line arguments (including comma-separated)
+			for _, arg := range args {
+				// Handle comma-separated values in arguments
+				if strings.Contains(arg, ",") {
+					ids := strings.Split(arg, ",")
+					for _, id := range ids {
+						id = strings.TrimSpace(id)
+						if id != "" {
+							vulnIDs = append(vulnIDs, id)
+						}
+					}
+				} else {
+					vulnIDs = append(vulnIDs, arg)
+				}
+			}
+
+			// 2. File input
+			if idFile != "" {
+				fileIDs, err := readIDsFromFile(idFile)
+				if err != nil {
+					gologger.Fatal().Msgf("Failed to read IDs from file: %s", err)
+				}
+				vulnIDs = append(vulnIDs, fileIDs...)
+			}
+
+			// 3. Stdin input (if available and no other input provided)
+			if len(vulnIDs) == 0 && fileutil.HasStdin() {
+				stdinIDs, err := readIDsFromStdin()
+				if err != nil {
+					gologger.Fatal().Msgf("Failed to read IDs from stdin: %s", err)
+				}
+				vulnIDs = append(vulnIDs, stdinIDs...)
+			}
 
 			// Input validation
-			if err := validateIDInputs(vulnID); err != nil {
-				gologger.Fatal().Msgf("Invalid input: %s", err)
+			if len(vulnIDs) == 0 {
+				gologger.Fatal().Msg("No vulnerability IDs provided. Use command line arguments, --file, or pipe IDs via stdin")
+			}
+
+			// Remove duplicates and validate IDs
+			vulnIDs = removeDuplicates(vulnIDs)
+			for _, vulnID := range vulnIDs {
+				if err := validateSingleID(vulnID); err != nil {
+					gologger.Fatal().Msgf("Invalid vulnerability ID '%s': %s", vulnID, err)
+				}
+			}
+
+			if len(vulnIDs) > 100 {
+				gologger.Warning().Msgf("Processing %d IDs. Limiting to first 100 for performance.", len(vulnIDs))
+				vulnIDs = vulnIDs[:100]
 			}
 
 			// Use the global cvemapClient
 			handler := id.NewHandler(cvemapClient)
-			vuln, err := handler.Get(vulnID)
-			if err != nil {
-				if errors.Is(err, cvemap.ErrNotFound) {
-					gologger.Fatal().Msgf("Vulnerability not found: %s", vulnID)
-				}
-				gologger.Fatal().Msgf("Failed to fetch vulnerability: %s", err)
-			}
 
-			// Handle JSON and output file flags
+			// Handle JSON output for multiple IDs
 			if jsonOutput || outputFile != "" {
-				jsonBytes, err := json.Marshal(vuln)
+				var allVulns []*cvemap.Vulnerability
+				for _, vulnID := range vulnIDs {
+					vuln, err := handler.Get(vulnID)
+					if err != nil {
+						if errors.Is(err, cvemap.ErrNotFound) {
+							gologger.Warning().Msgf("Vulnerability not found: %s", vulnID)
+							continue
+						}
+						gologger.Error().Msgf("Failed to fetch vulnerability %s: %s", vulnID, err)
+						continue
+					}
+					allVulns = append(allVulns, vuln)
+				}
+
+				if len(allVulns) == 0 {
+					gologger.Fatal().Msg("No vulnerabilities were successfully retrieved")
+				}
+
+				// Marshal single item or array based on input
+				var jsonBytes []byte
+				var err error
+				if len(vulnIDs) == 1 && len(allVulns) == 1 {
+					jsonBytes, err = json.MarshalIndent(allVulns[0], "", "  ")
+				} else {
+					jsonBytes, err = json.MarshalIndent(allVulns, "", "  ")
+				}
+
 				if err != nil {
 					gologger.Fatal().Msgf("Failed to marshal JSON: %s", err)
 				}
+
 				if outputFile != "" {
 					// Check if file exists
 					if _, err := os.Stat(outputFile); err == nil {
@@ -82,9 +173,10 @@ vulnx id --no-color CVE-2024-1234
 					if _, err := f.Write(jsonBytes); err != nil {
 						gologger.Fatal().Msgf("Failed to write to output file: %s", err)
 					}
-					gologger.Info().Msgf("Wrote output to file: %s", outputFile)
+					gologger.Info().Msgf("Wrote %d vulnerability(s) to file: %s", len(allVulns), outputFile)
 					return
 				}
+
 				// Print to stdout
 				if _, err := os.Stdout.Write(jsonBytes); err != nil {
 					gologger.Error().Msgf("Failed to write JSON to stdout: %s", err)
@@ -95,12 +187,7 @@ vulnx id --no-color CVE-2024-1234
 				return
 			}
 
-			// Use detailed CLI renderer instead of YAML
-			entry := renderer.FromVulnerability(vuln)
-			if entry == nil {
-				gologger.Fatal().Msgf("Failed to convert vulnerability data")
-			}
-
+			// CLI output for multiple vulnerabilities
 			// Determine color configuration
 			var colors *renderer.ColorConfig
 			if noColor || !renderer.IsTerminal() {
@@ -109,15 +196,146 @@ vulnx id --no-color CVE-2024-1234
 				colors = renderer.DefaultColorConfig()
 			}
 
-			// Render detailed output
-			result := renderer.RenderDetailed(entry, colors)
-			fmt.Println(result)
+			successCount := 0
+			for i, vulnID := range vulnIDs {
+				vuln, err := handler.Get(vulnID)
+				if err != nil {
+					if errors.Is(err, cvemap.ErrNotFound) {
+						gologger.Warning().Msgf("Vulnerability not found: %s", vulnID)
+						continue
+					}
+					gologger.Error().Msgf("Failed to fetch vulnerability %s: %s", vulnID, err)
+					continue
+				}
+
+				// Convert to renderer entry
+				entry := renderer.FromVulnerability(vuln)
+				if entry == nil {
+					gologger.Error().Msgf("Failed to convert vulnerability data for %s", vulnID)
+					continue
+				}
+
+				// Add separator between multiple results
+				if i > 0 && successCount > 0 {
+					separator := strings.Repeat("─", 65)
+					if colors != nil {
+						fmt.Println(colors.ColorResultSeparator(separator))
+					} else {
+						fmt.Println(separator)
+					}
+					fmt.Println()
+				}
+
+				// Render detailed output
+				result := renderer.RenderDetailed(entry, colors)
+				fmt.Println(result)
+				successCount++
+			}
+
+			if successCount == 0 {
+				gologger.Fatal().Msg("No vulnerabilities were successfully retrieved")
+			} else if successCount < len(vulnIDs) {
+				gologger.Info().Msgf("Successfully retrieved %d out of %d vulnerabilities", successCount, len(vulnIDs))
+			}
 		},
 	}
 )
 
-// validateIDInputs performs input validation for id command
-func validateIDInputs(vulnID string) error {
+// readIDsFromFile reads vulnerability IDs from a file
+func readIDsFromFile(filename string) ([]string, error) {
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file: %w", err)
+	}
+
+	content := strings.TrimSpace(string(data))
+	if content == "" {
+		return nil, fmt.Errorf("file is empty")
+	}
+
+	var ids []string
+
+	// Try line-by-line first
+	lines := strings.Split(content, "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue // Skip empty lines and comments
+		}
+
+		// Check if line contains commas (comma-separated format)
+		if strings.Contains(line, ",") {
+			parts := strings.Split(line, ",")
+			for _, part := range parts {
+				part = strings.TrimSpace(part)
+				if part != "" {
+					ids = append(ids, part)
+				}
+			}
+		} else {
+			ids = append(ids, line)
+		}
+	}
+
+	return ids, nil
+}
+
+// readIDsFromStdin reads vulnerability IDs from stdin
+func readIDsFromStdin() ([]string, error) {
+	data, err := io.ReadAll(os.Stdin)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read from stdin: %w", err)
+	}
+
+	content := strings.TrimSpace(string(data))
+	if content == "" {
+		return nil, fmt.Errorf("no input provided via stdin")
+	}
+
+	var ids []string
+
+	// Split by newlines first
+	lines := strings.Split(content, "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		// Check if line contains commas
+		if strings.Contains(line, ",") {
+			parts := strings.Split(line, ",")
+			for _, part := range parts {
+				part = strings.TrimSpace(part)
+				if part != "" {
+					ids = append(ids, part)
+				}
+			}
+		} else {
+			ids = append(ids, line)
+		}
+	}
+
+	return ids, nil
+}
+
+// removeDuplicates removes duplicate IDs while preserving order
+func removeDuplicates(ids []string) []string {
+	seen := make(map[string]bool)
+	var result []string
+
+	for _, id := range ids {
+		if !seen[id] {
+			seen[id] = true
+			result = append(result, id)
+		}
+	}
+
+	return result
+}
+
+// validateSingleID performs input validation for a single vulnerability ID
+func validateSingleID(vulnID string) error {
 	// Basic CVE ID format validation
 	if vulnID == "" {
 		return fmt.Errorf("vulnerability ID cannot be empty")
@@ -128,16 +346,15 @@ func validateIDInputs(vulnID string) error {
 		return fmt.Errorf("vulnerability ID length must be between 3 and 50 characters")
 	}
 
-	// Validate output file path if specified
-	if outputFile != "" {
-		if !strings.HasSuffix(outputFile, ".json") {
-			return fmt.Errorf("output file must have .json extension")
-		}
-	}
-
 	return nil
 }
 
+// validateIDInputs performs input validation for id command (legacy function)
+func validateIDInputs(vulnID string) error {
+	return validateSingleID(vulnID)
+}
+
 func init() {
+	idCmd.Flags().StringVar(&idFile, "file", "", "Read vulnerability IDs from file (one per line or comma-separated)")
 	rootCmd.AddCommand(idCmd)
 }

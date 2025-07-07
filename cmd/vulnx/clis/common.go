@@ -1,6 +1,8 @@
 package clis
 
 import (
+	"encoding/json"
+
 	"github.com/spf13/cobra"
 
 	"time"
@@ -11,6 +13,9 @@ import (
 	"net/url"
 
 	_ "embed"
+	"io"
+	"os"
+	"regexp"
 	"strings"
 
 	"github.com/projectdiscovery/cvemap"
@@ -18,10 +23,11 @@ import (
 	"github.com/projectdiscovery/gologger/levels"
 	retryablehttp "github.com/projectdiscovery/retryablehttp-go"
 
-	"os"
-
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/projectdiscovery/cvemap/pkg/tools"
+	"github.com/projectdiscovery/cvemap/pkg/tools/id"
+	"github.com/projectdiscovery/cvemap/pkg/tools/renderer"
+	fileutil "github.com/projectdiscovery/utils/file"
 )
 
 //go:embed banner.txt
@@ -57,6 +63,9 @@ var (
 	// Track if the banner has already been shown for this invocation
 	bannerShown bool
 
+	// CVE ID regex pattern
+	cveIDRegex = regexp.MustCompile(`CVE-\d{4}-\d{4,}`)
+
 	rootCmd = &cobra.Command{
 		Use:   "vulnx",
 		Short: "vulnx — The Swiss Army knife for vulnerability intel",
@@ -67,6 +76,14 @@ var (
 				showBanner()
 			}
 			return ensureCvemapClientInitialized(cmd)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// If no subcommand is provided and stdin has data, try to auto-detect the command
+			if len(args) == 0 && fileutil.HasStdin() {
+				return handleStdinAutoDetection(cmd, args)
+			}
+			// Otherwise, show help
+			return cmd.Help()
 		},
 	}
 
@@ -242,4 +259,234 @@ func showBanner() {
 	}
 	gologger.Print().Msgf("%s\n", vulnxBanner)
 	bannerShown = true
+}
+
+func handleStdinAutoDetection(cmd *cobra.Command, args []string) error {
+	// Read stdin content
+	stdinData, err := io.ReadAll(os.Stdin)
+	if err != nil {
+		return fmt.Errorf("failed to read stdin: %w", err)
+	}
+
+	content := strings.TrimSpace(string(stdinData))
+	if content == "" {
+		return fmt.Errorf("no input provided via stdin")
+	}
+
+	// Check if the content looks like CVE IDs
+	if isCVEContent(content) {
+		// Auto-route to id command
+		return executeIDCommand(content)
+	}
+
+	// If not CVE IDs, show help
+	return cmd.Help()
+}
+
+func isCVEContent(content string) bool {
+	// Check if content contains CVE IDs
+	lines := strings.Split(content, "\n")
+	cveCount := 0
+	totalLines := 0
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue // Skip empty lines and comments
+		}
+		totalLines++
+
+		// Check if line contains CVE IDs (either directly or comma-separated)
+		if cveIDRegex.MatchString(line) {
+			cveCount++
+		}
+	}
+
+	// Consider it CVE content if majority of non-empty lines contain CVE IDs
+	return totalLines > 0 && cveCount > 0 && float64(cveCount)/float64(totalLines) >= 0.5
+}
+
+func executeIDCommand(content string) error {
+	// Parse CVE IDs from content
+	var cveIDs []string
+
+	lines := strings.Split(content, "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		// Handle comma-separated values on a single line
+		if strings.Contains(line, ",") {
+			parts := strings.Split(line, ",")
+			for _, part := range parts {
+				part = strings.TrimSpace(part)
+				if cveIDRegex.MatchString(part) {
+					cveIDs = append(cveIDs, part)
+				}
+			}
+		} else {
+			// Single CVE ID per line
+			matches := cveIDRegex.FindAllString(line, -1)
+			cveIDs = append(cveIDs, matches...)
+		}
+	}
+
+	if len(cveIDs) == 0 {
+		return fmt.Errorf("no valid CVE IDs found in stdin input")
+	}
+
+	// Remove duplicates
+	cveIDs = removeDuplicateStrings(cveIDs)
+
+	// Execute id command with the parsed CVE IDs
+	return executeIDWithIDs(cveIDs)
+}
+
+func removeDuplicateStrings(ids []string) []string {
+	seen := make(map[string]bool)
+	var result []string
+
+	for _, id := range ids {
+		if !seen[id] {
+			seen[id] = true
+			result = append(result, id)
+		}
+	}
+
+	return result
+}
+
+func executeIDWithIDs(cveIDs []string) error {
+	// Call the id command logic directly
+	return runIDCommandWithIDs(cveIDs)
+}
+
+func runIDCommandWithIDs(cveIDs []string) error {
+	// Limit to 100 IDs for performance
+	if len(cveIDs) > 100 {
+		gologger.Warning().Msgf("Processing %d IDs. Limiting to first 100 for performance.", len(cveIDs))
+		cveIDs = cveIDs[:100]
+	}
+
+	// Use the global cvemapClient
+	handler := id.NewHandler(cvemapClient)
+
+	// Handle JSON output for multiple IDs
+	if jsonOutput || outputFile != "" {
+		var allVulns []*cvemap.Vulnerability
+		for _, vulnID := range cveIDs {
+			vuln, err := handler.Get(vulnID)
+			if err != nil {
+				if err.Error() == "not found" {
+					gologger.Warning().Msgf("Vulnerability not found: %s", vulnID)
+					continue
+				}
+				gologger.Error().Msgf("Failed to fetch vulnerability %s: %s", vulnID, err)
+				continue
+			}
+			allVulns = append(allVulns, vuln)
+		}
+
+		if len(allVulns) == 0 {
+			gologger.Fatal().Msg("No vulnerabilities were successfully retrieved")
+		}
+
+		// Marshal single item or array based on input
+		var jsonBytes []byte
+		var err error
+		if len(cveIDs) == 1 && len(allVulns) == 1 {
+			jsonBytes, err = json.MarshalIndent(allVulns[0], "", "  ")
+		} else {
+			jsonBytes, err = json.MarshalIndent(allVulns, "", "  ")
+		}
+
+		if err != nil {
+			gologger.Fatal().Msgf("Failed to marshal JSON: %s", err)
+		}
+
+		if outputFile != "" {
+			// Check if file exists
+			if _, err := os.Stat(outputFile); err == nil {
+				gologger.Fatal().Msgf("Output file already exists: %s", outputFile)
+			}
+			f, err := os.OpenFile(outputFile, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
+			if err != nil {
+				gologger.Fatal().Msgf("Failed to create output file: %s", err)
+			}
+			defer func() {
+				if err := f.Close(); err != nil {
+					gologger.Error().Msgf("Failed to close output file: %s", err)
+				}
+			}()
+			if _, err := f.Write(jsonBytes); err != nil {
+				gologger.Fatal().Msgf("Failed to write to output file: %s", err)
+			}
+			gologger.Info().Msgf("Wrote %d vulnerability(s) to file: %s", len(allVulns), outputFile)
+			return nil
+		}
+
+		// Print to stdout
+		if _, err := os.Stdout.Write(jsonBytes); err != nil {
+			gologger.Error().Msgf("Failed to write JSON to stdout: %s", err)
+		}
+		if _, err := os.Stdout.Write([]byte("\n")); err != nil {
+			gologger.Error().Msgf("Failed to write newline to stdout: %s", err)
+		}
+		return nil
+	}
+
+	// CLI output for multiple vulnerabilities
+	// Determine color configuration
+	var colors *renderer.ColorConfig
+	if noColor || !renderer.IsTerminal() {
+		colors = renderer.NoColorConfig()
+	} else {
+		colors = renderer.DefaultColorConfig()
+	}
+
+	successCount := 0
+	for i, vulnID := range cveIDs {
+		vuln, err := handler.Get(vulnID)
+		if err != nil {
+			if err.Error() == "not found" {
+				gologger.Warning().Msgf("Vulnerability not found: %s", vulnID)
+				continue
+			}
+			gologger.Error().Msgf("Failed to fetch vulnerability %s: %s", vulnID, err)
+			continue
+		}
+
+		// Convert to renderer entry
+		entry := renderer.FromVulnerability(vuln)
+		if entry == nil {
+			gologger.Error().Msgf("Failed to convert vulnerability data for %s", vulnID)
+			continue
+		}
+
+		// Add separator between multiple results
+		if i > 0 && successCount > 0 {
+			separator := strings.Repeat("─", 65)
+			if colors != nil {
+				fmt.Println(colors.ColorResultSeparator(separator))
+			} else {
+				fmt.Println(separator)
+			}
+			fmt.Println()
+		}
+
+		// Render detailed output
+		result := renderer.RenderDetailed(entry, colors)
+		fmt.Println(result)
+		successCount++
+	}
+
+	if successCount == 0 {
+		gologger.Fatal().Msg("No vulnerabilities were successfully retrieved")
+	} else if successCount < len(cveIDs) {
+		gologger.Info().Msgf("Successfully retrieved %d out of %d vulnerabilities", successCount, len(cveIDs))
+	}
+
+	return nil
 }

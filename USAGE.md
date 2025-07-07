@@ -12,6 +12,85 @@
 | **Known exploited vulns** | `vulnx search is_kev:true` |
 | **Analyze by vendor** | `vulnx analyze -f affected_products.vendor` |
 
+## Vulnerability ID Lookup
+
+### Multiple Input Methods
+
+The `vulnx id` command supports flexible input methods similar to cvemap:
+
+```bash
+# Single ID lookup
+vulnx id CVE-2024-1234
+
+# File input
+vulnx id --file ids.txt
+
+# Comma-separated IDs (directly in arguments)
+vulnx id CVE-2024-1234,CVE-2024-5678,CVE-2023-9999
+```
+
+### Auto-Detection Feature
+
+vulnx now intelligently detects CVE IDs from stdin and automatically routes to the `id` command:
+
+```bash
+# Smart detection from mixed content
+echo "Critical vulnerabilities found: CVE-2024-1234, CVE-2024-5678" | vulnx
+
+# Works with any input format
+echo "CVE-2024-1234,CVE-2024-5678,CVE-2023-9999" | vulnx
+
+# Global flags work with auto-detection
+echo "CVE-2024-1234" | vulnx --json
+echo "CVE-2024-1234" | vulnx --output results.json --silent
+```
+
+### File Format Support
+
+Create input files with flexible formatting:
+
+```bash
+# Line-by-line format
+cat > vuln_ids.txt << 'EOF'
+CVE-2024-1234
+CVE-2024-5678
+CVE-2023-9999
+EOF
+```
+
+### Batch Processing Features
+
+```bash
+# JSON output for automation
+vulnx id --json --file ids.txt > results.json
+
+# Single ID as object, multiple as array
+vulnx id --json CVE-2024-1234                    # Returns object
+vulnx id --json CVE-2024-1234 CVE-2024-5678     # Returns array
+
+# Comma-separated IDs
+vulnx id --json CVE-2024-1234,CVE-2024-5678,CVE-2023-9999  # Returns array
+
+# Save to file
+vulnx id --output vulnerabilities.json --file ids.txt
+
+# Handle errors gracefully
+vulnx id --file ids.txt  # Continues processing if some IDs fail
+```
+
+### Integration Patterns
+
+```bash
+# Pipeline integration
+cat vulnerability_report.txt | grep -o 'CVE-[0-9]\{4\}-[0-9]\+' | vulnx id --json
+
+# Incident response workflow
+echo "CVE-2021-44228" | vulnx id | grep -A5 "CVSS:"
+
+# Bulk validation
+vulnx id --file cve_list.txt --json | jq '.[] | .cve_id + ": " + .severity'
+```
+
 ## Search Strategies
 
 ### Start Broad, Filter Down

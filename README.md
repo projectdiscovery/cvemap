@@ -112,6 +112,36 @@ vulnx search is_kev:true                # Known exploited vulns
 vulnx search is_template:true           # Has Nuclei templates
 ```
 
+## Vulnerability ID Lookup
+
+**Multiple input methods:**
+```bash
+# Single ID lookup
+vulnx id CVE-2024-1234
+
+# Multiple IDs (comma-separated)
+vulnx id CVE-2024-1234,CVE-2024-5678,CVE-2023-9999
+
+# Auto-detection from stdin (no 'id' command needed!)
+echo "CVE-2024-1234" | vulnx
+echo -e "CVE-2024-1234\nCVE-2024-5678" | vulnx
+
+# File input
+vulnx id --file ids.txt
+```
+
+**Batch processing:**
+```bash
+# JSON output for automation
+vulnx id --json CVE-2024-1234 CVE-2024-5678
+
+# Save to file
+vulnx id --output vulns.json --file ids.txt
+
+# Pipeline integration
+cat report.txt | grep -o 'CVE-[0-9]\{4\}-[0-9]\+' | vulnx id --json
+```
+
 ## Useful Field Names
 
 | Field | Description | Example Values |
