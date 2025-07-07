@@ -230,3 +230,51 @@ vulnsh analyze help                     # Available analyze fields
 - Save frequently used queries as shell aliases
 
 For advanced usage patterns and examples, see [USAGE.md](USAGE.md).
+
+## Development
+
+### Pre-Commit Setup
+
+To avoid CI failures and maintain code quality, choose one of these automation options:
+
+**Option 1: Zero Dependencies (Recommended for simple setups)**
+```bash
+# Uses our manual script directly as Git hook
+make git-hooks
+```
+
+**Option 2: Pre-commit Package (Recommended for advanced features)**
+```bash
+# Install pre-commit framework
+pip install pre-commit
+
+# Set up hooks with advanced features
+make pre-commit
+```
+
+**Manual quality checks:**
+```bash
+# Run all pre-commit checks
+make pre-push
+
+# Or run individual checks
+make fmt      # Format code
+make test     # Run tests  
+make lint     # Run linter
+make vet      # Static analysis
+```
+
+**Alternative script:**
+```bash
+# Make executable and run
+chmod +x scripts/pre-commit.sh
+./scripts/pre-commit.sh
+```
+
+**Troubleshooting:**
+If you encounter dependency issues (like "undefined: retryablehttp"), run:
+```bash
+make fix-deps  # Fixes common Go module issues
+```
+
+These checks include Go formatting, import fixing, testing, linting, and building. Running them locally prevents GitHub CI failures and keeps the codebase clean.

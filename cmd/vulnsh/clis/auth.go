@@ -39,48 +39,48 @@ vulnsh auth
 
 func runAuthCommand() {
 	gologger.Info().Msg("Get your free API key by signing up at https://cloud.projectdiscovery.io")
-	
+
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("[*] Enter PDCP API Key (exit to abort): ")
-	
+
 	apiKey, err := reader.ReadString('\n')
 	if err != nil {
 		gologger.Fatal().Msgf("Error reading input: %s", err)
 	}
-	
+
 	apiKey = strings.TrimSpace(apiKey)
 	if apiKey == "" || strings.ToLower(apiKey) == "exit" {
 		gologger.Info().Msg("Authentication setup aborted")
 		return
 	}
-	
+
 	// Validate the API key format (basic validation)
 	if len(apiKey) < 10 {
 		gologger.Fatal().Msg("Invalid API key format")
 	}
-	
+
 	// Initialize PDCP handler
 	ph := pdcp.PDCPCredHandler{}
-	
+
 	// Validate the API key with the server
 	apiServer := "https://cloud.projectdiscovery.io"
 	if customServer := os.Getenv("PDCP_API_SERVER"); customServer != "" {
 		apiServer = customServer
 	}
-	
+
 	gologger.Info().Msg("Validating API key...")
-	
+
 	validatedCreds, err := ph.ValidateAPIKey(apiKey, apiServer, "cvemap")
 	if err != nil {
 		gologger.Fatal().Msgf("API key validation failed: %s", err)
 	}
-	
+
 	// Save the credentials
 	err = ph.SaveCreds(validatedCreds)
 	if err != nil {
 		gologger.Fatal().Msgf("Failed to save credentials: %s", err)
 	}
-	
+
 	gologger.Info().Msgf("Successfully logged in as (%s)", validatedCreds.Username)
 	gologger.Info().Msg("API key saved successfully")
 }

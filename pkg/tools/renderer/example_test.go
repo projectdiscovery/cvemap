@@ -76,7 +76,7 @@ func ExampleRender() {
 	entry := FromVulnerability(vuln)
 	entries := []*Entry{entry}
 
-	result := Render(entries, layout, 1, 1)
+	result := RenderWithColors(entries, layout, 1, 1, NoColorConfig())
 	fmt.Println(result)
 
 	// Output:
@@ -85,5 +85,7 @@ func ExampleRender() {
 	// ↳ Exposure: ~15.0K | Vendors: example-corp | Products: webapp, api-server
 	// ↳ Patch: ✔ | POCs: 2 | KEV: ✔ (CISA, VULCHECK) | Nuclei Template: ✘ | Exploit Seen: ✔ | HackerOne: ✔
 	// ↳ Tags: rce, auth-bypass
+	//
 	// ↳ Showing 1 of 1 total results
+	//
 }

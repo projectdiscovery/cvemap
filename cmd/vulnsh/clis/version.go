@@ -46,11 +46,11 @@ vulnsh version --disable-update-check
 
 func showVersion() {
 	gologger.Info().Msgf("vulnsh version %s", Version)
-	
+
 	if disableUpdateCheck {
 		return
 	}
-	
+
 	// Use cvemap name temporarily until server-side support is added for vulnsh
 	// TODO: Change "cvemap" to "vulnsh" once server-side support is implemented
 	latestVersion, err := updateutils.GetToolVersionCallback("cvemap", Version)()
@@ -60,11 +60,11 @@ func showVersion() {
 		}
 		return
 	}
-	
+
 	description := updateutils.GetVersionDescription(Version, latestVersion)
 	if description != "" {
 		gologger.Info().Msgf("Update status: %s", description)
-		
+
 		// If there's a newer version available, provide helpful information
 		if latestVersion != Version {
 			gologger.Info().Msg("To update vulnsh, please check the latest release at:")

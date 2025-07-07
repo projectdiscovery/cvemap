@@ -10,7 +10,7 @@ import (
 
 	"github.com/projectdiscovery/cvemap/pkg/types"
 	"github.com/projectdiscovery/gologger"
-	"github.com/projectdiscovery/retryablehttp-go"
+	retryablehttp "github.com/projectdiscovery/retryablehttp-go"
 	"github.com/projectdiscovery/utils/env"
 	errorutil "github.com/projectdiscovery/utils/errors"
 )

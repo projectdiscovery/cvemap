@@ -83,7 +83,8 @@ func TestRender(t *testing.T) {
   ↳ Patch: ✔ | POCs: 3 | Nuclei Template: ✔ | HackerOne: ✔
   ↳ Template Authors: author1, author2 +2
 
-↳ Showing 1 of 1 total results`
+↳ Showing 1 of 1 total results
+`
 
 	if result != expected {
 		t.Errorf("Expected:\n%s\n\nGot:\n%s", expected, result)

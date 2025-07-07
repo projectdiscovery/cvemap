@@ -16,7 +16,7 @@ import (
 	"github.com/projectdiscovery/cvemap"
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/gologger/levels"
-	"github.com/projectdiscovery/retryablehttp-go"
+	retryablehttp "github.com/projectdiscovery/retryablehttp-go"
 
 	"os"
 

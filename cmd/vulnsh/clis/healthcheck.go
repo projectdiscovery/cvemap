@@ -13,9 +13,9 @@ import (
 
 var (
 	healthCmd = &cobra.Command{
-		Use:   "healthcheck",
+		Use:     "healthcheck",
 		Aliases: []string{"health", "hc"},
-		Short: "Check vulnsh health and connectivity",
+		Short:   "Check vulnsh health and connectivity",
 		Long: `Check vulnsh health and connectivity to the ProjectDiscovery API.
 
 This command performs various checks to ensure vulnsh is working correctly:
@@ -47,39 +47,39 @@ vulnsh hc
 )
 
 type HealthCheckResult struct {
-	Check     string        `json:"check"`
-	Status    string        `json:"status"`
-	Duration  time.Duration `json:"duration,omitempty"`
-	Message   string        `json:"message,omitempty"`
-	Details   interface{}   `json:"details,omitempty"`
+	Check    string        `json:"check"`
+	Status   string        `json:"status"`
+	Duration time.Duration `json:"duration,omitempty"`
+	Message  string        `json:"message,omitempty"`
+	Details  interface{}   `json:"details,omitempty"`
 }
 
 func runHealthCheck() {
 	gologger.Info().Msg("Running vulnsh health check...")
-	
+
 	var results []HealthCheckResult
-	
+
 	// Check 1: API Key validation
 	authResult := checkAuthentication()
 	results = append(results, authResult)
-	
+
 	if authResult.Status != "PASS" {
 		gologger.Error().Msg("Health check failed: Authentication issues detected")
 		displayResults(results)
 		return
 	}
-	
+
 	// Check 2: API connectivity and response time
 	connectivityResult := checkAPIConnectivity()
 	results = append(results, connectivityResult)
-	
+
 	// Check 3: API endpoint functionality
 	endpointResult := checkAPIEndpoint()
 	results = append(results, endpointResult)
-	
+
 	// Display results
 	displayResults(results)
-	
+
 	// Overall status
 	allPassed := true
 	for _, result := range results {
@@ -88,7 +88,7 @@ func runHealthCheck() {
 			break
 		}
 	}
-	
+
 	if allPassed {
 		gologger.Info().Msg("✅ All health checks passed - vulnsh is working correctly")
 	} else {
@@ -98,11 +98,11 @@ func runHealthCheck() {
 
 func checkAuthentication() HealthCheckResult {
 	start := time.Now()
-	
+
 	// Try to initialize the cvemap client
 	err := ensureCvemapClientInitialized(nil)
 	duration := time.Since(start)
-	
+
 	if err != nil {
 		return HealthCheckResult{
 			Check:    "Authentication",
@@ -111,7 +111,7 @@ func checkAuthentication() HealthCheckResult {
 			Message:  fmt.Sprintf("Failed to initialize API client: %v", err),
 		}
 	}
-	
+
 	if cvemapClient == nil {
 		return HealthCheckResult{
 			Check:    "Authentication",
@@ -120,7 +120,7 @@ func checkAuthentication() HealthCheckResult {
 			Message:  "API client is nil after initialization",
 		}
 	}
-	
+
 	return HealthCheckResult{
 		Check:    "Authentication",
 		Status:   "PASS",
@@ -131,14 +131,14 @@ func checkAuthentication() HealthCheckResult {
 
 func checkAPIConnectivity() HealthCheckResult {
 	start := time.Now()
-	
+
 	// Try to make a simple API call to test connectivity
 	handler := filters.NewHandler(cvemapClient)
-	
+
 	// Measure round-trip time
 	_, err := handler.List()
 	duration := time.Since(start)
-	
+
 	if err != nil {
 		return HealthCheckResult{
 			Check:    "API Connectivity",
@@ -151,16 +151,16 @@ func checkAPIConnectivity() HealthCheckResult {
 			},
 		}
 	}
-	
+
 	// Check if response time is reasonable
 	status := "PASS"
 	message := fmt.Sprintf("API connectivity successful (response time: %v)", duration)
-	
+
 	if duration > 10*time.Second {
 		status = "WARN"
 		message = fmt.Sprintf("API connectivity successful but slow (response time: %v)", duration)
 	}
-	
+
 	return HealthCheckResult{
 		Check:    "API Connectivity",
 		Status:   status,
@@ -175,12 +175,12 @@ func checkAPIConnectivity() HealthCheckResult {
 
 func checkAPIEndpoint() HealthCheckResult {
 	start := time.Now()
-	
+
 	// Test the filters endpoint functionality
 	handler := filters.NewHandler(cvemapClient)
 	filters, err := handler.List()
 	duration := time.Since(start)
-	
+
 	if err != nil {
 		return HealthCheckResult{
 			Check:    "API Endpoint",
@@ -189,7 +189,7 @@ func checkAPIEndpoint() HealthCheckResult {
 			Message:  fmt.Sprintf("Filters endpoint failed: %v", err),
 		}
 	}
-	
+
 	if len(filters) == 0 {
 		return HealthCheckResult{
 			Check:    "API Endpoint",
@@ -198,7 +198,7 @@ func checkAPIEndpoint() HealthCheckResult {
 			Message:  "Filters endpoint returned empty response",
 		}
 	}
-	
+
 	return HealthCheckResult{
 		Check:    "API Endpoint",
 		Status:   "PASS",
@@ -226,11 +226,11 @@ func displayResults(results []HealthCheckResult) {
 	fmt.Println()
 	gologger.Info().Msg("Health Check Results:")
 	fmt.Println()
-	
+
 	for _, result := range results {
 		status := result.Status
 		var statusIcon string
-		
+
 		switch status {
 		case "PASS":
 			statusIcon = "✅"
@@ -241,22 +241,22 @@ func displayResults(results []HealthCheckResult) {
 		default:
 			statusIcon = "❓"
 		}
-		
+
 		fmt.Printf("  %s %s: %s", statusIcon, result.Check, status)
 		if result.Duration > 0 {
 			fmt.Printf(" (%v)", result.Duration)
 		}
 		fmt.Println()
-		
+
 		if result.Message != "" {
 			fmt.Printf("    %s\n", result.Message)
 		}
-		
+
 		if verbose && result.Details != nil {
 			detailsBytes, _ := json.MarshalIndent(result.Details, "    ", "  ")
 			fmt.Printf("    Details: %s\n", string(detailsBytes))
 		}
-		
+
 		fmt.Println()
 	}
 }

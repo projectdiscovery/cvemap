@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/mattn/go-isatty"
+	isatty "github.com/mattn/go-isatty"
 )
 
 // pageBreak is an ASCII Form-Feed (0x0c) that most pagers (e.g. `less`) treat
