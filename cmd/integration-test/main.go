@@ -18,7 +18,7 @@ var (
 	success             = aurora.Green("[✓]").String()
 	failed              = aurora.Red("[✘]").String()
 	currentCvemapBinary = flag.String("current", "", "Current Branch Cvemap Binary")
-	currentVulnshBinary = flag.String("vulnsh", "", "Current Branch Vulnsh Binary")
+	currentVulnxBinary  = flag.String("vulnx", "", "Current Branch Vulnx Binary")
 )
 
 func main() {
@@ -66,18 +66,18 @@ func runIntegrationTests() error {
 		}
 	}
 
-	// Run vulnsh tests if binary is provided
-	if currentVulnshBinary != nil && *currentVulnshBinary != "" {
-		fmt.Println("\nRunning Vulnsh integration tests...")
-		for testName, testcase := range vulnshTestCases {
+	// Run vulnx tests if binary is provided
+	if currentVulnxBinary != nil && *currentVulnxBinary != "" {
+		fmt.Println("\nRunning Vulnx integration tests...")
+		for testName, testcase := range vulnxTestCases {
 			if err := testcase.Execute(); err != nil {
-				fmt.Fprintf(os.Stderr, "%s Vulnsh Test \"%s\" failed: %s\n", failed, testName, err)
+				fmt.Fprintf(os.Stderr, "%s Vulnx Test \"%s\" failed: %s\n", failed, testName, err)
 			} else {
-				fmt.Printf("%s Vulnsh Test \"%s\" passed!\n", success, testName)
+				fmt.Printf("%s Vulnx Test \"%s\" passed!\n", success, testName)
 			}
 		}
 	} else {
-		fmt.Println("\nSkipping Vulnsh tests (no binary provided)")
+		fmt.Println("\nSkipping Vulnx tests (no binary provided)")
 	}
 
 	return nil

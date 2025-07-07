@@ -22,7 +22,7 @@ go.work
 /cvemap
 /cmd/cvemap/cvemap
 /dist
-/vulnsh
+/vulnx
 /cmd/integration-test/cvemap
 /cmd/integration-test/integration-test
-/cmd/integration-test/vulnsh
+/cmd/integration-test/vulnx

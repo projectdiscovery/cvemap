@@ -1,16 +1,16 @@
-# vulnsh Advanced Usage Guide
+# vulnx Advanced Usage Guide
 
-> **Master vulnsh to efficiently discover, analyze, and track vulnerabilities**
+> **Master vulnx to efficiently discover, analyze, and track vulnerabilities**
 
 ## Quick Reference
 
 | Task | Command |
 |------|---------|
-| **Find recent critical vulns** | `vulnsh search severity:critical cve_created_at:2024` |
-| **Get Apache RCE vulns** | `vulnsh search apache "remote code execution"` |
-| **High CVSS with exploits** | `vulnsh search cvss_score:>8.0 is_poc:true` |
-| **Known exploited vulns** | `vulnsh search is_kev:true` |
-| **Analyze by vendor** | `vulnsh analyze -f affected_products.vendor` |
+| **Find recent critical vulns** | `vulnx search severity:critical cve_created_at:2024` |
+| **Get Apache RCE vulns** | `vulnx search apache "remote code execution"` |
+| **High CVSS with exploits** | `vulnx search cvss_score:>8.0 is_poc:true` |
+| **Known exploited vulns** | `vulnx search is_kev:true` |
+| **Analyze by vendor** | `vulnx analyze -f affected_products.vendor` |
 
 ## Search Strategies
 
@@ -18,39 +18,39 @@
 
 ```bash
 # 1. Start with technology
-vulnsh search apache
+vulnx search apache
 
 # 2. Add severity filter  
-vulnsh search apache severity:high
+vulnx search apache severity:high
 
 # 3. Add time constraint
-vulnsh search apache severity:high cve_created_at:2024
+vulnx search apache severity:high cve_created_at:2024
 
 # 4. Focus on exploitable
-vulnsh search apache severity:high cve_created_at:2024 is_remote:true
+vulnx search apache severity:high cve_created_at:2024 is_remote:true
 ```
 
 ### Technology Stack Assessment
 
 ```bash
 # Web stack vulnerabilities
-vulnsh search "(apache OR nginx OR tomcat)" severity:high
-vulnsh search affected_products.vendor:apache --limit 100
+vulnx search "(apache OR nginx OR tomcat)" severity:high
+vulnx search affected_products.vendor:apache --limit 100
 
 # Database vulnerabilities  
-vulnsh search "(mysql OR postgresql OR mongodb)" severity:critical
-vulnsh search affected_products.product:mysql cve_created_at:2024
+vulnx search "(mysql OR postgresql OR mongodb)" severity:critical
+vulnx search affected_products.product:mysql cve_created_at:2024
 
 # Framework vulnerabilities
-vulnsh search "(spring OR django OR rails)" is_remote:true
+vulnx search "(spring OR django OR rails)" is_remote:true
 ```
 
 ### Threat Intelligence Workflows
 
 **Find trending vulnerabilities:**
 ```bash
-vulnsh search cve_created_at:[2024-01-01 TO 2024-12-31] is_kev:true
-vulnsh search epss_score:>0.9 --sort-desc cve_created_at
+vulnx search cve_created_at:[2024-01-01 TO 2024-12-31] is_kev:true
+vulnx search epss_score:>0.9 --sort-desc cve_created_at
 ```
 
 **Active exploitation tracking:**

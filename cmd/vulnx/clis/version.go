@@ -16,20 +16,20 @@ var (
 
 	versionCmd = &cobra.Command{
 		Use:   "version",
-		Short: "Show vulnsh version and check for updates",
-		Long: `Show vulnsh version and check for updates.
+		Short: "Show vulnx version and check for updates",
+		Long: `Show vulnx version and check for updates.
 
-This command displays the current version of vulnsh and checks if a newer version
+This command displays the current version of vulnx and checks if a newer version
 is available. Update checking can be disabled with the --disable-update-check flag.
 
 Note: Currently uses 'cvemap' for version checking until server-side support is added.
 `,
 		Example: `
 # Show version and check for updates
-vulnsh version
+vulnx version
 
 # Show version without update check
-vulnsh version --disable-update-check
+vulnx version --disable-update-check
 `,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// Override the root command's PersistentPreRunE to avoid client initialization
@@ -45,14 +45,14 @@ vulnsh version --disable-update-check
 )
 
 func showVersion() {
-	gologger.Info().Msgf("vulnsh version %s", Version)
+	gologger.Info().Msgf("vulnx version %s", Version)
 
 	if disableUpdateCheck {
 		return
 	}
 
-	// Use cvemap name temporarily until server-side support is added for vulnsh
-	// TODO: Change "cvemap" to "vulnsh" once server-side support is implemented
+	// Use cvemap name temporarily until server-side support is added for vulnx
+	// TODO: Change "cvemap" to "vulnx" once server-side support is implemented
 	latestVersion, err := updateutils.GetToolVersionCallback("cvemap", Version)()
 	if err != nil {
 		if verbose || debug {
@@ -67,9 +67,9 @@ func showVersion() {
 
 		// If there's a newer version available, provide helpful information
 		if latestVersion != Version {
-			gologger.Info().Msg("To update vulnsh, please check the latest release at:")
+			gologger.Info().Msg("To update vulnx, please check the latest release at:")
 			gologger.Info().Msg("https://github.com/projectdiscovery/cvemap/releases")
-			gologger.Info().Msg("Note: vulnsh updates will be included in cvemap releases until separate releases are available")
+			gologger.Info().Msg("Note: vulnx updates will be included in cvemap releases until separate releases are available")
 		}
 	}
 }

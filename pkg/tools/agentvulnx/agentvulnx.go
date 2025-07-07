@@ -19,14 +19,14 @@ import (
 //   1. The user (or another tool) calls agent_vulnx with a free-form task such
 //      as "Find recent critical RCEs in WordPress".
 //   2. agent_vulnx returns a prompt skeleton containing:
-//        • Proposed tool chain (vulnsh_fields_list → vulnsh_search → …)
+//        • Proposed tool chain (vulnx_fields_list → vulnx_search → …)
 //        • Step-by-step rationale for each action
 //        • Space for clarification questions and an ethical notice
 //   3. Down-stream automation or an analyst fills in the details and executes
 //      the referenced MCP tools.
 //
 // NOTE: This tool is the **only** component authorised to instruct calls to
-// vulnsh_fields_list, vulnsh_search, vulnsh_analyze, and vulnsh_get_by_id unless
+// vulnx_fields_list, vulnx_search, vulnx_analyze, and vulnx_get_by_id unless
 // the user explicitly demands those tools.
 //
 // Input Parameters (JSON Schema):
@@ -53,7 +53,7 @@ func (h *Handler) MCPToolSpec() mcp.Tool {
 
 When to use this tool:
 - Any time a user poses an open-ended vulnerability, CVE, exploit, or template-related request.
-- When another tool or the system needs an explicit, step-by-step plan before invoking vulnsh_* tools.
+- When another tool or the system needs an explicit, step-by-step plan before invoking vulnx_* tools.
 
 Key features:
 - Breaks the problem into ordered tool calls (fields_list → search → analyze → get_by_id).
@@ -78,19 +78,19 @@ Start with Field Discovery to identify all available fields and examples. Use in
 # Steps
 
 1. **Field Discovery**: 
-   - Use *vulnsh_fields_list* to enumerate available fields and example values.
+   - Use *vulnx_fields_list* to enumerate available fields and example values.
    
 2. **Query Design**:
    - Draft Bleve-inspired queries based on the insights from Field Discovery.
 
-3. **vulnsh_search Execution**:
+3. **vulnx_search Execution**:
    - Run the designed queries and analyze the results. Aim to refine queries if errors or irrelevant results occur.
 
 4. **Result Assessment**:
    - Assess result counts and their relevance. Make necessary iterative adjustments to queries, focusing on precision and discovering meaningful insights.
 
 5. **Aggregation or Detail**:
-   - For statistical analysis or trend visualization, use *vulnsh_analyze*. For deeper insights into specific vulnerabilities, use *vulnsh_get_by_id*.
+   - For statistical analysis or trend visualization, use *vulnx_analyze*. For deeper insights into specific vulnerabilities, use *vulnx_get_by_id*.
 
 6. **Completion**:
    - Summarize the analysis, capturing key findings, associated risks, remediation proposals, and suggested next steps.
@@ -106,9 +106,9 @@ The output should summarize key findings in a clear and structured format, captu
 # Examples
 
 - **Field Discovery & Query Design**:
-   - "Using *vulnsh_fields_list*, identified fields: severity, cvss_score, tags. Constructed initial query: 'severity:critical && tags:rce'."
+   - "Using *vulnx_fields_list*, identified fields: severity, cvss_score, tags. Constructed initial query: 'severity:critical && tags:rce'."
   
-- **vulnsh_search Execution & Result Analysis**:
+- **vulnx_search Execution & Result Analysis**:
    - "Executed query and observed 50 relevant results indicating high-risk vulnerabilities. Refined query by adjusting filters to: 'severity:critical && cvss_score:>7'."
 
 - **Completion Summary**:

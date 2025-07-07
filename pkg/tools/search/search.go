@@ -43,11 +43,11 @@ func (h *Handler) Search(params cvemap.SearchParams) (cvemap.SearchResponse, err
 
 // MCPToolSpec returns the MCP tool spec for registration.
 func (h *Handler) MCPToolSpec() mcp.Tool {
-	return mcp.NewTool("vulnsh_search",
+	return mcp.NewTool("vulnx_search",
 		mcp.WithDescription("Search vulnerabilities with Bleve-inspired query syntax (use '&&' and '||' instead of 'AND', 'OR'). NOTE: Use this tool ONLY when `agent_vulnx` explicitly instructs you or when the user directly asks for a search; otherwise do not invoke it."),
 		mcp.WithString("query",
 			mcp.Required(),
-			mcp.Description("Bleve-inspired query expression (e.g. 'severity:critical && product:atlassian'). Combine any fields from 'vulnsh_fields_list'."),
+			mcp.Description("Bleve-inspired query expression (e.g. 'severity:critical && product:atlassian'). Combine any fields from 'vulnx_fields_list'."),
 		),
 		mcp.WithNumber("limit",
 			mcp.Description("Maximum results per call (default 5, cap 100)."),
@@ -73,7 +73,7 @@ func (h *Handler) MCPHandler(client *cvemap.Client) func(ctx context.Context, re
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		query, err := request.RequireString("query")
 		if err != nil || query == "" {
-			return mcp.NewToolResultError("ProjectDiscovery vulnsh: 'query' is required and must be a string."), nil
+			return mcp.NewToolResultError("ProjectDiscovery vulnx: 'query' is required and must be a string."), nil
 		}
 		limit := request.GetInt("limit", 5)
 		if limit > 100 {
@@ -113,12 +113,12 @@ func (h *Handler) MCPHandler(client *cvemap.Client) func(ctx context.Context, re
 
 		resp, err := h.Search(params)
 		if err != nil {
-			return mcp.NewToolResultError("ProjectDiscovery vulnsh: " + err.Error()), nil
+			return mcp.NewToolResultError("ProjectDiscovery vulnx: " + err.Error()), nil
 		}
 		b, err := json.MarshalIndent(resp, "", "  ")
 		if err != nil {
-			return mcp.NewToolResultError("ProjectDiscovery vulnsh: failed to marshal search result: " + err.Error()), nil
+			return mcp.NewToolResultError("ProjectDiscovery vulnx: failed to marshal search result: " + err.Error()), nil
 		}
-		return mcp.NewToolResultText("ProjectDiscovery vulnerability.sh (vulnsh) search result:\n" + string(b)), nil
+		return mcp.NewToolResultText("ProjectDiscovery vulnerability.sh (vulnx) search result:\n" + string(b)), nil
 	}
 }

@@ -10,28 +10,28 @@ import (
 	"github.com/projectdiscovery/gologger"
 )
 
-// VulnshTestCase represents a test case for vulnsh
-type VulnshTestCase struct {
+// VulnxTestCase represents a test case for vulnx
+type VulnxTestCase struct {
 	Name        string
 	Args        []string
 	ExpectedOut string
 	ShouldFail  bool
 }
 
-func (v *VulnshTestCase) Execute() error {
-	output, err := runVulnshBinaryAndGetResults(*currentVulnshBinary, debug, v.Args)
+func (v *VulnxTestCase) Execute() error {
+	output, err := runVulnxBinaryAndGetResults(*currentVulnxBinary, debug, v.Args)
 	if err != nil && !v.ShouldFail {
-		return errors.Wrapf(err, "vulnsh test '%s' failed unexpectedly", v.Name)
+		return errors.Wrapf(err, "vulnx test '%s' failed unexpectedly", v.Name)
 	}
 
 	if err == nil && v.ShouldFail {
-		return errors.Errorf("vulnsh test '%s' should have failed but succeeded", v.Name)
+		return errors.Errorf("vulnx test '%s' should have failed but succeeded", v.Name)
 	}
 
 	if v.ExpectedOut != "" {
 		outputStr := strings.Join(output, " ")
 		if !strings.Contains(outputStr, v.ExpectedOut) {
-			return errors.Errorf("vulnsh test '%s' output doesn't contain expected string '%s'. Got: %s",
+			return errors.Errorf("vulnx test '%s' output doesn't contain expected string '%s'. Got: %s",
 				v.Name, v.ExpectedOut, outputStr)
 		}
 	}
@@ -39,10 +39,10 @@ func (v *VulnshTestCase) Execute() error {
 	return nil
 }
 
-// runVulnshBinaryAndGetResults executes vulnsh with given arguments and returns output
-func runVulnshBinaryAndGetResults(vulnshBinary string, debug bool, args []string) ([]string, error) {
+// runVulnxBinaryAndGetResults executes vulnx with given arguments and returns output
+func runVulnxBinaryAndGetResults(vulnxBinary string, debug bool, args []string) ([]string, error) {
 	cmd := exec.Command("bash", "-c")
-	cmdLine := fmt.Sprintf(`./%s `, vulnshBinary)
+	cmdLine := fmt.Sprintf(`./%s `, vulnxBinary)
 	cmdLine += strings.Join(args, " ")
 	if debug {
 		if err := os.Setenv("DEBUG", "1"); err != nil {
@@ -65,8 +65,8 @@ func runVulnshBinaryAndGetResults(vulnshBinary string, debug bool, args []string
 	return parts, nil
 }
 
-// Vulnsh specific test cases
-var vulnshTestCases = map[string]*VulnshTestCase{
+// Vulnx specific test cases
+var vulnxTestCases = map[string]*VulnxTestCase{
 	"Get By CVE ID": {
 		Name:        "Get By CVE ID",
 		Args:        []string{"id", "CVE-1999-0027", "--json", "--silent"},
@@ -85,7 +85,7 @@ var vulnshTestCases = map[string]*VulnshTestCase{
 	"Help Command": {
 		Name:        "Help Command",
 		Args:        []string{"--help"},
-		ExpectedOut: "vulnsh — The Swiss Army knife for vulnerability intel",
+		ExpectedOut: "vulnx — The Swiss Army knife for vulnerability intel",
 	},
 	"Analyze Command": {
 		Name:        "Analyze Command",

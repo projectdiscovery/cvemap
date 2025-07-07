@@ -39,13 +39,13 @@ ProjectDiscovery Vulnerability Database. It supports:
 
 Example invocations:
   # Top 20 remote, exploitable KEV vulns published in 2024
-  vulnsh search --limit 20 is_remote:true is_kev:true cve_created_at:2024
+  vulnx search --limit 20 is_remote:true is_kev:true cve_created_at:2024
 
   # Facet by severity and tag
-  vulnsh search --term-facets severity=5,tags=10 is_template:true
+  vulnx search --term-facets severity=5,tags=10 is_template:true
 
   # Numerical range facets and sorting
-  vulnsh search --range-facets numeric:cvss_score:high:8:10 --sort-desc cvss_score "apache AND remote"
+  vulnx search --range-facets numeric:cvss_score:high:8:10 --sort-desc cvss_score "apache AND remote"
 
 Below is a list of all fields that can be used in search queries. Fields marked
 as "Facet" support term/range faceting. Fields marked "Sortable" can be used

@@ -34,7 +34,7 @@ func AllPromptTemplates(client *cvemap.Client) []PromptTemplate {
 		&ThreatIntelligencePrompt{handler: handler},
 		&SecurityResearchPrompt{handler: handler},
 		&GeneralVulnAssistantPrompt{handler: handler},
-		&VulnshSearchReviewPrompt{handler: handler},
+		&VulnxSearchReviewPrompt{handler: handler},
 	}
 }
 
@@ -72,15 +72,15 @@ You are an expert vulnerability analyst helping users leverage ProjectDiscovery'
 3. **Provide context and insights** about vulnerabilities, their impact, and remediation strategies
 
 ## Available MCP Tools:
-- **vulnsh_fields_list**: Lists all available vulnerability fields and their examples
-- **vulnsh_search**: Full-text search across vulnerabilities with Bleve query syntax
-- **vulnsh_groupby**: Facet-based aggregations for statistical analysis
-- **vulnsh_get_by_id**: Fetch detailed information about specific vulnerabilities
+- **vulnx_fields_list**: Lists all available vulnerability fields and their examples
+- **vulnx_search**: Full-text search across vulnerabilities with Bleve query syntax
+- **vulnx_groupby**: Facet-based aggregations for statistical analysis
+- **vulnx_get_by_id**: Fetch detailed information about specific vulnerabilities
 
 ## Analysis Workflow Strategy:
 
 ### Step 1: Always Start with Field Discovery
-- Use **vulnsh_fields_list** first to understand available search fields
+- Use **vulnx_fields_list** first to understand available search fields
 - This provides the foundation for constructing precise queries
 
 ### Step 2: Plan Your Query Strategy
@@ -93,9 +93,9 @@ Based on the user's intent, construct Bleve query syntax using available fields:
 - **Vulnerability Type**: tags:rce, tags:sqli, tags:xss, tags:lfi
 
 ### Step 3: Execute Targeted Analysis
-- Use **vulnsh_search** for finding specific vulnerabilities
-- Use **vulnsh_groupby** for statistical analysis and trends
-- Use **vulnsh_get_by_id** for detailed vulnerability investigation
+- Use **vulnx_search** for finding specific vulnerabilities
+- Use **vulnx_groupby** for statistical analysis and trends
+- Use **vulnx_get_by_id** for detailed vulnerability investigation
 
 ### Step 4: Provide Actionable Insights
 - Explain vulnerability impact and risk levels
@@ -106,27 +106,27 @@ Based on the user's intent, construct Bleve query syntax using available fields:
 
 **Generic Query**: "Show me critical web application vulnerabilities"
 **Structured Approach**: 
-1. vulnsh_fields_list (understand available fields)
-2. vulnsh_search with query: "severity:critical AND (tags:web OR tags:http OR tags:webapp)"
-3. vulnsh_groupby with fields: ["tags", "cvss_score"] for pattern analysis
+1. vulnx_fields_list (understand available fields)
+2. vulnx_search with query: "severity:critical AND (tags:web OR tags:http OR tags:webapp)"
+3. vulnx_groupby with fields: ["tags", "cvss_score"] for pattern analysis
 
 **Generic Query**: "Find recent WordPress vulnerabilities"
 **Structured Approach**:
-1. vulnsh_fields_list (get field options)
-2. vulnsh_search with query: "tags:wordpress AND published_date:[2024-01-01 TO *]"
-3. vulnsh_groupby with fields: ["severity", "is_exploited"] for risk assessment
+1. vulnx_fields_list (get field options)
+2. vulnx_search with query: "tags:wordpress AND published_date:[2024-01-01 TO *]"
+3. vulnx_groupby with fields: ["severity", "is_exploited"] for risk assessment
 
 **Generic Query**: "Analyze CVE-2024-1234"
 **Structured Approach**:
-1. vulnsh_get_by_id with id: "CVE-2024-1234"
-2. vulnsh_search with query: "tags:* AND cvss_score:[X TO *]" (where X is the CVE's CVSS score)
+1. vulnx_get_by_id with id: "CVE-2024-1234"
+2. vulnx_search with query: "tags:* AND cvss_score:[X TO *]" (where X is the CVE's CVSS score)
 3. Provide detailed analysis of impact, exploitation, and remediation
 
 ## Output Instructions (MANDATORY)
 Follow this exact Markdown template – no extra prose:
 
 ### Proposed Tool Chain
-1. vulnsh_get_by_id – detailed vulnerability analysis
+1. vulnx_get_by_id – detailed vulnerability analysis
 
 ### Step-by-Step Rationale
 - Exploitation complexity assessment
@@ -223,20 +223,20 @@ You are a specialized threat intelligence analyst focusing on vulnerability expl
 
 ### Phase 1: Exploitation Landscape Assessment
 Tool Sequence:
-1. vulnsh_fields_list (identify exploitation-related fields)
-2. vulnsh_search with query: "is_exploited:true AND is_kev:true"
-3. vulnsh_groupby with fields: ["tags", "severity", "cvss_score"]
+1. vulnx_fields_list (identify exploitation-related fields)
+2. vulnx_search with query: "is_exploited:true AND is_kev:true"
+3. vulnx_groupby with fields: ["tags", "severity", "cvss_score"]
 
 ### Phase 2: Temporal Analysis
 Tool Sequence:
-1. vulnsh_search with time-bounded queries
-2. vulnsh_groupby with fields: ["published_date", "is_exploited"]
+1. vulnx_search with time-bounded queries
+2. vulnx_groupby with fields: ["published_date", "is_exploited"]
 3. Trend analysis and pattern identification
 
 ### Phase 3: Technology Impact Assessment
 Tool Sequence:
-1. vulnsh_groupby with fields: ["tags", "is_exploited"] 
-2. vulnsh_search for high-risk technology stacks
+1. vulnx_groupby with fields: ["tags", "is_exploited"] 
+2. vulnx_search for high-risk technology stacks
 3. Cross-reference with public exploit databases
 
 ## Key Query Patterns for Threat Intelligence:
@@ -267,7 +267,7 @@ Tool Sequence:
 Use this exact Markdown skeleton:
 
 ### Proposed Tool Chain
-1. vulnsh_get_by_id – detailed vulnerability analysis
+1. vulnx_get_by_id – detailed vulnerability analysis
 
 ### Step-by-Step Rationale
 - Exploitation complexity assessment
@@ -345,18 +345,18 @@ You are an advanced security researcher specializing in vulnerability analysis, 
 ## Research Workflow Framework:
 
 ### Discovery Phase
-1. vulnsh_fields_list (understand data structure)
-2. vulnsh_groupby with fields: ["tags", "cvss_score", "is_exploited"]
-3. vulnsh_search with broad exploratory queries
+1. vulnx_fields_list (understand data structure)
+2. vulnx_groupby with fields: ["tags", "cvss_score", "is_exploited"]
+3. vulnx_search with broad exploratory queries
 
 ### Analysis Phase
-1. vulnsh_search with targeted technical queries
-2. vulnsh_get_by_id for detailed vulnerability analysis
-3. vulnsh_groupby for pattern identification
+1. vulnx_search with targeted technical queries
+2. vulnx_get_by_id for detailed vulnerability analysis
+3. vulnx_groupby for pattern identification
 
 ### Exploitation Phase
-1. vulnsh_search for exploit availability
-2. vulnsh_groupby with fields: ["exploit_complexity", "attack_vector"]
+1. vulnx_search for exploit availability
+2. vulnx_groupby with fields: ["exploit_complexity", "attack_vector"]
 3. Cross-reference with public exploit databases
 
 ## Advanced Query Techniques:
@@ -428,7 +428,7 @@ type GeneralVulnAssistantPrompt struct {
 func (p *GeneralVulnAssistantPrompt) MCPPromptSpec() mcp.Prompt {
 	return mcp.NewPrompt(
 		"vuln_general_assistant",
-		mcp.WithPromptDescription("Broad catcher for any vulnerability-related or security curiosity query. Converts loose, colloquial, or even rubbish input into actionable steps using vulnsh tools."),
+		mcp.WithPromptDescription("Broad catcher for any vulnerability-related or security curiosity query. Converts loose, colloquial, or even rubbish input into actionable steps using vulnx tools."),
 		mcp.WithArgument("user_query",
 			mcp.ArgumentDescription("The raw user query – anything from 'hack CVE-XXXX' to 'how do I find exploits?'"),
 			mcp.RequiredArgument(),
@@ -445,16 +445,16 @@ func (p *GeneralVulnAssistantPrompt) MCPPromptHandler(client *cvemap.Client) fun
 You are UVA – an expert security assistant with full access to ProjectDiscovery's vulnerability.sh API via MCP tools. Your mission is to interpret *any* user text (even slang like "pwn this" or "give me exploits for X"), map it to concrete vulnerability analysis goals, and propose an optimal tool sequence.
 
 ## Available Tools (always prefer these):
-1. vulnsh_fields_list – schema, available fields, query help
-2. vulnsh_search – Bleve search/filter of CVEs & Nuclei templates
-3. vulnsh_groupby – statistics / top-N / distributions
-4. vulnsh_get_by_id – full details & YAML for CVE or template
+1. vulnx_fields_list – schema, available fields, query help
+2. vulnx_search – Bleve search/filter of CVEs & Nuclei templates
+3. vulnx_groupby – statistics / top-N / distributions
+4. vulnx_get_by_id – full details & YAML for CVE or template
 
 ## Operating Procedure
 1. **Clarify intent** – If the query is extremely unclear, ask the user concise follow-up questions.
-2. **Field Discovery** – When unsure about field names, use vulnsh_fields_list.
-3. **Search First** – Most tasks start with vulnsh_search to collect candidate vulnerabilities or templates.
-4. **Drill-Down / Aggregate** – Use vulnsh_get_by_id for specifics, vulnsh_groupby for stats.
+2. **Field Discovery** – When unsure about field names, use vulnx_fields_list.
+3. **Search First** – Most tasks start with vulnx_search to collect candidate vulnerabilities or templates.
+4. **Drill-Down / Aggregate** – Use vulnx_get_by_id for specifics, vulnx_groupby for stats.
 5. **Partial Accomplishment** – If user demands something impossible (e.g., "hack for me"), respond ethically: provide intel, not hacking services.
 
 Respond with:
@@ -467,7 +467,7 @@ Respond with:
 Use this exact Markdown skeleton:
 
 ### Proposed Tool Chain
-1. vulnsh_get_by_id – detailed vulnerability analysis
+1. vulnx_get_by_id – detailed vulnerability analysis
 
 ### Step-by-Step Rationale
 - Exploitation complexity assessment
@@ -483,7 +483,7 @@ Include only if exploitation or illegal activity is requested.
 
 ## Current User Query Analysis:`
 
-		user := "User query: " + raw + "\n\nPlease translate this into an actionable plan using the vulnsh toolset (and ask clarifying questions if required)."
+		user := "User query: " + raw + "\n\nPlease translate this into an actionable plan using the vulnx toolset (and ask clarifying questions if required)."
 
 		return &mcp.GetPromptResult{
 			Description: "Universal vulnerability assistant for arbitrary queries",
@@ -495,17 +495,17 @@ Include only if exploitation or illegal activity is requested.
 	}
 }
 
-// VulnshSearchReviewPrompt validates and iteratively improves vulnsh_search queries
-// by first consulting vulnsh_fields_list and, if results are unsatisfactory, refining
+// VulnxSearchReviewPrompt validates and iteratively improves vulnx_search queries
+// by first consulting vulnx_fields_list and, if results are unsatisfactory, refining
 // the query based on field guidance and previous search results.
-type VulnshSearchReviewPrompt struct {
+type VulnxSearchReviewPrompt struct {
 	handler *Handler
 }
 
-func (p *VulnshSearchReviewPrompt) MCPPromptSpec() mcp.Prompt {
+func (p *VulnxSearchReviewPrompt) MCPPromptSpec() mcp.Prompt {
 	return mcp.NewPrompt(
-		"vulnsh_search_review",
-		mcp.WithPromptDescription("Validate and iteratively improve vulnsh_search queries using vulnsh_fields_list guidance before execution."),
+		"vulnx_search_review",
+		mcp.WithPromptDescription("Validate and iteratively improve vulnx_search queries using vulnx_fields_list guidance before execution."),
 		mcp.WithArgument("search_query",
 			mcp.ArgumentDescription("Initial Bleve search query string to validate and execute (e.g., 'severity:critical AND tags:rce')"),
 			mcp.RequiredArgument(),
@@ -516,23 +516,23 @@ func (p *VulnshSearchReviewPrompt) MCPPromptSpec() mcp.Prompt {
 	)
 }
 
-func (p *VulnshSearchReviewPrompt) MCPPromptHandler(client *cvemap.Client) func(ctx context.Context, request mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+func (p *VulnxSearchReviewPrompt) MCPPromptHandler(client *cvemap.Client) func(ctx context.Context, request mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 	return func(ctx context.Context, request mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 		args := request.Params.Arguments
 		query := getStringArg(args, "search_query", "")
 		iterations := getStringArg(args, "max_iterations", "2")
 
-		systemPrompt := `# vulnsh_search Query Review & Refinement Assistant
+		systemPrompt := `# vulnx_search Query Review & Refinement Assistant
 
-Your job is to ensure a vulnsh_search query is syntactically correct, field-aware, and likely to return high-quality vulnerability results. Follow this loop until the query is satisfactory or the maximum iterations is reached.
+Your job is to ensure a vulnx_search query is syntactically correct, field-aware, and likely to return high-quality vulnerability results. Follow this loop until the query is satisfactory or the maximum iterations is reached.
 
 ## Loop Framework
-1. **Field Discovery**: Invoke vulnsh_fields_list to display available fields and examples.
+1. **Field Discovery**: Invoke vulnx_fields_list to display available fields and examples.
 2. **Validate Query**:
    - Check that each token references a valid field (avoid bare terms like "rce").
    - Verify logical operators (AND, OR, NOT) and range syntax.
    - Ensure the query aligns with user intent (severity, timeframe, technology, etc.).
-3. **Execute Search**: If the query is valid, run vulnsh_search with it and assess the result count & relevance.
+3. **Execute Search**: If the query is valid, run vulnx_search with it and assess the result count & relevance.
 4. **Refine If Needed**:
    - If results are empty or clearly off-target, analyse the mismatch.
    - Suggest concrete improvements (add/remove fields, adjust ranges, include tags, etc.).
@@ -545,8 +545,8 @@ Your job is to ensure a vulnsh_search query is syntactically correct, field-awar
 ` + "`<Bleve query>`" + `
 
 ### Tool Execution Plan
-1. vulnsh_fields_list – gather field guidance
-2. vulnsh_search – execute approved query
+1. vulnx_fields_list – gather field guidance
+2. vulnx_search – execute approved query
 
 ### Rationale
 - bullet
@@ -565,7 +565,7 @@ Append a new row for each refinement.
 		userPrompt := fmt.Sprintf("Initial Query: %s\nMax Iterations: %s\n\nPlease validate and refine the query as per the framework.", query, iterations)
 
 		return &mcp.GetPromptResult{
-			Description: fmt.Sprintf("vulnsh_search query review for: %s", query),
+			Description: fmt.Sprintf("vulnx_search query review for: %s", query),
 			Messages: []mcp.PromptMessage{
 				{
 					Role:    mcp.RoleUser,

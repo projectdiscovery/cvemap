@@ -20,7 +20,7 @@ type MCPTool interface {
 	MCPHandler(client *cvemap.Client) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error)
 }
 
-// AllMCPTools returns all MCPTool implementations for ProjectDiscovery vulnerability.sh (vulnsh) MCP integration.
+// AllMCPTools returns all MCPTool implementations for ProjectDiscovery vulnerability.sh (vulnx) MCP integration.
 func AllMCPTools(client *cvemap.Client) []MCPTool {
 	return []MCPTool{
 		filters.NewHandler(client),
@@ -31,7 +31,7 @@ func AllMCPTools(client *cvemap.Client) []MCPTool {
 	}
 }
 
-// // AllMCPPrompts returns all prompt templates for ProjectDiscovery vulnerability.sh (vulnsh) MCP integration.
+// // AllMCPPrompts returns all prompt templates for ProjectDiscovery vulnerability.sh (vulnx) MCP integration.
 // func AllMCPPrompts(client *cvemap.Client) []templates.PromptTemplate {
 // 	return templates.AllPromptTemplates(client)
 // }

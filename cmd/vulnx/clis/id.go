@@ -29,16 +29,16 @@ Global flags:
 `,
 		Example: `
 # Get details for a specific vulnerability
-vulnsh id CVE-2024-1234
+vulnx id CVE-2024-1234
 
 # Output as JSON for piping
-vulnsh id --json CVE-2024-1234
+vulnx id --json CVE-2024-1234
 
 # Write output to a file (JSON)
-vulnsh id --output vuln.json CVE-2024-1234
+vulnx id --output vuln.json CVE-2024-1234
 
 # Disable colors
-vulnsh id --no-color CVE-2024-1234
+vulnx id --no-color CVE-2024-1234
 `,
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {

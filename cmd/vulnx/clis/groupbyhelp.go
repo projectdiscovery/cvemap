@@ -39,10 +39,10 @@ It supports:
 
 Example invocations:
   # Group by severity (top 5 buckets)
-  vulnsh analyze -f severity=5
+  vulnx analyze -f severity=5
 
   # Group by vendor and product for templates with planned / covered coverage
-  vulnsh analyze -f affected_products.vendor,affected_products.product \
+  vulnx analyze -f affected_products.vendor,affected_products.product \
                 -q 'template_coverage:planned || template_coverage:covered'
 `
 

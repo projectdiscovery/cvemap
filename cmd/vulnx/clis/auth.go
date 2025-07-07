@@ -15,7 +15,7 @@ var (
 	authCmd = &cobra.Command{
 		Use:   "auth",
 		Short: "Configure ProjectDiscovery Cloud Platform API key",
-		Long: `Configure ProjectDiscovery Cloud Platform API key for vulnsh.
+		Long: `Configure ProjectDiscovery Cloud Platform API key for vulnx.
 
 This command allows you to interactively set up your PDCP API key, which is required
 to access the ProjectDiscovery Vulnerability Database.
@@ -24,7 +24,7 @@ You can get your free API key by signing up at https://cloud.projectdiscovery.io
 `,
 		Example: `
 # Configure API key interactively
-vulnsh auth
+vulnx auth
 
 # The command will prompt you to enter your API key
 `,

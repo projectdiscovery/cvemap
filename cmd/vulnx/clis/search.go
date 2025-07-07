@@ -73,30 +73,30 @@ Global flags:
 `,
 		Example: `
 # Search help
-vulnsh help search
+vulnx help search
 
 # Basic search for only KEV vulnerabilities
-vulnsh search is_kev:true
+vulnx search is_kev:true
 
 # Output as JSON for piping
-vulnsh search --json is_kev:true
+vulnx search --json is_kev:true
 
 # Write output to a file (JSON)
-vulnsh search --output results.json is_kev:true
+vulnx search --output results.json is_kev:true
 
 # Search and request term facets (tags and severity)
-vulnsh search --term-facets tags=10,severity=4 is_remote:true
+vulnx search --term-facets tags=10,severity=4 is_remote:true
 
 # Search and request range facets:
 #   – CVE created in 2024
 #   – EPS score "high" bucket (0.9-1.0)
-vulnsh search \
+vulnx search \
 	--range-facets date:cve_created_at:2024:2024-01:2024-12 \
 	--range-facets numeric:epss_score:high:0.9:1.0 \
 	is_poc:true
 
 # Combine term and range facets
-vulnsh search \
+vulnx search \
 	--term-facets tags=10 \
 	--range-facets numeric:epss_score:medium:0.4:0.9 \
 	cvss_score:>7

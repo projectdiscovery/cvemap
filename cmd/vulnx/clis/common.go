@@ -25,7 +25,7 @@ import (
 )
 
 //go:embed banner.txt
-var vulnshBanner string
+var vulnxBanner string
 
 var (
 	verbose bool
@@ -58,8 +58,8 @@ var (
 	bannerShown bool
 
 	rootCmd = &cobra.Command{
-		Use:   "vulnsh",
-		Short: "vulnsh — The Swiss Army knife for vulnerability intel",
+		Use:   "vulnx",
+		Short: "vulnx — The Swiss Army knife for vulnerability intel",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// Do not print the banner when running the "mcp" sub-command as it
 			// can interfere with clients expecting clean JSON output.
@@ -72,15 +72,15 @@ var (
 
 	mcpCmd = &cobra.Command{
 		Use:   "mcp",
-		Short: "Start MCP server for vulnsh (ProjectDiscovery vulnerability.sh) tools",
+		Short: "Start MCP server for vulnx (ProjectDiscovery vulnerability.sh) tools",
 		Run: func(cmd *cobra.Command, args []string) {
 			mode, _ := cmd.Flags().GetString("mode")
 			port, _ := cmd.Flags().GetInt("port")
 			if debug {
-				fmt.Fprintln(os.Stderr, "\nProjectDiscovery vulnerability.sh (vulnsh) MCP server mode\n----------------------------------------------")
+				fmt.Fprintln(os.Stderr, "\nProjectDiscovery vulnerability.sh (vulnx) MCP server mode\n----------------------------------------------")
 			}
 			s := server.NewMCPServer(
-				"ProjectDiscovery vulnerability.sh (vulnsh)",
+				"ProjectDiscovery vulnerability.sh (vulnx)",
 				"1.0.0",
 				server.WithToolCapabilities(false),
 				server.WithRecovery(),
@@ -240,6 +240,6 @@ func showBanner() {
 	if bannerShown || silent {
 		return
 	}
-	gologger.Print().Msgf("%s\n", vulnshBanner)
+	gologger.Print().Msgf("%s\n", vulnxBanner)
 	bannerShown = true
 }

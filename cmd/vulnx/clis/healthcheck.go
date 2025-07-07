@@ -15,10 +15,10 @@ var (
 	healthCmd = &cobra.Command{
 		Use:     "healthcheck",
 		Aliases: []string{"health", "hc"},
-		Short:   "Check vulnsh health and connectivity",
-		Long: `Check vulnsh health and connectivity to the ProjectDiscovery API.
+		Short:   "Check vulnx health and connectivity",
+		Long: `Check vulnx health and connectivity to the ProjectDiscovery API.
 
-This command performs various checks to ensure vulnsh is working correctly:
+This command performs various checks to ensure vulnx is working correctly:
 - API key validation
 - Network connectivity
 - API endpoint accessibility
@@ -29,13 +29,13 @@ and provides good coverage of the API functionality.
 `,
 		Example: `
 # Run health check
-vulnsh healthcheck
+vulnx healthcheck
 
 # Run health check with detailed output
-vulnsh healthcheck --verbose
+vulnx healthcheck --verbose
 
 # Short alias
-vulnsh hc
+vulnx hc
 `,
 		Run: func(cmd *cobra.Command, args []string) {
 			if !silent {
@@ -55,7 +55,7 @@ type HealthCheckResult struct {
 }
 
 func runHealthCheck() {
-	gologger.Info().Msg("Running vulnsh health check...")
+	gologger.Info().Msg("Running vulnx health check...")
 
 	var results []HealthCheckResult
 
@@ -90,7 +90,7 @@ func runHealthCheck() {
 	}
 
 	if allPassed {
-		gologger.Info().Msg("✅ All health checks passed - vulnsh is working correctly")
+		gologger.Info().Msg("✅ All health checks passed - vulnx is working correctly")
 	} else {
 		gologger.Error().Msg("❌ Some health checks failed - see details above")
 	}

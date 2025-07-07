@@ -105,7 +105,7 @@ func (h *Handler) GroupBy(params Params) (cvemap.SearchResponse, error) {
 
 // MCPToolSpec returns the MCP tool spec for registration.
 func (h *Handler) MCPToolSpec() mcp.Tool {
-	return mcp.NewTool("vulnsh_groupby",
+	return mcp.NewTool("vulnx_groupby",
 		mcp.WithDescription("Aggregate vulnerabilities (GROUP BY/facets) over selected fields. NOTE: Use this tool ONLY when instructed by `agent_vulnx` or when the user explicitly asks for a group-by; do NOT call it otherwise."),
 		mcp.WithArray("fields",
 			mcp.Description("Facet/group-by expressions. Example: ['severity=5', 'vendor=10']. Each entry is either just the field name or 'field=size' to override bucket count (max 200)."),
@@ -113,7 +113,7 @@ func (h *Handler) MCPToolSpec() mcp.Tool {
 			mcp.Required(),
 		),
 		mcp.WithString("query",
-			mcp.Description("Optional Bleve-inspired query filter (use '&&', '||' for logical operations) applied before aggregation. Combine field names and operators to narrow the data set (see 'vulnsh_fields_list' for valid fields)."),
+			mcp.Description("Optional Bleve-inspired query filter (use '&&', '||' for logical operations) applied before aggregation. Combine field names and operators to narrow the data set (see 'vulnx_fields_list' for valid fields)."),
 		),
 		mcp.WithNumber("facet_size",
 			mcp.Description("Default bucket count when 'field=size' is not provided. Max 200."),
@@ -126,7 +126,7 @@ func (h *Handler) MCPHandler(client *cvemap.Client) func(ctx context.Context, re
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		fields, err := request.RequireStringSlice("fields")
 		if err != nil || len(fields) == 0 {
-			return mcp.NewToolResultError("ProjectDiscovery vulnsh: 'fields' is required and must be a string array."), nil
+			return mcp.NewToolResultError("ProjectDiscovery vulnx: 'fields' is required and must be a string array."), nil
 		}
 		// fix request fields format
 		for i, f := range fields {
@@ -151,12 +151,12 @@ func (h *Handler) MCPHandler(client *cvemap.Client) func(ctx context.Context, re
 		}
 		resp, err := h.GroupBy(params)
 		if err != nil {
-			return mcp.NewToolResultError("ProjectDiscovery vulnsh: " + err.Error()), nil
+			return mcp.NewToolResultError("ProjectDiscovery vulnx: " + err.Error()), nil
 		}
 		b, err := json.MarshalIndent(resp, "", "  ")
 		if err != nil {
-			return mcp.NewToolResultError("ProjectDiscovery vulnsh: failed to marshal groupby result: " + err.Error()), nil
+			return mcp.NewToolResultError("ProjectDiscovery vulnx: failed to marshal groupby result: " + err.Error()), nil
 		}
-		return mcp.NewToolResultText("ProjectDiscovery vulnerability.sh (vulnsh) groupby result:\n" + string(b)), nil
+		return mcp.NewToolResultText("ProjectDiscovery vulnerability.sh (vulnx) groupby result:\n" + string(b)), nil
 	}
 }
