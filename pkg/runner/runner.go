@@ -17,7 +17,6 @@ import (
 	"github.com/projectdiscovery/cvemap/pkg/types"
 	"github.com/projectdiscovery/goflags"
 	"github.com/projectdiscovery/gologger"
-	"github.com/projectdiscovery/gologger/levels"
 	"github.com/projectdiscovery/utils/auth/pdcp"
 	"github.com/projectdiscovery/utils/env"
 	fileutil "github.com/projectdiscovery/utils/file"
@@ -252,12 +251,6 @@ func New(options *Options) (*Runner, error) {
 }
 
 func (r *Runner) Run() {
-	if r.Options.Silent {
-		gologger.DefaultLogger.SetMaxLevel(levels.LevelSilent)
-	} else if r.Options.Verbose {
-		gologger.DefaultLogger.SetMaxLevel(levels.LevelVerbose)
-	}
-
 	// Show the user the banner
 	showBanner()
 

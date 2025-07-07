@@ -349,11 +349,6 @@ func validateSingleID(vulnID string) error {
 	return nil
 }
 
-// validateIDInputs performs input validation for id command (legacy function)
-func validateIDInputs(vulnID string) error {
-	return validateSingleID(vulnID)
-}
-
 func init() {
 	idCmd.Flags().StringVar(&idFile, "file", "", "Read vulnerability IDs from file (one per line or comma-separated)")
 	rootCmd.AddCommand(idCmd)

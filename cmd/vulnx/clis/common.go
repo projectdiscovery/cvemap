@@ -20,7 +20,6 @@ import (
 
 	"github.com/projectdiscovery/cvemap"
 	"github.com/projectdiscovery/gologger"
-	"github.com/projectdiscovery/gologger/levels"
 	retryablehttp "github.com/projectdiscovery/retryablehttp-go"
 
 	"github.com/mark3labs/mcp-go/server"
@@ -191,11 +190,7 @@ func Execute() error {
 // ensureCvemapClientInitialized initializes the global cvemapClient if it is nil.
 func ensureCvemapClientInitialized(_ *cobra.Command) error {
 	if cvemapClient == nil {
-		if verbose {
-			gologger.DefaultLogger.SetMaxLevel(levels.LevelInfo)
-		}
 		if debug {
-			gologger.DefaultLogger.SetMaxLevel(levels.LevelDebug)
 			debugReq = true
 			debugResp = true
 		}
