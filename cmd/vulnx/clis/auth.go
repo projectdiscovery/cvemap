@@ -161,7 +161,10 @@ func runAuthCommand() {
 		fmt.Print("\nChoice (1-3): ")
 
 		var choice string
-		fmt.Scanln(&choice)
+		if _, err := fmt.Scanln(&choice); err != nil {
+			gologger.Error().Msgf("Error reading input: %s", err)
+			return
+		}
 
 		switch strings.TrimSpace(choice) {
 		case "1":
@@ -173,7 +176,10 @@ func runAuthCommand() {
 			// If validation fails, ask if they want to configure a new one
 			fmt.Print("\nWould you like to configure a new API key? (y/N): ")
 			var response string
-			fmt.Scanln(&response)
+			if _, err := fmt.Scanln(&response); err != nil {
+				gologger.Error().Msgf("Error reading input: %s", err)
+				return
+			}
 			if strings.ToLower(strings.TrimSpace(response)) != "y" {
 				gologger.Info().Msg("Authentication setup cancelled")
 				return
@@ -204,7 +210,10 @@ func runAuthCommand() {
 		fmt.Print("\nChoice (1-3): ")
 
 		var choice string
-		fmt.Scanln(&choice)
+		if _, err := fmt.Scanln(&choice); err != nil {
+			gologger.Error().Msgf("Error reading input: %s", err)
+			return
+		}
 
 		switch strings.TrimSpace(choice) {
 		case "1":
@@ -216,7 +225,10 @@ func runAuthCommand() {
 			// If validation fails, ask if they want to update
 			fmt.Print("\nWould you like to update your API key? (y/N): ")
 			var response string
-			fmt.Scanln(&response)
+			if _, err := fmt.Scanln(&response); err != nil {
+				gologger.Error().Msgf("Error reading input: %s", err)
+				return
+			}
 			if strings.ToLower(strings.TrimSpace(response)) != "y" {
 				gologger.Info().Msg("Authentication setup cancelled")
 				return
