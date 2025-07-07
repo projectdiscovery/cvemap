@@ -577,13 +577,15 @@ func constructQueryParams(opts *Options) string {
 		var cvsKey string
 		for _, cvssScore := range opts.CvssScore {
 			cvsKey = "cvss_score"
-			switch cvssScore[0] {
-			case '>':
-				cvsKey = "cvss_score_gte"
-				cvssScore = strings.TrimSpace(cvssScore[1:])
-			case '<':
-				cvsKey = "cvss_score_lte"
-				cvssScore = strings.TrimSpace(cvssScore[1:])
+			if len(cvssScore) > 0 {
+				switch cvssScore[0] {
+				case '>':
+					cvsKey = "cvss_score_gte"
+					cvssScore = strings.TrimSpace(cvssScore[1:])
+				case '<':
+					cvsKey = "cvss_score_lte"
+					cvssScore = strings.TrimSpace(cvssScore[1:])
+				}
 			}
 			queryParams.Add(cvsKey, cvssScore)
 		}
@@ -591,13 +593,15 @@ func constructQueryParams(opts *Options) string {
 
 	if len(opts.Age) > 0 {
 		ageKey := "age_in_days"
-		switch opts.Age[0] {
-		case '>':
-			ageKey = "age_in_days_gte"
-			opts.Age = strings.TrimSpace(opts.Age[1:])
-		case '<':
-			ageKey = "age_in_days_lte"
-			opts.Age = strings.TrimSpace(opts.Age[1:])
+		if len(opts.Age) > 0 {
+			switch opts.Age[0] {
+			case '>':
+				ageKey = "age_in_days_gte"
+				opts.Age = strings.TrimSpace(opts.Age[1:])
+			case '<':
+				ageKey = "age_in_days_lte"
+				opts.Age = strings.TrimSpace(opts.Age[1:])
+			}
 		}
 		queryParams.Add(ageKey, opts.Age)
 	}
@@ -609,13 +613,15 @@ func constructQueryParams(opts *Options) string {
 	}
 	if len(opts.EpssScore) > 0 {
 		epssKey := "epss.epss_score"
-		switch opts.EpssScore[0] {
-		case '>':
-			epssKey = "epss.epss_score_gte"
-			opts.EpssScore = strings.TrimSpace(opts.EpssScore[1:])
-		case '<':
-			epssKey = "epss.epss_score_lte"
-			opts.EpssScore = strings.TrimSpace(opts.EpssScore[1:])
+		if len(opts.EpssScore) > 0 {
+			switch opts.EpssScore[0] {
+			case '>':
+				epssKey = "epss.epss_score_gte"
+				opts.EpssScore = strings.TrimSpace(opts.EpssScore[1:])
+			case '<':
+				epssKey = "epss.epss_score_lte"
+				opts.EpssScore = strings.TrimSpace(opts.EpssScore[1:])
+			}
 		}
 		queryParams.Add(epssKey, opts.EpssScore)
 	}
@@ -623,13 +629,15 @@ func constructQueryParams(opts *Options) string {
 		var epKey string
 		for _, ep := range opts.EpssPercentile {
 			epKey = "epss.epss_percentile"
-			switch ep[0] {
-			case '>':
-				epKey = "epss.epss_percentile_gte"
-				ep = strings.TrimSpace(ep[1:])
-			case '<':
-				epKey = "epss.epss_percentile_lte"
-				ep = strings.TrimSpace(ep[1:])
+			if len(ep) > 0 {
+				switch ep[0] {
+				case '>':
+					epKey = "epss.epss_percentile_gte"
+					ep = strings.TrimSpace(ep[1:])
+				case '<':
+					epKey = "epss.epss_percentile_lte"
+					ep = strings.TrimSpace(ep[1:])
+				}
 			}
 			queryParams.Add(epKey, ep)
 		}
@@ -720,26 +728,30 @@ func constructQueryByOptions(opts Options) string {
 		var cvsKey string
 		for _, cvssScore := range opts.CvssScore {
 			cvsKey = "cvss_score"
-			switch cvssScore[0] {
-			case '>':
-				cvsKey = "cvss_score_gte"
-				cvssScore = strings.TrimSpace(cvssScore[1:])
-			case '<':
-				cvsKey = "cvss_score_lte"
-				cvssScore = strings.TrimSpace(cvssScore[1:])
+			if len(cvssScore) > 0 {
+				switch cvssScore[0] {
+				case '>':
+					cvsKey = "cvss_score_gte"
+					cvssScore = strings.TrimSpace(cvssScore[1:])
+				case '<':
+					cvsKey = "cvss_score_lte"
+					cvssScore = strings.TrimSpace(cvssScore[1:])
+				}
 			}
 			query = fmt.Sprintf("%s %s:%s", query, cvsKey, cvssScore)
 		}
 	}
 	if len(opts.EpssScore) > 0 {
 		epssKey := "epss.epss_score"
-		switch opts.EpssScore[0] {
-		case '>':
-			epssKey = "epss.epss_score_gte"
-			opts.EpssScore = strings.TrimSpace(opts.EpssScore[1:])
-		case '<':
-			epssKey = "epss.epss_score_lte"
-			opts.EpssScore = strings.TrimSpace(opts.EpssScore[1:])
+		if len(opts.EpssScore) > 0 {
+			switch opts.EpssScore[0] {
+			case '>':
+				epssKey = "epss.epss_score_gte"
+				opts.EpssScore = strings.TrimSpace(opts.EpssScore[1:])
+			case '<':
+				epssKey = "epss.epss_score_lte"
+				opts.EpssScore = strings.TrimSpace(opts.EpssScore[1:])
+			}
 		}
 		query = fmt.Sprintf("%s %s:%s", query, epssKey, opts.EpssScore)
 	}
@@ -747,13 +759,15 @@ func constructQueryByOptions(opts Options) string {
 		var epKey string
 		for _, ep := range opts.EpssPercentile {
 			epKey = "epss.epss_percentile"
-			switch ep[0] {
-			case '>':
-				epKey = "epss.epss_percentile_gte"
-				ep = strings.TrimSpace(ep[1:])
-			case '<':
-				epKey = "epss.epss_percentile_lte"
-				ep = strings.TrimSpace(ep[1:])
+			if len(ep) > 0 {
+				switch ep[0] {
+				case '>':
+					epKey = "epss.epss_percentile_gte"
+					ep = strings.TrimSpace(ep[1:])
+				case '<':
+					epKey = "epss.epss_percentile_lte"
+					ep = strings.TrimSpace(ep[1:])
+				}
 			}
 			query = fmt.Sprintf("%s %s:%s", query, epKey, ep)
 		}
@@ -766,13 +780,15 @@ func constructQueryByOptions(opts Options) string {
 	}
 	if len(opts.Age) > 0 {
 		ageKey := "age_in_days"
-		switch opts.Age[0] {
-		case '>':
-			ageKey = "age_in_days_gte"
-			opts.Age = strings.TrimSpace(opts.Age[1:])
-		case '<':
-			ageKey = "age_in_days_lte"
-			opts.Age = strings.TrimSpace(opts.Age[1:])
+		if len(opts.Age) > 0 {
+			switch opts.Age[0] {
+			case '>':
+				ageKey = "age_in_days_gte"
+				opts.Age = strings.TrimSpace(opts.Age[1:])
+			case '<':
+				ageKey = "age_in_days_lte"
+				opts.Age = strings.TrimSpace(opts.Age[1:])
+			}
 		}
 		query = fmt.Sprintf("%s %s:%s", query, ageKey, opts.Age)
 	}
