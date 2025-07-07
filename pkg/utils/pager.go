@@ -8,10 +8,6 @@ import (
 	isatty "github.com/mattn/go-isatty"
 )
 
-// pageBreak is an ASCII Form-Feed (0x0c) that most pagers (e.g. `less`) treat
-// as a "clear-screen" marker, giving the user a visual hard page boundary.
-const pageBreak = "\f"
-
 // OpenPager returns a writer that streams to the system pager (defined by
 // $PAGER or falling back to "less -R -N -M") when stdout is an interactive
 // TTY. A no-op cleanup function is always returned; the caller *must* defer it.

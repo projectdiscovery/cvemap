@@ -266,7 +266,6 @@ func RenderDetailed(entry *Entry, colors *ColorConfig) string {
 		if sectionsAdded {
 			output.WriteString("\n")
 		}
-		sectionsAdded = true
 
 		// Header without ↳
 		header := "Affected Products 🎯"
