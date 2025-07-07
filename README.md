@@ -155,8 +155,15 @@ vulnx search apache*                    # Wildcard
 **Set up authentication:**
 ```bash
 vulnx auth                              # Interactive setup
+vulnx auth --api-key YOUR_API_KEY       # Non-interactive (automation)
+vulnx auth --test                       # Test current API key
 export PDCP_API_KEY="your-key-here"     # Environment variable
 ```
+
+**Authentication modes:**
+- **Interactive**: `vulnx auth` - Guided setup with prompts
+- **Non-interactive**: `vulnx auth --api-key KEY` - Perfect for automation/CI/CD
+- **Test only**: `vulnx auth --test` - Validate current configuration
 
 **Global options:**
 ```bash
@@ -172,6 +179,21 @@ vulnx --timeout 60s search apache       # Custom timeout
 ```
 Error: api key is required
 → Run: vulnx auth
+```
+
+**Automation/CI/CD setup:**
+```bash
+# Docker containers
+vulnx auth --api-key "$SECRET_API_KEY"
+
+# CI/CD pipelines
+vulnx auth --api-key "${PDCP_API_KEY}"
+
+# Kubernetes init containers
+vulnx auth --api-key "$(cat /secrets/api-key)"
+
+# Test authentication in scripts
+vulnx auth --test && echo "Auth OK" || echo "Auth failed"
 ```
 
 **Help commands requiring API key:**
@@ -233,48 +255,8 @@ For advanced usage patterns and examples, see [USAGE.md](USAGE.md).
 
 ## Development
 
-### Pre-Commit Setup
+For development setup, code quality checks, and contribution guidelines, see [DEVELOPMENT.md](DEVELOPMENT.md).
 
-To avoid CI failures and maintain code quality, choose one of these automation options:
+## License
 
-**Option 1: Zero Dependencies (Recommended for simple setups)**
-```bash
-# Uses our manual script directly as Git hook
-make git-hooks
-```
-
-**Option 2: Pre-commit Package (Recommended for advanced features)**
-```bash
-# Install pre-commit framework
-pip install pre-commit
-
-# Set up hooks with advanced features
-make pre-commit
-```
-
-**Manual quality checks:**
-```bash
-# Run all pre-commit checks
-make pre-push
-
-# Or run individual checks
-make fmt      # Format code
-make test     # Run tests  
-make lint     # Run linter
-make vet      # Static analysis
-```
-
-**Alternative script:**
-```bash
-# Make executable and run
-chmod +x scripts/pre-commit.sh
-./scripts/pre-commit.sh
-```
-
-**Troubleshooting:**
-If you encounter dependency issues (like "undefined: retryablehttp"), run:
-```bash
-make fix-deps  # Fixes common Go module issues
-```
-
-These checks include Go formatting, import fixing, testing, linting, and building. Running them locally prevents GitHub CI failures and keeps the codebase clean.
+vulnx is distributed under [MIT License](LICENSE).
