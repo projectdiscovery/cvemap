@@ -13,30 +13,30 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/jedib0t/go-pretty/v6/table"
-	groupbytool "github.com/projectdiscovery/cvemap/pkg/tools/groupby"
+	analyzetool "github.com/projectdiscovery/cvemap/pkg/tools/analyze"
 )
 
 var (
 	// Flag placeholders – defined in init()
-	groupbyFields    []string
-	groupbyFacetSize int
-	groupbyQuery     string
+	analyzeFields    []string
+	analyzeFacetSize int
+	analyzeQuery     string
 
-	groupbyCmd = &cobra.Command{
+	analyzeCmd = &cobra.Command{
 		Use:   "analyze",
 		Short: "Group vulnerabilities by one or more fields using term facets",
 		Long: `Group vulnerabilities by one or more fields using term facets.
 
 The command internally leverages the Vulnerability Search API's term-facet
 aggregation capabilities. It sets the response fields to "doc_id" and limit to
-1 to minimise payload size – only the facet buckets are required for group-by
+1 to minimise payload size – only the facet buckets are required for analyze
 operations.
 
 Examples:
-  # Group by severity
+  # Analyze by severity
   vulnx analyze -f severity
 
-  # Group by vendor & product but only for templates with planned/covered coverage
+  # Analyze by vendor & product but only for templates with planned/covered coverage
   vulnx analyze -f affected_products.vendor,affected_products.product -q 'template_coverage:planned || template_coverage:covered'
 
 Global flags:
@@ -47,33 +47,33 @@ Global flags:
 		Run: func(cmd *cobra.Command, args []string) {
 			// Support 'vulnx analyze help' by delegating to the dedicated help command.
 			if len(args) > 0 && strings.ToLower(args[0]) == "help" {
-				groupbyHelpCmd.Run(cmd, args)
+				analyzeHelpCmd.Run(cmd, args)
 				return
 			}
 
 			// Input validation
-			if err := validateGroupbyInputs(); err != nil {
+			if err := validateAnalyzeInputs(); err != nil {
 				gologger.Fatal().Msgf("Invalid input: %s", err)
 			}
 
-			params := groupbytool.Params{
-				Fields: groupbyFields,
+			params := analyzetool.Params{
+				Fields: analyzeFields,
 			}
-			if groupbyFacetSize > 0 {
-				params.FacetSize = cvemap.Ptr(groupbyFacetSize)
+			if analyzeFacetSize > 0 {
+				params.FacetSize = cvemap.Ptr(analyzeFacetSize)
 			}
-			if groupbyQuery != "" {
-				params.Query = cvemap.Ptr(groupbyQuery)
+			if analyzeQuery != "" {
+				params.Query = cvemap.Ptr(analyzeQuery)
 			}
 
 			// Use the global cvemapClient (initialised by rootCmd)
-			handler := groupbytool.NewHandler(cvemapClient)
-			resp, err := handler.GroupBy(params)
+			handler := analyzetool.NewHandler(cvemapClient)
+			resp, err := handler.Analyze(params)
 			if err != nil {
 				if errors.Is(err, cvemap.ErrNotFound) {
 					gologger.Fatal().Msg("No results found for the provided facets")
 				}
-				gologger.Fatal().Msgf("Failed to perform group-by: %s", err)
+				gologger.Fatal().Msgf("Failed to perform analysis: %s", err)
 			}
 
 			// Handle JSON and output file flags (same behaviour as search)
@@ -115,44 +115,53 @@ Global flags:
 				fmt.Printf("\nField: %s\n", facetName)
 
 				tbl := table.NewWriter()
+				tbl.SetOutputMirror(os.Stdout)
 				tbl.SetStyle(table.StyleRounded)
 				tbl.AppendHeader(table.Row{"Value", "Count"})
 
 				// Attempt to coerce into expected structure
 				facetMap, ok := facetAny.(map[string]any)
 				if !ok {
+					fmt.Printf("Warning: Unable to parse facet data for field '%s'\n", facetName)
 					continue
 				}
 
 				bucketsAny, ok := facetMap["buckets"]
-				if ok {
-					switch b := bucketsAny.(type) {
-					case map[string]any:
-						// Convert to slice and sort desc by count
-						type kv struct {
-							Key   string
-							Count float64
+				if !ok {
+					fmt.Printf("Warning: No buckets found for field '%s'\n", facetName)
+					continue
+				}
+
+				hasData := false
+				switch b := bucketsAny.(type) {
+				case map[string]any:
+					// Convert to slice and sort desc by count
+					type kv struct {
+						Key   string
+						Count float64
+					}
+					var pairs []kv
+					for k, v := range b {
+						switch vv := v.(type) {
+						case float64:
+							pairs = append(pairs, kv{k, vv})
+							hasData = true
+						case int:
+							pairs = append(pairs, kv{k, float64(vv)})
+							hasData = true
 						}
-						var pairs []kv
-						for k, v := range b {
-							switch vv := v.(type) {
-							case float64:
-								pairs = append(pairs, kv{k, vv})
-							case int:
-								pairs = append(pairs, kv{k, float64(vv)})
-							}
-						}
-						sort.Slice(pairs, func(i, j int) bool { return pairs[i].Count > pairs[j].Count })
-						for _, p := range pairs {
-							tbl.AppendRow(table.Row{p.Key, int(p.Count)})
-						}
-					case []any:
-						for _, item := range b {
-							if m, ok := item.(map[string]any); ok {
-								key, _ := m["key"].(string)
-								count, _ := m["count"].(float64)
-								tbl.AppendRow(table.Row{key, int(count)})
-							}
+					}
+					sort.Slice(pairs, func(i, j int) bool { return pairs[i].Count > pairs[j].Count })
+					for _, p := range pairs {
+						tbl.AppendRow(table.Row{p.Key, int(p.Count)})
+					}
+				case []any:
+					for _, item := range b {
+						if m, ok := item.(map[string]any); ok {
+							key, _ := m["key"].(string)
+							count, _ := m["count"].(float64)
+							tbl.AppendRow(table.Row{key, int(count)})
+							hasData = true
 						}
 					}
 				}
@@ -161,24 +170,29 @@ Global flags:
 				if missAny, ok := facetMap["missing"]; ok {
 					if mCount, ok2 := missAny.(float64); ok2 && mCount > 0 {
 						tbl.AppendRow(table.Row{"UNASSIGNED", int(mCount)})
+						hasData = true
 					}
 				}
 
-				tbl.Render()
+				if hasData {
+					tbl.Render()
+				} else {
+					fmt.Printf("No data found for field '%s'\n", facetName)
+				}
 			}
 		},
 	}
 )
 
-// validateGroupbyInputs performs input validation for groupby command
-func validateGroupbyInputs() error {
+// validateAnalyzeInputs performs input validation for analyze command
+func validateAnalyzeInputs() error {
 	// Validate fields
-	if len(groupbyFields) == 0 {
+	if len(analyzeFields) == 0 {
 		return fmt.Errorf("at least one --fields value is required")
 	}
 
 	// Validate facet size
-	if groupbyFacetSize < 1 || groupbyFacetSize > 1000 {
+	if analyzeFacetSize < 1 || analyzeFacetSize > 1000 {
 		return fmt.Errorf("facet-size must be between 1 and 1000")
 	}
 
@@ -193,10 +207,10 @@ func validateGroupbyInputs() error {
 }
 
 func init() { // Register flags and add command to rootCmd
-	groupbyCmd.Flags().StringSliceVarP(&groupbyFields, "fields", "f", nil, "Fields to calculate (comma-separated)")
-	groupbyCmd.Flags().IntVar(&groupbyFacetSize, "facet-size", 10, "Number of facet buckets to return")
-	groupbyCmd.Flags().StringVarP(&groupbyQuery, "query", "q", "", "Query to filter results")
-	groupbyCmd.SetHelpFunc(groupbyHelpCmd.Run)
+	analyzeCmd.Flags().StringSliceVarP(&analyzeFields, "fields", "f", nil, "Fields to calculate (comma-separated)")
+	analyzeCmd.Flags().IntVar(&analyzeFacetSize, "facet-size", 10, "Number of facet buckets to return")
+	analyzeCmd.Flags().StringVarP(&analyzeQuery, "query", "q", "", "Query to filter results")
+	analyzeCmd.SetHelpFunc(analyzeHelpCmd.Run)
 
-	rootCmd.AddCommand(groupbyCmd)
+	rootCmd.AddCommand(analyzeCmd)
 }

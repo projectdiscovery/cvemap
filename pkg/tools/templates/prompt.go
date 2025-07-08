@@ -74,7 +74,7 @@ You are an expert vulnerability analyst helping users leverage ProjectDiscovery'
 ## Available MCP Tools:
 - **vulnx_fields_list**: Lists all available vulnerability fields and their examples
 - **vulnx_search**: Full-text search across vulnerabilities with Bleve query syntax
-- **vulnx_groupby**: Facet-based aggregations for statistical analysis
+- **vulnx_analyze**: Facet-based aggregations for statistical analysis
 - **vulnx_get_by_id**: Fetch detailed information about specific vulnerabilities
 
 ## Analysis Workflow Strategy:
@@ -86,15 +86,15 @@ You are an expert vulnerability analyst helping users leverage ProjectDiscovery'
 ### Step 2: Plan Your Query Strategy
 Based on the user's intent, construct Bleve query syntax using available fields:
 - **Severity**: severity:critical, severity:high
-- **CVSS Score**: cvss_score:[7.0 TO 10.0]
+- **CVSS Score**: cvss_score:>7.0, cvss_score:<9.0
 - **Exploit Status**: is_exploited:true, is_kev:true
 - **Technology**: tags:wordpress, tags:nginx, tags:apache
-- **Time Range**: published_date:[2024-01-01 TO 2024-12-31]
+- **Time Range**: age_in_days:<365, age_in_days:>30
 - **Vulnerability Type**: tags:rce, tags:sqli, tags:xss, tags:lfi
 
 ### Step 3: Execute Targeted Analysis
 - Use **vulnx_search** for finding specific vulnerabilities
-- Use **vulnx_groupby** for statistical analysis and trends
+- Use **vulnx_analyze** for statistical analysis and trends
 - Use **vulnx_get_by_id** for detailed vulnerability investigation
 
 ### Step 4: Provide Actionable Insights
@@ -107,19 +107,19 @@ Based on the user's intent, construct Bleve query syntax using available fields:
 **Generic Query**: "Show me critical web application vulnerabilities"
 **Structured Approach**: 
 1. vulnx_fields_list (understand available fields)
-2. vulnx_search with query: "severity:critical AND (tags:web OR tags:http OR tags:webapp)"
-3. vulnx_groupby with fields: ["tags", "cvss_score"] for pattern analysis
+2. vulnx_search with query: "severity:critical && (tags:web || tags:http || tags:webapp)"
+3. vulnx_analyze with fields: ["tags", "cvss_score"] for pattern analysis
 
 **Generic Query**: "Find recent WordPress vulnerabilities"
 **Structured Approach**:
 1. vulnx_fields_list (get field options)
-2. vulnx_search with query: "tags:wordpress AND published_date:[2024-01-01 TO *]"
-3. vulnx_groupby with fields: ["severity", "is_exploited"] for risk assessment
+2. vulnx_search with query: "tags:wordpress && age_in_days:<365"
+3. vulnx_analyze with fields: ["severity", "is_exploited"] for risk assessment
 
 **Generic Query**: "Analyze CVE-2024-1234"
 **Structured Approach**:
 1. vulnx_get_by_id with id: "CVE-2024-1234"
-2. vulnx_search with query: "tags:* AND cvss_score:[X TO *]" (where X is the CVE's CVSS score)
+2. vulnx_search with query: "tags:* && cvss_score:>X" (where X is the CVE's CVSS score)
 3. Provide detailed analysis of impact, exploitation, and remediation
 
 ## Output Instructions (MANDATORY)
@@ -224,38 +224,38 @@ You are a specialized threat intelligence analyst focusing on vulnerability expl
 ### Phase 1: Exploitation Landscape Assessment
 Tool Sequence:
 1. vulnx_fields_list (identify exploitation-related fields)
-2. vulnx_search with query: "is_exploited:true AND is_kev:true"
-3. vulnx_groupby with fields: ["tags", "severity", "cvss_score"]
+2. vulnx_search with query: "is_exploited:true && is_kev:true"
+3. vulnx_analyze with fields: ["tags", "severity", "cvss_score"]
 
 ### Phase 2: Temporal Analysis
 Tool Sequence:
 1. vulnx_search with time-bounded queries
-2. vulnx_groupby with fields: ["published_date", "is_exploited"]
+2. vulnx_analyze with fields: ["published_date", "is_exploited"]
 3. Trend analysis and pattern identification
 
 ### Phase 3: Technology Impact Assessment
 Tool Sequence:
-1. vulnx_groupby with fields: ["tags", "is_exploited"] 
+1. vulnx_analyze with fields: ["tags", "is_exploited"] 
 2. vulnx_search for high-risk technology stacks
 3. Cross-reference with public exploit databases
 
 ## Key Query Patterns for Threat Intelligence:
 
 **Active Exploitation Tracking**:
-- "is_exploited:true AND published_date:[2024-01-01 TO *]"
-- "is_kev:true AND cvss_score:[7.0 TO 10.0]"
+- "is_exploited:true && age_in_days:<365"
+- "is_kev:true && cvss_score:>7.0"
 
 **Zero-Day Monitoring**:
-- "tags:zero-day OR tags:0day"
-- "cvss_score:[9.0 TO 10.0] AND is_exploited:true"
+- "tags:zero-day || tags:0day"
+- "cvss_score:>9.0 && is_exploited:true"
 
 **Ransomware-Related Vulnerabilities**:
-- "tags:ransomware OR tags:rce OR tags:privilege-escalation"
-- "is_exploited:true AND (tags:windows OR tags:linux)"
+- "tags:ransomware || tags:rce || tags:privilege-escalation"
+- "is_exploited:true && (tags:windows || tags:linux)"
 
 **APT Campaign Vulnerabilities**:
-- "tags:apt OR tags:nation-state"
-- "is_exploited:true AND tags:supply-chain"
+- "tags:apt || tags:nation-state"
+- "is_exploited:true && tags:supply-chain"
 
 ## Intelligence Enrichment:
 - Cross-reference with public exploit databases
@@ -346,36 +346,36 @@ You are an advanced security researcher specializing in vulnerability analysis, 
 
 ### Discovery Phase
 1. vulnx_fields_list (understand data structure)
-2. vulnx_groupby with fields: ["tags", "cvss_score", "is_exploited"]
+2. vulnx_analyze with fields: ["tags", "cvss_score", "is_exploited"]
 3. vulnx_search with broad exploratory queries
 
 ### Analysis Phase
 1. vulnx_search with targeted technical queries
 2. vulnx_get_by_id for detailed vulnerability analysis
-3. vulnx_groupby for pattern identification
+3. vulnx_analyze for pattern identification
 
 ### Exploitation Phase
 1. vulnx_search for exploit availability
-2. vulnx_groupby with fields: ["exploit_complexity", "attack_vector"]
+2. vulnx_analyze with fields: ["exploit_complexity", "attack_vector"]
 3. Cross-reference with public exploit databases
 
 ## Advanced Query Techniques:
 
 **Vulnerability Chaining Research**:
-- "cvss_score:[7.0 TO 10.0] AND attack_vector:network"
-- "tags:privilege-escalation AND tags:rce"
+- "cvss_score:>7.0 && attack_vector:network"
+- "tags:privilege-escalation && tags:rce"
 
 **Attack Surface Mapping**:
-- "tags:TARGET_TECH AND (cvss_score:[5.0 TO 10.0])"
-- "attack_vector:network AND attack_complexity:low"
+- "tags:TARGET_TECH && cvss_score:>5.0"
+- "attack_vector:network && attack_complexity:low"
 
 **Exploit Development**:
-- "is_exploited:true AND exploit_complexity:low"
-- "tags:buffer-overflow OR tags:use-after-free"
+- "is_exploited:true && exploit_complexity:low"
+- "tags:buffer-overflow || tags:use-after-free"
 
 **Novel Pattern Discovery**:
-- "published_date:[2024-01-01 TO *] AND cvss_score:[8.0 TO 10.0]"
-- "tags:supply-chain OR tags:dependency-confusion"
+- "age_in_days:<365 && cvss_score:>8.0"
+- "tags:supply-chain || tags:dependency-confusion"
 
 ## Research Complexity Levels:
 
@@ -447,14 +447,14 @@ You are UVA – an expert security assistant with full access to ProjectDiscover
 ## Available Tools (always prefer these):
 1. vulnx_fields_list – schema, available fields, query help
 2. vulnx_search – Bleve search/filter of CVEs & Nuclei templates
-3. vulnx_groupby – statistics / top-N / distributions
+3. vulnx_analyze – statistics / top-N / distributions
 4. vulnx_get_by_id – full details & YAML for CVE or template
 
 ## Operating Procedure
 1. **Clarify intent** – If the query is extremely unclear, ask the user concise follow-up questions.
 2. **Field Discovery** – When unsure about field names, use vulnx_fields_list.
 3. **Search First** – Most tasks start with vulnx_search to collect candidate vulnerabilities or templates.
-4. **Drill-Down / Aggregate** – Use vulnx_get_by_id for specifics, vulnx_groupby for stats.
+4. **Drill-Down / Aggregate** – Use vulnx_get_by_id for specifics, vulnx_analyze for stats.
 5. **Partial Accomplishment** – If user demands something impossible (e.g., "hack for me"), respond ethically: provide intel, not hacking services.
 
 Respond with:
@@ -507,7 +507,7 @@ func (p *VulnxSearchReviewPrompt) MCPPromptSpec() mcp.Prompt {
 		"vulnx_search_review",
 		mcp.WithPromptDescription("Validate and iteratively improve vulnx_search queries using vulnx_fields_list guidance before execution."),
 		mcp.WithArgument("search_query",
-			mcp.ArgumentDescription("Initial Bleve search query string to validate and execute (e.g., 'severity:critical AND tags:rce')"),
+			mcp.ArgumentDescription("Initial Bleve search query string to validate and execute (e.g., 'severity:critical && tags:rce')"),
 			mcp.RequiredArgument(),
 		),
 		mcp.WithArgument("max_iterations",
@@ -530,7 +530,7 @@ Your job is to ensure a vulnx_search query is syntactically correct, field-aware
 1. **Field Discovery**: Invoke vulnx_fields_list to display available fields and examples.
 2. **Validate Query**:
    - Check that each token references a valid field (avoid bare terms like "rce").
-   - Verify logical operators (AND, OR, NOT) and range syntax.
+   - Verify logical operators (&&, ||, NOT) and comparison syntax.
    - Ensure the query aligns with user intent (severity, timeframe, technology, etc.).
 3. **Execute Search**: If the query is valid, run vulnx_search with it and assess the result count & relevance.
 4. **Refine If Needed**:

@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	groupbyHelpCmd = &cobra.Command{
+	analyzeHelpCmd = &cobra.Command{
 		Use:     "help",
 		Aliases: []string{"analyze:help", "analyzehelp"},
 		Short:   "Detailed help for the 'analyze' command with facet-capable fields",
@@ -37,10 +37,10 @@ It supports:
   • --query  / -q   Optional Lucene-style search filter before aggregation
 
 Example invocations:
-  # Group by severity (top 5 buckets)
+  # Analyze by severity (top 5 buckets)
   vulnx analyze -f severity=5
 
-  # Group by vendor and product for templates with planned / covered coverage
+  # Analyze by vendor and product for templates with planned / covered coverage
   vulnx analyze -f affected_products.vendor,affected_products.product \
                 -q 'template_coverage:planned || template_coverage:covered'
 `

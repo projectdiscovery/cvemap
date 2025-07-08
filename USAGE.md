@@ -128,7 +128,7 @@ vulnx search "(spring || django || rails) && is_remote:true"
 
 **Find trending vulnerabilities:**
 ```bash
-vulnx search "cve_created_at:[2024-01-01 TO 2024-12-31] && is_kev:true"
+vulnx search "age_in_days:<365 && is_kev:true"
 vulnx search "epss_score:>0.9" --sort-desc cve_created_at
 ```
 
@@ -151,14 +151,14 @@ vulnx search "age_in_days:<30 && severity:critical"
 ```bash
 # Recent high-impact vulnerabilities
 vulnx search "age_in_days:<7 && severity:critical"
-vulnx search "cve_created_at:[2024-11-01 TO 2024-11-30]"
+vulnx search "age_in_days:<90"
 
 # Historical vulnerability patterns
 vulnx search "cve_created_at:2023" --term-facets severity=10
 vulnx analyze -f severity -q "cve_created_at:2023"
 
 # Quarterly assessments
-vulnx search "cve_created_at:[2024-01-01 TO 2024-03-31]" --limit 1000
+vulnx search "age_in_days:<365" --limit 1000
 ```
 
 ### Risk-Based Prioritization
@@ -432,8 +432,9 @@ vulnx search "affected_products.product:windows"
 # Combine multiple criteria efficiently
 vulnx search "severity:critical && is_remote:true && is_poc:true"
 
-# Use ranges for scores
-vulnx search "cvss_score:[8.0 TO 10.0]"  # More efficient than cvss_score:>8.0
+# Use comparison operators for scores
+vulnx search "cvss_score:>8.0"  # Greater than 8.0
+vulnx search "cvss_score:<9.0"  # Less than 9.0
 ```
 
 ### Faceting for Analysis
@@ -515,7 +516,7 @@ vulnx search help  # See available fields (requires API key)
 vulnx search "test:value" --limit 1  # Verify syntax works
 
 # Validate data ranges
-vulnx search "cvss_score:[0 TO 10]" --limit 1  # Check valid ranges
+vulnx search "cvss_score:>0" --limit 1  # Check valid ranges
 ```
 
 ### API Limits & Rate Limiting
@@ -534,7 +535,7 @@ vulnx search "large_query" --limit 1000 --output batch1.json
 - **Start broad, filter progressively** - Begin with general terms, add constraints
 - **Use specific fields** - `affected_products.vendor:apache` vs. generic `apache`
 - **Combine filters logically** - `severity:critical && is_remote:true`
-- **Leverage ranges** - `cvss_score:[8 TO 10]` for score ranges
+- **Use comparison operators** - `cvss_score:>8` or `cvss_score:<9` for score filtering
 
 ### Data Management
 - **Cache frequent queries** - Save commonly used results as JSON files

@@ -396,9 +396,9 @@ func buildFilterQuery() (string, error) {
 
 	if filterHackerOne != "" {
 		if filterHackerOne == "true" {
-			queryParts = append(queryParts, "hackerone.reports:>0")
+			queryParts = append(queryParts, "h1.reports:>0")
 		} else {
-			queryParts = append(queryParts, "NOT hackerone.reports:>0")
+			queryParts = append(queryParts, "NOT h1.reports:>0")
 		}
 	}
 

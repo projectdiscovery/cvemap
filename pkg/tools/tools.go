@@ -6,8 +6,8 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/projectdiscovery/cvemap"
 	"github.com/projectdiscovery/cvemap/pkg/tools/agentvulnx"
+	"github.com/projectdiscovery/cvemap/pkg/tools/analyze"
 	"github.com/projectdiscovery/cvemap/pkg/tools/filters"
-	"github.com/projectdiscovery/cvemap/pkg/tools/groupby"
 	"github.com/projectdiscovery/cvemap/pkg/tools/id"
 	"github.com/projectdiscovery/cvemap/pkg/tools/search"
 )
@@ -24,9 +24,9 @@ type MCPTool interface {
 func AllMCPTools(client *cvemap.Client) []MCPTool {
 	return []MCPTool{
 		filters.NewHandler(client),
-		groupby.NewHandler(client),
-		id.NewHandler(client),
 		search.NewHandler(client),
+		id.NewHandler(client),
+		analyze.NewHandler(client),
 		agentvulnx.NewHandler(client),
 	}
 }

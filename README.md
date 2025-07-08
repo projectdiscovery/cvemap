@@ -216,7 +216,7 @@ cat report.txt | grep -o 'CVE-[0-9]\{4\}-[0-9]\+' | vulnx id --json
 | Field | Description | Example Values |
 |-------|-------------|----------------|
 | `severity` | Vulnerability severity | `low`, `medium`, `high`, `critical` |
-| `cvss_score` | CVSS score (0-10) | `7.5`, `>8.0`, `[7 TO 9]` |
+| `cvss_score` | CVSS score (0-10) | `7.5`, `>8.0`, `<9.0` |
 | `cve_id` | CVE identifier | `CVE-2021-44228` |
 | `is_remote` | Remotely exploitable | `true`, `false` |
 | `is_kev` | Known exploited vuln | `true`, `false` |
@@ -245,7 +245,7 @@ vulnx search "(apache || nginx) && severity:high"  # Grouped
 **Ranges and wildcards:**
 ```bash
 vulnx search "cvss_score:>8.0"            # Greater than
-vulnx search "cvss_score:[7 TO 9]"        # Range
+vulnx search "cvss_score:<9.0"            # Less than
 vulnx search "apache*"                    # Wildcard
 ```
 
