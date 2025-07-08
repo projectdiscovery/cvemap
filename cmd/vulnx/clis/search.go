@@ -321,16 +321,19 @@ func buildFilterQuery() (string, error) {
 	}
 
 	// Build exclude product filter
-	if len(filterExcludeProduct) > 0 {
-		excludeQuery := buildNotInQuery("affected_products.product", filterExcludeProduct)
-		queryParts = append(queryParts, excludeQuery)
-	}
+	// NOTE: Exclude filters are disabled because NOT operator is not supported by search API
+	/*
+		if len(filterExcludeProduct) > 0 {
+			excludeQuery := buildNotInQuery("affected_products.product", filterExcludeProduct)
+			queryParts = append(queryParts, excludeQuery)
+		}
 
-	// Build exclude vendor filter
-	if len(filterExcludeVendor) > 0 {
-		excludeQuery := buildNotInQuery("affected_products.vendor", filterExcludeVendor)
-		queryParts = append(queryParts, excludeQuery)
-	}
+		// Build exclude vendor filter
+		if len(filterExcludeVendor) > 0 {
+			excludeQuery := buildNotInQuery("affected_products.vendor", filterExcludeVendor)
+			queryParts = append(queryParts, excludeQuery)
+		}
+	*/
 
 	// Build severity filter
 	if len(filterSeverity) > 0 {
@@ -339,21 +342,30 @@ func buildFilterQuery() (string, error) {
 	}
 
 	// Build exclude severity filter
-	if len(filterExcludeSeverity) > 0 {
-		excludeQuery := buildNotInQuery("severity", filterExcludeSeverity)
-		queryParts = append(queryParts, excludeQuery)
-	}
+	// NOTE: Exclude filters are disabled because NOT operator is not supported by search API
+	/*
+		if len(filterExcludeSeverity) > 0 {
+			excludeQuery := buildNotInQuery("severity", filterExcludeSeverity)
+			queryParts = append(queryParts, excludeQuery)
+		}
+	*/
 
 	// Build CPE filter
-	if filterCPE != "" {
-		queryParts = append(queryParts, fmt.Sprintf("cpe:\"%s\"", filterCPE))
-	}
+	// NOTE: CPE filter is disabled because CPE field is not available in search API
+	/*
+		if filterCPE != "" {
+			queryParts = append(queryParts, fmt.Sprintf("affected_products.cpe:%s", filterCPE))
+		}
+	*/
 
 	// Build assignee filter
-	if len(filterAssignee) > 0 {
-		assigneeQuery := buildInQuery("assignee_short_name", filterAssignee)
-		queryParts = append(queryParts, assigneeQuery)
-	}
+	// NOTE: Assignee filter is disabled because assignee field is not available/searchable in search API
+	/*
+		if len(filterAssignee) > 0 {
+			assigneeQuery := buildInQuery("assignee", filterAssignee)
+			queryParts = append(queryParts, assigneeQuery)
+		}
+	*/
 
 	// Build vulnerability status filter
 	if filterVulnStatus != "" {
@@ -566,14 +578,24 @@ func init() { // Register flags and add command to rootCmd
 	// Filter flags - String slice filters
 	searchCmd.Flags().StringSliceVarP(&filterProduct, "product", "p", nil, "Filter by product (comma-separated)")
 	searchCmd.Flags().StringSliceVar(&filterVendor, "vendor", nil, "Filter by vendor (comma-separated)")
-	searchCmd.Flags().StringSliceVar(&filterExcludeProduct, "exclude-product", nil, "Exclude products (comma-separated)")
-	searchCmd.Flags().StringSliceVar(&filterExcludeVendor, "exclude-vendor", nil, "Exclude vendors (comma-separated)")
 	searchCmd.Flags().StringSliceVarP(&filterSeverity, "severity", "s", nil, "Filter by severity (comma-separated)")
-	searchCmd.Flags().StringSliceVar(&filterExcludeSeverity, "exclude-severity", nil, "Exclude severities (comma-separated)")
-	searchCmd.Flags().StringSliceVarP(&filterAssignee, "assignee", "a", nil, "Filter by assignee (comma-separated)")
 
-	// Single value filters
-	searchCmd.Flags().StringVarP(&filterCPE, "cpe", "c", "", "Filter by CPE string")
+	// NOTE: The following filters are disabled because they don't work with the search API:
+	// - exclude-product: NOT operator not supported
+	// - exclude-vendor: NOT operator not supported
+	// - exclude-severity: NOT operator not supported
+	// - assignee: assignee field not available/searchable
+	// - cpe: CPE field not available in search API
+
+	/*
+		searchCmd.Flags().StringSliceVar(&filterExcludeProduct, "exclude-product", nil, "Exclude products (comma-separated)")
+		searchCmd.Flags().StringSliceVar(&filterExcludeVendor, "exclude-vendor", nil, "Exclude vendors (comma-separated)")
+		searchCmd.Flags().StringSliceVar(&filterExcludeSeverity, "exclude-severity", nil, "Exclude severities (comma-separated)")
+		searchCmd.Flags().StringSliceVarP(&filterAssignee, "assignee", "a", nil, "Filter by assignee (comma-separated)")
+
+		// Single value filters
+		searchCmd.Flags().StringVarP(&filterCPE, "cpe", "c", "", "Filter by CPE string")
+	*/
 	searchCmd.Flags().StringVar(&filterVulnStatus, "vstatus", "", "Filter by vulnerability status (new, confirmed, unconfirmed, modified, rejected, unknown)")
 	searchCmd.Flags().StringVar(&filterVulnAge, "vuln-age", "", "Filter by vulnerability age (supports <, >, exact: e.g., '5', '<10', '>30')")
 
