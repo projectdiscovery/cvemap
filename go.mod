@@ -1,16 +1,21 @@
 module github.com/projectdiscovery/cvemap
 
-go 1.22.0
+go 1.23.0
+
+toolchain go1.24.4
 
 require (
 	github.com/eiannone/keyboard v0.0.0-20220611211555-0d226195f203
 	github.com/jedib0t/go-pretty/v6 v6.6.7
 	github.com/logrusorgru/aurora v2.0.3+incompatible
+	github.com/mark3labs/mcp-go v0.32.0
 	github.com/pkg/errors v0.9.1
 	github.com/projectdiscovery/goflags v0.1.71
 	github.com/projectdiscovery/gologger v1.1.43
 	github.com/projectdiscovery/retryablehttp-go v1.0.98
 	github.com/projectdiscovery/utils v0.4.9
+	github.com/spf13/cobra v1.9.1
+	golang.org/x/term v0.29.0
 )
 
 require (
@@ -37,7 +42,7 @@ require (
 	github.com/dlclark/regexp2 v1.11.4 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5 // indirect
-	github.com/fatih/color v1.16.0 // indirect
+	github.com/fatih/color v1.15.0 // indirect
 	github.com/gaissmai/bart v0.9.5 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
@@ -45,9 +50,10 @@ require (
 	github.com/google/go-github/v30 v30.1.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
-	github.com/google/uuid v1.3.1 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.17.5 // indirect
 	github.com/klauspost/pgzip v1.2.6 // indirect
@@ -78,6 +84,8 @@ require (
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
 	github.com/shirou/gopsutil/v3 v3.23.7 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
+	github.com/spf13/cast v1.7.1 // indirect
+	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/tidwall/btree v1.7.0 // indirect
 	github.com/tidwall/buntdb v1.3.0 // indirect
@@ -92,6 +100,7 @@ require (
 	github.com/ulikunitz/xz v0.5.11 // indirect
 	github.com/weppos/publicsuffix-go v0.30.2-0.20230730094716-a20f9abcc222 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
+	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 	github.com/yuin/goldmark v1.7.4 // indirect
 	github.com/yuin/goldmark-emoji v1.0.3 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
@@ -106,8 +115,7 @@ require (
 	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/oauth2 v0.16.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect
-	golang.org/x/sys v0.30.0 // indirect
-	golang.org/x/term v0.29.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	google.golang.org/appengine v1.6.8 // indirect

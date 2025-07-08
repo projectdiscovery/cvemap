@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/projectdiscovery/cvemap/pkg/types"
+	"github.com/projectdiscovery/gologger"
 )
 
 var cveData *types.CVEBulkData
@@ -68,7 +69,11 @@ func loadData(filename string) (*types.CVEBulkData, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			gologger.Error().Msgf("Failed to close file: %s", err)
+		}
+	}()
 
 	var data types.CVEBulkData
 	decoder := json.NewDecoder(file)

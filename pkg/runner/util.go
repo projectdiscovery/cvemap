@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/projectdiscovery/cvemap/pkg/types"
+	"github.com/projectdiscovery/gologger"
 	fileutil "github.com/projectdiscovery/utils/file"
 )
 
@@ -23,7 +24,9 @@ func DoHealthCheck(opts Options) string {
 	var testResult string
 	c4, err := net.Dial("tcp4", "cve.projectdiscovery.io:443")
 	if err == nil && c4 != nil {
-		c4.Close()
+		if err := c4.Close(); err != nil {
+			gologger.Error().Msgf("Failed to close c4: %s", err)
+		}
 	}
 	testResult = "Ok"
 	if err != nil {
@@ -33,7 +36,9 @@ func DoHealthCheck(opts Options) string {
 
 	u4, err := net.Dial("udp4", "cve.projectdiscovery.io:53")
 	if err == nil && u4 != nil {
-		u4.Close()
+		if err := u4.Close(); err != nil {
+			gologger.Error().Msgf("Failed to close u4: %s", err)
+		}
 	}
 	testResult = "Ok"
 	if err != nil {

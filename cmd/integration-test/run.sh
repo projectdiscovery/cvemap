@@ -15,6 +15,10 @@ echo "::group::Building cvemap binary from current branch"
 go build -o cvemap$extension ../cvemap
 echo "::endgroup::"
 
+echo "::group::Building vulnx binary from current branch"
+go build -o vulnx$extension ../vulnx
+echo "::endgroup::"
 
-echo 'Starting cvemap integration test'
-./integration-test$extension -current cvemap$extension
+
+echo 'Starting integration tests'
+./integration-test$extension -current cvemap$extension -vulnx vulnx$extension

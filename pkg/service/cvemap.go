@@ -10,7 +10,7 @@ import (
 
 	"github.com/projectdiscovery/cvemap/pkg/types"
 	"github.com/projectdiscovery/gologger"
-	"github.com/projectdiscovery/retryablehttp-go"
+	retryablehttp "github.com/projectdiscovery/retryablehttp-go"
 	"github.com/projectdiscovery/utils/env"
 	errorutil "github.com/projectdiscovery/utils/errors"
 )
@@ -84,7 +84,11 @@ func (c *Cvemap) GetCvesByIds(cveIds []string) (*types.CVEBulkData, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer response.Body.Close()
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			gologger.Error().Msgf("Failed to close response body: %s", err)
+		}
+	}()
 	// Check the response status code
 	if response.StatusCode != http.StatusOK {
 		return nil, errorutil.New("unexpected status code: %d", response.StatusCode)
@@ -105,7 +109,11 @@ func (c *Cvemap) GetCvesByFilters(encodedParams string) (*types.CVEBulkData, err
 	if err != nil {
 		return nil, err
 	}
-	defer response.Body.Close()
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			gologger.Error().Msgf("Failed to close response body: %s", err)
+		}
+	}()
 	// Check the response status code
 	if response.StatusCode != http.StatusOK {
 		return nil, errorutil.New("unexpected status code: %d", response.StatusCode)
@@ -135,7 +143,11 @@ func (c *Cvemap) GetCvesBySearchString(query string, limit, offset int) (*types.
 	if err != nil {
 		return nil, err
 	}
-	defer response.Body.Close()
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			gologger.Error().Msgf("Failed to close response body: %s", err)
+		}
+	}()
 	// Check the response status code
 	if response.StatusCode != http.StatusOK {
 		return nil, errorutil.New("unexpected status code: %d", response.StatusCode)
@@ -158,7 +170,11 @@ func (c *Cvemap) GetCvesForSpecificFields(fields []string, encodedParams string,
 	if err != nil {
 		return nil, err
 	}
-	defer response.Body.Close()
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			gologger.Error().Msgf("Failed to close response body: %s", err)
+		}
+	}()
 	// Check the response status code
 	if response.StatusCode != http.StatusOK {
 		return nil, errorutil.New("unexpected status code: %d", response.StatusCode)
