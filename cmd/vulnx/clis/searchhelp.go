@@ -82,22 +82,6 @@ with --sort-asc/--sort-desc.`
 				})
 			}
 			tbl.Render()
-
-			// 4. Detailed sections for enum_values / examples
-			fmt.Println("\nADDITIONAL FIELD DETAILS")
-			fmt.Println(strings.Repeat("-", 120))
-			for _, f := range fltrs {
-				if len(f.EnumValues) == 0 && len(f.Examples) == 0 {
-					continue
-				}
-				fmt.Printf("\n%s\n", strings.ToUpper(f.Field))
-				if len(f.EnumValues) > 0 {
-					fmt.Printf("  Enum Values : %s\n", strings.Join(f.EnumValues, ", "))
-				}
-				if len(f.Examples) > 0 {
-					fmt.Printf("  Examples    : %s\n", strings.Join(f.Examples, ", "))
-				}
-			}
 		},
 	}
 )

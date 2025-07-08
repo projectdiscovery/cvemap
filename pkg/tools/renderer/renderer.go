@@ -424,6 +424,44 @@ func extractPlaceholders(entry *Entry) map[string]string {
 	// Enhanced KEV status
 	placeholders["kev_enhanced"] = formatKEVEnhanced(entry)
 
+	// Conditional placeholders with labels (only show when data exists)
+	var exposurePart, vendorsPart, productsPart string
+
+	// Check what data we have
+	hasExposure := entry.Exposure != nil && entry.Exposure.MaxHosts > 0
+	hasVendors := len(vendors) > 0
+	hasProducts := len(products) > 0
+
+	// Build parts with appropriate prefixes
+	if hasExposure {
+		exposurePart = "Exposure: " + formatExposure(entry.Exposure.MaxHosts)
+	}
+	if hasVendors {
+		vendorsPart = "Vendors: " + truncateList(vendors, 2)
+	}
+	if hasProducts {
+		productsPart = "Products: " + truncateList(products, 2)
+	}
+
+	// Combine parts with proper separators
+	var parts []string
+	if exposurePart != "" {
+		parts = append(parts, exposurePart)
+	}
+	if vendorsPart != "" {
+		parts = append(parts, vendorsPart)
+	}
+	if productsPart != "" {
+		parts = append(parts, productsPart)
+	}
+
+	// Create the final conditional line
+	if len(parts) > 0 {
+		placeholders["exposure_vendors_products"] = "  ↳ " + strings.Join(parts, " | ")
+	} else {
+		placeholders["exposure_vendors_products"] = ""
+	}
+
 	// Detailed sections for single vulnerability view
 	placeholders["description"] = entry.Description
 	placeholders["impact"] = entry.Impact

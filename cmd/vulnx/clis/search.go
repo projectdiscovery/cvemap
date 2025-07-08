@@ -39,11 +39,11 @@ var (
 	filterAssignee        []string
 	filterVulnStatus      string
 	filterVulnAge         string
-	filterKevOnly         *bool
-	filterTemplate        *bool
-	filterPOC             *bool
-	filterHackerOne       *bool
-	filterRemoteExploit   *bool
+	filterKevOnly         string
+	filterTemplate        string
+	filterPOC             string
+	filterHackerOne       string
+	filterRemoteExploit   string
 
 	// File input flags
 	productFile         string
@@ -73,8 +73,8 @@ var (
 		},
 		{
 			"line": 4,
-			"format": "  ↳ Exposure: {exposure} | Vendors: {vendors} | Products: {products}",
-			"omit_if": ["exposure == 0", "vendors.length == 0", "products.length == 0"]
+			"format": "{exposure_vendors_products}",
+			"omit_if": []
 		},
 		{
 			"line": 5,
@@ -324,9 +324,9 @@ func buildFilterQuery() (string, error) {
 		queryParts = append(queryParts, productQuery)
 	}
 
-	// Build vendor filter
+	// Build vendor filter - search both vendor and product fields for better UX
 	if len(vendors) > 0 {
-		vendorQuery := buildInQuery("affected_products.vendor", vendors)
+		vendorQuery := buildVendorQuery(vendors)
 		queryParts = append(queryParts, vendorQuery)
 	}
 
@@ -380,28 +380,44 @@ func buildFilterQuery() (string, error) {
 	}
 
 	// Build boolean filters
-	if filterKevOnly != nil {
-		queryParts = append(queryParts, fmt.Sprintf("is_kev:%t", *filterKevOnly))
+	if filterKevOnly != "" {
+		if filterKevOnly == "true" {
+			queryParts = append(queryParts, fmt.Sprintf("is_kev:%t", true))
+		} else {
+			queryParts = append(queryParts, fmt.Sprintf("is_kev:%t", false))
+		}
 	}
 
-	if filterTemplate != nil {
-		queryParts = append(queryParts, fmt.Sprintf("is_template:%t", *filterTemplate))
+	if filterTemplate != "" {
+		if filterTemplate == "true" {
+			queryParts = append(queryParts, fmt.Sprintf("is_template:%t", true))
+		} else {
+			queryParts = append(queryParts, fmt.Sprintf("is_template:%t", false))
+		}
 	}
 
-	if filterPOC != nil {
-		queryParts = append(queryParts, fmt.Sprintf("is_poc:%t", *filterPOC))
+	if filterPOC != "" {
+		if filterPOC == "true" {
+			queryParts = append(queryParts, fmt.Sprintf("is_poc:%t", true))
+		} else {
+			queryParts = append(queryParts, fmt.Sprintf("is_poc:%t", false))
+		}
 	}
 
-	if filterHackerOne != nil {
-		if *filterHackerOne {
+	if filterHackerOne != "" {
+		if filterHackerOne == "true" {
 			queryParts = append(queryParts, "hackerone.reports:>0")
 		} else {
 			queryParts = append(queryParts, "NOT hackerone.reports:>0")
 		}
 	}
 
-	if filterRemoteExploit != nil {
-		queryParts = append(queryParts, fmt.Sprintf("is_remote:%t", *filterRemoteExploit))
+	if filterRemoteExploit != "" {
+		if filterRemoteExploit == "true" {
+			queryParts = append(queryParts, fmt.Sprintf("is_remote:%t", true))
+		} else {
+			queryParts = append(queryParts, fmt.Sprintf("is_remote:%t", false))
+		}
 	}
 
 	return strings.Join(queryParts, " && "), nil
@@ -465,6 +481,27 @@ func readValuesFromFile(filename string) ([]string, error) {
 // buildProductQuery builds a query that searches both vendor and product fields
 // This provides better UX when users search for products like "apache"
 func buildProductQuery(values []string) string {
+	if len(values) == 0 {
+		return ""
+	}
+
+	var parts []string
+	for _, value := range values {
+		// Search both vendor and product fields for each value
+		productPart := fmt.Sprintf("affected_products.product:%s", value)
+		vendorPart := fmt.Sprintf("affected_products.vendor:%s", value)
+		parts = append(parts, fmt.Sprintf("(%s || %s)", productPart, vendorPart))
+	}
+
+	if len(parts) == 1 {
+		return parts[0]
+	}
+
+	return fmt.Sprintf("(%s)", strings.Join(parts, " || "))
+}
+
+// buildVendorQuery builds a query that searches both vendor and product fields for vendors
+func buildVendorQuery(values []string) string {
 	if len(values) == 0 {
 		return ""
 	}
@@ -613,38 +650,22 @@ func init() { // Register flags and add command to rootCmd
 	searchCmd.Flags().StringVar(&excludeSeverityFile, "exclude-severity-file", "", "Read exclude severity values from file")
 	searchCmd.Flags().StringVar(&assigneeFile, "assignee-file", "", "Read assignee values from file")
 
-	// Boolean filters - need special handling for true/false values
-	searchCmd.Flags().Var(&BoolFlag{&filterKevOnly}, "kev-only", "Filter KEV (Known Exploited Vulnerabilities) only (true/false)")
-	searchCmd.Flags().VarP(&BoolFlag{&filterTemplate}, "template", "t", "Filter CVEs with Nuclei templates (true/false)")
-	searchCmd.Flags().Var(&BoolFlag{&filterPOC}, "poc", "Filter CVEs with public POCs (true/false)")
-	searchCmd.Flags().Var(&BoolFlag{&filterHackerOne}, "hackerone", "Filter CVEs reported on HackerOne (true/false)")
-	searchCmd.Flags().Var(&BoolFlag{&filterRemoteExploit}, "remote-exploit", "Filter remotely exploitable CVEs (true/false)")
+	// Boolean filters with default to true when flag is present without value
+	searchCmd.Flags().StringVar(&filterKevOnly, "kev-only", "", "Filter KEV (Known Exploited Vulnerabilities) only (true/false)")
+	searchCmd.Flags().Lookup("kev-only").NoOptDefVal = "true"
+
+	searchCmd.Flags().StringVarP(&filterTemplate, "template", "t", "", "Filter CVEs with Nuclei templates (true/false)")
+	searchCmd.Flags().Lookup("template").NoOptDefVal = "true"
+
+	searchCmd.Flags().StringVar(&filterPOC, "poc", "", "Filter CVEs with public POCs (true/false)")
+	searchCmd.Flags().Lookup("poc").NoOptDefVal = "true"
+
+	searchCmd.Flags().StringVar(&filterHackerOne, "hackerone", "", "Filter CVEs reported on HackerOne (true/false)")
+	searchCmd.Flags().Lookup("hackerone").NoOptDefVal = "true"
+
+	searchCmd.Flags().StringVar(&filterRemoteExploit, "remote-exploit", "", "Filter remotely exploitable CVEs (true/false)")
+	searchCmd.Flags().Lookup("remote-exploit").NoOptDefVal = "true"
 
 	searchCmd.SetHelpFunc(searchHelpCmd.Run)
 	rootCmd.AddCommand(searchCmd)
-}
-
-// BoolFlag implements pflag.Value interface for nullable bool flags
-type BoolFlag struct {
-	value **bool
-}
-
-func (b *BoolFlag) String() string {
-	if *b.value == nil {
-		return ""
-	}
-	return fmt.Sprintf("%t", **b.value)
-}
-
-func (b *BoolFlag) Set(s string) error {
-	v, err := strconv.ParseBool(s)
-	if err != nil {
-		return err
-	}
-	*b.value = &v
-	return nil
-}
-
-func (b *BoolFlag) Type() string {
-	return "bool"
 }
