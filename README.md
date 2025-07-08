@@ -28,9 +28,9 @@ vulnx id CVE-2021-44228
 
 **Search vulnerabilities with precision:**
 ```bash
-vulnx search severity:critical is_remote:true
-vulnx search "apache OR nginx" --limit 20
-vulnx search cvss_score:>8.0 cve_created_at:2024
+vulnx search "severity:critical && is_remote:true"
+vulnx search "apache || nginx" --limit 20
+vulnx search "cvss_score:>8.0 && cve_created_at:2024"
 ```
 
 **Get detailed vulnerability info:**
@@ -49,7 +49,7 @@ vulnx analyze --fields affected_products.vendor
 
 | Command | Purpose | Example |
 |---------|---------|---------|
-| `search` | Find vulnerabilities with advanced filters | `vulnx search apache severity:high` |
+| `search` | Find vulnerabilities with advanced filters | `vulnx search "apache && severity:high"` |
 | `id` | Get details for specific CVE | `vulnx id CVE-2021-44228` |
 | `analyze` | Aggregate data by fields | `vulnx analyze -f severity` |
 | `auth` | Configure API access | `vulnx auth` |
@@ -60,74 +60,116 @@ vulnx analyze --fields affected_products.vendor
 
 **Output formats:**
 ```bash
-vulnx search apache --json              # Machine-readable JSON
-vulnx search apache --output results.json  # Save to file
-vulnx search apache --silent            # Quiet output
+vulnx search "apache" --json              # Machine-readable JSON
+vulnx search "apache" --output results.json  # Save to file
+vulnx search "apache" --silent            # Quiet output
 ```
 
 **Search control:**
 ```bash
-vulnx search apache --limit 50          # Get 50 results
-vulnx search apache --sort-desc cvss_score  # Sort by CVSS score
-vulnx search apache --fields cve_id,severity  # Specific fields only
+vulnx search "apache" --limit 50          # Get 50 results
+vulnx search "apache" --sort-desc cvss_score  # Sort by CVSS score
+vulnx search "apache" --fields cve_id,severity  # Specific fields only
 ```
 
 **Advanced search:**
 ```bash
-vulnx search --term-facets severity=5,tags=10 apache
-vulnx search --range-facets numeric:cvss_score:high:8:10 remote
+vulnx search --term-facets severity=5,tags=10 "apache"
+vulnx search --range-facets numeric:cvss_score:high:8:10 "remote"
+vulnx search --highlight "apache"            # Enable search highlighting
+vulnx search --facet-size 20 "nginx"         # More facet buckets
+vulnx search --detailed "xss"                # Detailed output like 'id' command
 ```
 
 ## Common Search Patterns
 
 **Find high-risk vulnerabilities:**
 ```bash
-vulnx search severity:critical is_remote:true is_kev:true
+vulnx search "severity:critical && is_remote:true && is_kev:true"
 ```
 
 **Search by technology:**
 ```bash
-vulnx search apache                     # Apache vulnerabilities  
-vulnx search "apache OR nginx"          # Multiple technologies
-vulnx search affected_products.vendor:microsoft  # By vendor
+vulnx search "apache"                     # Apache vulnerabilities  
+vulnx search "apache || nginx"          # Multiple technologies
+vulnx search "affected_products.vendor:microsoft"  # By vendor
 ```
 
 **Filter by severity and scores:**
 ```bash
-vulnx search severity:high              # High severity
-vulnx search cvss_score:>7.0            # CVSS score above 7
-vulnx search epss_score:>0.8            # High EPSS score
+vulnx search "severity:high"              # High severity
+vulnx search "cvss_score:>7.0"            # CVSS score above 7
+vulnx search "epss_score:>0.8"            # High EPSS score
 ```
 
 **Time-based searches:**
 ```bash
-vulnx search cve_created_at:2024        # Published in 2024
-vulnx search cve_created_at:[2024-01-01 TO 2024-06-30]  # Date range
+vulnx search "cve_created_at:2024"        # Published in 2024
+vulnx search "cve_created_at:[2024-01-01 TO 2024-06-30]"  # Date range
 ```
 
 **Find exploitable vulnerabilities:**
 ```bash
-vulnx search is_poc:true                # Has proof of concept
-vulnx search is_kev:true                # Known exploited vulns
-vulnx search is_template:true           # Has Nuclei templates
+vulnx search "is_poc:true"                # Has proof of concept
+vulnx search "is_kev:true"                # Known exploited vulns
+vulnx search "is_template:true"           # Has Nuclei templates
+vulnx search --detailed "log4j"          # Detailed analysis of specific vuln
 ```
 
 ## Filter Flags
+
+### Filter Flags Reference
+
+| Flag | Short | Description | Example |
+|------|-------|-------------|---------|
+| `--product` | `-p` | Filter by products | `--product apache,nginx` |
+| `--vendor` | | Filter by vendors | `--vendor microsoft,oracle` |
+| `--exclude-product` | | Exclude products | `--exclude-product apache` |
+| `--exclude-vendor` | | Exclude vendors | `--exclude-vendor microsoft` |
+| `--severity` | `-s` | Filter by severity | `--severity critical,high` |
+| `--exclude-severity` | | Exclude severities | `--exclude-severity low,medium` |
+| `--assignee` | `-a` | Filter by assignee | `--assignee cve@mitre.org` |
+| `--cpe` | `-c` | Filter by CPE string | `--cpe "cpe:2.3:a:apache:*"` |
+| `--vstatus` | | Filter by vuln status | `--vstatus confirmed` |
+| `--vuln-age` | | Filter by age | `--vuln-age "<30"` |
+| `--kev-only` | | KEV vulnerabilities only | `--kev-only` |
+| `--template` | `-t` | Has Nuclei templates | `--template` |
+| `--poc` | | Has proof of concept | `--poc` |
+| `--hackerone` | | HackerOne reported | `--hackerone` |
+| `--remote-exploit` | | Remotely exploitable | `--remote-exploit` |
+
+
+### Search Control Flags
+
+| Flag | Short | Description | Example |
+|------|-------|-------------|---------|
+| `--detailed` | | Detailed output like 'id' | `--detailed` |
+| `--highlight` | | Enable search highlighting | `--highlight` |
+| `--limit` | `-n` | Number of results | `--limit 50` |
+| `--offset` | | Pagination offset | `--offset 100` |
+| `--sort-asc` | | Sort ascending | `--sort-asc cvss_score` |
+| `--sort-desc` | | Sort descending | `--sort-desc cve_created_at` |
+| `--fields` | | Select specific fields | `--fields cve_id,severity` |
+| `--term-facets` | | Calculate term facets | `--term-facets severity=5` |
+| `--range-facets` | | Calculate range facets | `--range-facets numeric:cvss_score:high:8:10` |
+| `--facet-size` | | Facet bucket count | `--facet-size 20` |
 
 **Product and vendor filtering:**
 ```bash
 vulnx search --product apache,nginx     # Filter by products (searches both vendor and product fields)
 vulnx search --vendor microsoft,oracle  # Filter by vendors only
-vulnx search --product-file products.txt  # Read from file
 vulnx search --exclude-product apache   # Exclude products
+vulnx search --exclude-vendor microsoft # Exclude vendors
 ```
 
 **Severity and assignment:**
 ```bash
 vulnx search --severity critical,high   # Filter by severity
+vulnx search --exclude-severity low,medium  # Exclude severities
 vulnx search --assignee cve@mitre.org   # Filter by assignee
 vulnx search --vstatus confirmed         # Filter by status
 vulnx search --vuln-age "<30"           # Recent vulnerabilities
+vulnx search --cpe "cpe:2.3:a:apache:*" # Filter by CPE string
 ```
 
 **Exploit characteristics:**
@@ -187,24 +229,24 @@ cat report.txt | grep -o 'CVE-[0-9]\{4\}-[0-9]\+' | vulnx id --json
 
 **Basic searches:**
 ```bash
-vulnx search apache                     # Simple term
+vulnx search "apache"                     # Simple term
 vulnx search "remote code execution"    # Phrase search
-vulnx search severity:critical          # Field search
+vulnx search "severity:critical"          # Field search
 ```
 
 **Boolean logic:**
 ```bash
-vulnx search apache AND nginx           # Both terms
-vulnx search apache OR nginx            # Either term  
-vulnx search apache NOT tomcat          # Exclude term
-vulnx search "(apache OR nginx) AND severity:high"  # Grouped
+vulnx search "apache && nginx"           # Both terms
+vulnx search "apache || nginx"            # Either term  
+vulnx search "apache NOT tomcat"          # Exclude term
+vulnx search "(apache || nginx) && severity:high"  # Grouped
 ```
 
 **Ranges and wildcards:**
 ```bash
-vulnx search cvss_score:>8.0            # Greater than
-vulnx search cvss_score:[7 TO 9]        # Range
-vulnx search apache*                    # Wildcard
+vulnx search "cvss_score:>8.0"            # Greater than
+vulnx search "cvss_score:[7 TO 9]"        # Range
+vulnx search "apache*"                    # Wildcard
 ```
 
 ## Configuration
@@ -224,9 +266,9 @@ export PDCP_API_KEY="your-key-here"     # Environment variable
 
 **Global options:**
 ```bash
-vulnx --json search apache              # JSON output
-vulnx --silent search apache            # No banner
-vulnx --timeout 60s search apache       # Custom timeout
+vulnx --json search "apache"              # JSON output
+vulnx --silent search "apache"            # No banner
+vulnx --timeout 60s search "apache"       # Custom timeout
 ```
 
 ## Troubleshooting
@@ -262,22 +304,22 @@ Error: api key is required (when running vulnx search --help)
 
 **No results:**
 ```bash
-vulnx search is_kev:true --limit 1      # Test with known results
+vulnx search "is_kev:true" --limit 1      # Test with known results
 vulnx healthcheck                       # Check connectivity
 ```
 
 **Large result sets:**
 ```bash
-vulnx search apache --limit 100         # Increase limit
-vulnx search apache --offset 100        # Pagination
-vulnx search --fields cve_id,severity apache  # Fewer fields
+vulnx search "apache" --limit 100         # Increase limit
+vulnx search "apache" --offset 100        # Pagination
+vulnx search --fields cve_id,severity "apache"  # Fewer fields
 ```
 
 **Connection issues:**
 ```bash
-vulnx --timeout 60s search apache       # Increase timeout
-vulnx --proxy http://proxy:8080 search apache  # Use proxy
-vulnx --debug search apache             # Debug mode
+vulnx --timeout 60s search "apache"       # Increase timeout
+vulnx --proxy http://proxy:8080 search "apache"  # Use proxy
+vulnx --debug search "apache"             # Debug mode
 ```
 
 ## Getting Help

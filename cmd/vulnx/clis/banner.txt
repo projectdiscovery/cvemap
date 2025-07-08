@@ -3,6 +3,6 @@
   \ V /| || || || ' \  >  < 
    \_/  \_,_||_||_||_|/_/\_\ 
 
-                    by ProjectDiscovery (vulnerability.sh)
+    by ProjectDiscovery (vulnerability.sh)
 
                     

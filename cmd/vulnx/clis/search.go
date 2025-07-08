@@ -27,6 +27,7 @@ var (
 	searchRangeFacets []string
 	searchHighlight   bool
 	searchFacetSize   int
+	searchDetailed    bool
 
 	// Filter flags
 	filterProduct         []string
@@ -44,15 +45,6 @@ var (
 	filterPOC             string
 	filterHackerOne       string
 	filterRemoteExploit   string
-
-	// File input flags
-	productFile         string
-	vendorFile          string
-	excludeProductFile  string
-	excludeVendorFile   string
-	severityFile        string
-	excludeSeverityFile string
-	assigneeFile        string
 
 	// Security-focused layout for CLI rendering
 	defaultLayoutJSON = `[
@@ -97,22 +89,26 @@ Global flags:
   --json      Output raw JSON (for piping, disables CLI output)
   --output    Write output to file in JSON format (error if file exists)
   --no-color  Disable colored output (colors are auto-disabled for non-terminal output)
+  --detailed  Show detailed vulnerability information
 `,
 		Example: `
 # Search help
 vulnx help search
 
 # Basic search for only KEV vulnerabilities
-vulnx search is_kev:true
+vulnx search "is_kev:true"
+
+# Search with detailed information
+vulnx search --detailed "xss"
 
 # Output as JSON for piping
-vulnx search --json is_kev:true
+vulnx search --json "is_kev:true"
 
 # Write output to a file (JSON)
-vulnx search --output results.json is_kev:true
+vulnx search --output results.json "is_kev:true"
 
 # Search and request term facets (tags and severity)
-vulnx search --term-facets tags=10,severity=4 is_remote:true
+vulnx search --term-facets tags=10,severity=4 "is_remote:true"
 
 # Search and request range facets:
 #   – CVE created in 2024
@@ -120,13 +116,13 @@ vulnx search --term-facets tags=10,severity=4 is_remote:true
 vulnx search \
 	--range-facets date:cve_created_at:2024:2024-01:2024-12 \
 	--range-facets numeric:epss_score:high:0.9:1.0 \
-	is_poc:true
+	"is_poc:true"
 
 # Combine term and range facets
 vulnx search \
 	--term-facets tags=10 \
 	--range-facets numeric:epss_score:medium:0.4:0.9 \
-	cvss_score:>7
+	"cvss_score:>7"
 		`,
 		Args: cobra.ArbitraryArgs,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -272,8 +268,38 @@ vulnx search \
 			}
 
 			// Render output with colors
-			output := renderer.RenderWithColors(entries, layout, resp.Total, resp.Count, colors)
-			fmt.Print(output)
+			if searchDetailed {
+				// Use detailed rendering for each entry (similar to 'id' command)
+				for i, entry := range entries {
+					// Add separator between multiple results
+					if i > 0 {
+						separator := strings.Repeat("─", 65)
+						if colors != nil {
+							fmt.Println(colors.ColorResultSeparator(separator))
+						} else {
+							fmt.Println(separator)
+						}
+						fmt.Println()
+					}
+
+					// Render detailed output for each entry
+					result := renderer.RenderDetailed(entry, colors)
+					fmt.Print(result)
+				}
+
+				// Show summary at the end
+				fmt.Printf("\n")
+				summaryLine := fmt.Sprintf("Showing %d out of %d total results", resp.Count, resp.Total)
+				if colors != nil {
+					fmt.Println(colors.ColorResultSeparator(summaryLine))
+				} else {
+					fmt.Println(summaryLine)
+				}
+			} else {
+				// Use default layout rendering
+				output := renderer.RenderWithColors(entries, layout, resp.Total, resp.Count, colors)
+				fmt.Print(output)
+			}
 		},
 	}
 )
@@ -282,75 +308,39 @@ vulnx search \
 func buildFilterQuery() (string, error) {
 	var queryParts []string
 
-	// Read file inputs and merge with command line inputs
-	products, err := mergeWithFileInput(filterProduct, productFile)
-	if err != nil {
-		return "", fmt.Errorf("failed to read product file: %w", err)
-	}
-
-	vendors, err := mergeWithFileInput(filterVendor, vendorFile)
-	if err != nil {
-		return "", fmt.Errorf("failed to read vendor file: %w", err)
-	}
-
-	excludeProducts, err := mergeWithFileInput(filterExcludeProduct, excludeProductFile)
-	if err != nil {
-		return "", fmt.Errorf("failed to read exclude product file: %w", err)
-	}
-
-	excludeVendors, err := mergeWithFileInput(filterExcludeVendor, excludeVendorFile)
-	if err != nil {
-		return "", fmt.Errorf("failed to read exclude vendor file: %w", err)
-	}
-
-	severities, err := mergeWithFileInput(filterSeverity, severityFile)
-	if err != nil {
-		return "", fmt.Errorf("failed to read severity file: %w", err)
-	}
-
-	excludeSeverities, err := mergeWithFileInput(filterExcludeSeverity, excludeSeverityFile)
-	if err != nil {
-		return "", fmt.Errorf("failed to read exclude severity file: %w", err)
-	}
-
-	assignees, err := mergeWithFileInput(filterAssignee, assigneeFile)
-	if err != nil {
-		return "", fmt.Errorf("failed to read assignee file: %w", err)
-	}
-
 	// Build product filter - search both vendor and product fields for better UX
-	if len(products) > 0 {
-		productQuery := buildProductQuery(products)
+	if len(filterProduct) > 0 {
+		productQuery := buildProductQuery(filterProduct)
 		queryParts = append(queryParts, productQuery)
 	}
 
 	// Build vendor filter - search both vendor and product fields for better UX
-	if len(vendors) > 0 {
-		vendorQuery := buildVendorQuery(vendors)
+	if len(filterVendor) > 0 {
+		vendorQuery := buildVendorQuery(filterVendor)
 		queryParts = append(queryParts, vendorQuery)
 	}
 
 	// Build exclude product filter
-	if len(excludeProducts) > 0 {
-		excludeQuery := buildNotInQuery("affected_products.product", excludeProducts)
+	if len(filterExcludeProduct) > 0 {
+		excludeQuery := buildNotInQuery("affected_products.product", filterExcludeProduct)
 		queryParts = append(queryParts, excludeQuery)
 	}
 
 	// Build exclude vendor filter
-	if len(excludeVendors) > 0 {
-		excludeQuery := buildNotInQuery("affected_products.vendor", excludeVendors)
+	if len(filterExcludeVendor) > 0 {
+		excludeQuery := buildNotInQuery("affected_products.vendor", filterExcludeVendor)
 		queryParts = append(queryParts, excludeQuery)
 	}
 
 	// Build severity filter
-	if len(severities) > 0 {
-		severityQuery := buildInQuery("severity", severities)
+	if len(filterSeverity) > 0 {
+		severityQuery := buildInQuery("severity", filterSeverity)
 		queryParts = append(queryParts, severityQuery)
 	}
 
 	// Build exclude severity filter
-	if len(excludeSeverities) > 0 {
-		excludeQuery := buildNotInQuery("severity", excludeSeverities)
+	if len(filterExcludeSeverity) > 0 {
+		excludeQuery := buildNotInQuery("severity", filterExcludeSeverity)
 		queryParts = append(queryParts, excludeQuery)
 	}
 
@@ -360,8 +350,8 @@ func buildFilterQuery() (string, error) {
 	}
 
 	// Build assignee filter
-	if len(assignees) > 0 {
-		assigneeQuery := buildInQuery("assignee_short_name", assignees)
+	if len(filterAssignee) > 0 {
+		assigneeQuery := buildInQuery("assignee_short_name", filterAssignee)
 		queryParts = append(queryParts, assigneeQuery)
 	}
 
@@ -421,61 +411,6 @@ func buildFilterQuery() (string, error) {
 	}
 
 	return strings.Join(queryParts, " && "), nil
-}
-
-// mergeWithFileInput merges command line inputs with file inputs
-func mergeWithFileInput(cmdInputs []string, filename string) ([]string, error) {
-	result := make([]string, len(cmdInputs))
-	copy(result, cmdInputs)
-
-	if filename != "" {
-		fileInputs, err := readValuesFromFile(filename)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, fileInputs...)
-	}
-
-	return removeDuplicateStrings(result), nil
-}
-
-// readValuesFromFile reads values from a file (supports both newline and comma-separated)
-func readValuesFromFile(filename string) ([]string, error) {
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read file: %w", err)
-	}
-
-	content := strings.TrimSpace(string(data))
-	if content == "" {
-		return nil, fmt.Errorf("file is empty")
-	}
-
-	var values []string
-
-	// Try line-by-line first
-	lines := strings.Split(content, "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue // Skip empty lines and comments
-		}
-
-		// Check if line contains commas (comma-separated format)
-		if strings.Contains(line, ",") {
-			parts := strings.Split(line, ",")
-			for _, part := range parts {
-				part = strings.TrimSpace(part)
-				if part != "" {
-					values = append(values, part)
-				}
-			}
-		} else {
-			values = append(values, line)
-		}
-	}
-
-	return values, nil
 }
 
 // buildProductQuery builds a query that searches both vendor and product fields
@@ -626,29 +561,21 @@ func init() { // Register flags and add command to rootCmd
 	searchCmd.Flags().StringSliceVar(&searchRangeFacets, "range-facets", nil, "Range facets to calculate (comma-separated)")
 	searchCmd.Flags().BoolVar(&searchHighlight, "highlight", false, "Return search highlights where supported")
 	searchCmd.Flags().IntVar(&searchFacetSize, "facet-size", 10, "Number of facet buckets to return")
+	searchCmd.Flags().BoolVar(&searchDetailed, "detailed", false, "Show detailed vulnerability information (similar to 'id' command)")
 
 	// Filter flags - String slice filters
-	searchCmd.Flags().StringSliceVarP(&filterProduct, "product", "p", nil, "Filter by product (comma-separated, supports file input)")
-	searchCmd.Flags().StringSliceVar(&filterVendor, "vendor", nil, "Filter by vendor (comma-separated, supports file input)")
-	searchCmd.Flags().StringSliceVar(&filterExcludeProduct, "exclude-product", nil, "Exclude products (comma-separated, supports file input)")
-	searchCmd.Flags().StringSliceVar(&filterExcludeVendor, "exclude-vendor", nil, "Exclude vendors (comma-separated, supports file input)")
-	searchCmd.Flags().StringSliceVarP(&filterSeverity, "severity", "s", nil, "Filter by severity (comma-separated, supports file input)")
-	searchCmd.Flags().StringSliceVar(&filterExcludeSeverity, "exclude-severity", nil, "Exclude severities (comma-separated, supports file input)")
-	searchCmd.Flags().StringSliceVarP(&filterAssignee, "assignee", "a", nil, "Filter by assignee (comma-separated, supports file input)")
+	searchCmd.Flags().StringSliceVarP(&filterProduct, "product", "p", nil, "Filter by product (comma-separated)")
+	searchCmd.Flags().StringSliceVar(&filterVendor, "vendor", nil, "Filter by vendor (comma-separated)")
+	searchCmd.Flags().StringSliceVar(&filterExcludeProduct, "exclude-product", nil, "Exclude products (comma-separated)")
+	searchCmd.Flags().StringSliceVar(&filterExcludeVendor, "exclude-vendor", nil, "Exclude vendors (comma-separated)")
+	searchCmd.Flags().StringSliceVarP(&filterSeverity, "severity", "s", nil, "Filter by severity (comma-separated)")
+	searchCmd.Flags().StringSliceVar(&filterExcludeSeverity, "exclude-severity", nil, "Exclude severities (comma-separated)")
+	searchCmd.Flags().StringSliceVarP(&filterAssignee, "assignee", "a", nil, "Filter by assignee (comma-separated)")
 
 	// Single value filters
 	searchCmd.Flags().StringVarP(&filterCPE, "cpe", "c", "", "Filter by CPE string")
 	searchCmd.Flags().StringVar(&filterVulnStatus, "vstatus", "", "Filter by vulnerability status (new, confirmed, unconfirmed, modified, rejected, unknown)")
 	searchCmd.Flags().StringVar(&filterVulnAge, "vuln-age", "", "Filter by vulnerability age (supports <, >, exact: e.g., '5', '<10', '>30')")
-
-	// File input flags
-	searchCmd.Flags().StringVar(&productFile, "product-file", "", "Read product values from file (newline or comma-separated)")
-	searchCmd.Flags().StringVar(&vendorFile, "vendor-file", "", "Read vendor values from file (newline or comma-separated)")
-	searchCmd.Flags().StringVar(&excludeProductFile, "exclude-product-file", "", "Read exclude product values from file")
-	searchCmd.Flags().StringVar(&excludeVendorFile, "exclude-vendor-file", "", "Read exclude vendor values from file")
-	searchCmd.Flags().StringVar(&severityFile, "severity-file", "", "Read severity values from file")
-	searchCmd.Flags().StringVar(&excludeSeverityFile, "exclude-severity-file", "", "Read exclude severity values from file")
-	searchCmd.Flags().StringVar(&assigneeFile, "assignee-file", "", "Read assignee values from file")
 
 	// Boolean filters with default to true when flag is present without value
 	searchCmd.Flags().StringVar(&filterKevOnly, "kev-only", "", "Filter KEV (Known Exploited Vulnerabilities) only (true/false)")
