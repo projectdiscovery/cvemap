@@ -112,6 +112,33 @@ vulnx search is_kev:true                # Known exploited vulns
 vulnx search is_template:true           # Has Nuclei templates
 ```
 
+## Filter Flags
+
+**Product and vendor filtering:**
+```bash
+vulnx search --product apache,nginx     # Filter by products (searches both vendor and product fields)
+vulnx search --vendor microsoft,oracle  # Filter by vendors only
+vulnx search --product-file products.txt  # Read from file
+vulnx search --exclude-product apache   # Exclude products
+```
+
+**Severity and assignment:**
+```bash
+vulnx search --severity critical,high   # Filter by severity
+vulnx search --assignee cve@mitre.org   # Filter by assignee
+vulnx search --vstatus confirmed         # Filter by status
+vulnx search --vuln-age "<30"           # Recent vulnerabilities
+```
+
+**Exploit characteristics:**
+```bash
+vulnx search --kev-only true            # KEV vulnerabilities only
+vulnx search --template true            # Has Nuclei templates
+vulnx search --poc true                 # Has proof of concept
+vulnx search --hackerone true           # HackerOne reported
+vulnx search --remote-exploit true      # Remotely exploitable
+```
+
 ## Vulnerability ID Lookup
 
 **Multiple input methods:**

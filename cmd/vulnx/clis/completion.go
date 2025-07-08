@@ -149,7 +149,7 @@ _vulnx_completion() {
             return 0
             ;;
         search)
-            COMPREPLY=( $(compgen -W "--limit -n --offset --sort-asc --sort-desc --fields --term-facets --range-facets --highlight --facet-size ${global_flags}" -- ${cur}) )
+            COMPREPLY=( $(compgen -W "--limit -n --offset --sort-asc --sort-desc --fields --term-facets --range-facets --highlight --facet-size --product -p --vendor --exclude-product --exclude-vendor --severity -s --exclude-severity --cpe -c --assignee -a --vstatus --vuln-age --product-file --vendor-file --exclude-product-file --exclude-vendor-file --severity-file --exclude-severity-file --assignee-file --kev-only --template -t --poc --hackerone --remote-exploit ${global_flags}" -- ${cur}) )
             return 0
             ;;
         id)
