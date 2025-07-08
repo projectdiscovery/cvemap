@@ -2,7 +2,6 @@ package clis
 
 import (
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/jedib0t/go-pretty/v6/table"
@@ -10,7 +9,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/projectdiscovery/cvemap/pkg/tools/filters"
-	"github.com/projectdiscovery/cvemap/pkg/utils"
 )
 
 var (
@@ -51,33 +49,14 @@ Below is a list of all fields that can be used in search queries. Fields marked
 as "Facet" support term/range faceting. Fields marked "Sortable" can be used
 with --sort-asc/--sort-desc.`
 
-			// Use a pager when available
-			w, closePager, err := utils.OpenPager(noPager)
-			if err != nil {
-				// Fallback to stdout wrapped as io.WriteCloser
-				w = nopWriteCloser{Writer: cmd.OutOrStdout()}
-				closePager = func() error { return nil }
-			}
-			defer func() { _ = closePager() }()
-
 			// Print overview
-			if _, err := fmt.Fprintln(w, overview); err != nil {
-				gologger.Error().Msgf("Failed to write overview: %s", err)
-			}
-			if _, err := fmt.Fprintln(w, strings.Repeat("-", 120)); err != nil {
-				gologger.Error().Msgf("Failed to write separator: %s", err)
-			}
+			fmt.Println(overview)
+			fmt.Println(strings.Repeat("-", 120))
 
 			// Print command usage & flags (default Cobra output) before field table
-			if _, err := fmt.Fprintln(w, "COMMAND USAGE & FLAGS"); err != nil {
-				gologger.Error().Msgf("Failed to write section header: %s", err)
-			}
-			if _, err := fmt.Fprintln(w, strings.Repeat("-", 120)); err != nil {
-				gologger.Error().Msgf("Failed to write separator: %s", err)
-			}
-			if _, err := fmt.Fprintln(w, cmd.UsageString()); err != nil {
-				gologger.Error().Msgf("Failed to write usage string: %s", err)
-			}
+			fmt.Println("COMMAND USAGE & FLAGS")
+			fmt.Println(strings.Repeat("-", 120))
+			fmt.Println(cmd.UsageString())
 
 			// 2. Fetch filters via handler
 			h := filters.NewHandler(cvemapClient)
@@ -88,7 +67,6 @@ with --sort-asc/--sort-desc.`
 
 			// 3. Render summary table
 			tbl := table.NewWriter()
-			tbl.SetOutputMirror(w)
 			tbl.SetStyle(table.StyleRounded)
 			tbl.AppendHeader(table.Row{"Field", "Data Type", "Description", "Sortable", "Facet"})
 			tbl.SetColumnConfigs([]table.ColumnConfig{
@@ -106,28 +84,18 @@ with --sort-asc/--sort-desc.`
 			tbl.Render()
 
 			// 4. Detailed sections for enum_values / examples
-			if _, err := fmt.Fprintln(w, "\nADDITIONAL FIELD DETAILS"); err != nil {
-				gologger.Error().Msgf("Failed to write section header: %s", err)
-			}
-			if _, err := fmt.Fprintln(w, strings.Repeat("-", 120)); err != nil {
-				gologger.Error().Msgf("Failed to write separator: %s", err)
-			}
+			fmt.Println("\nADDITIONAL FIELD DETAILS")
+			fmt.Println(strings.Repeat("-", 120))
 			for _, f := range fltrs {
 				if len(f.EnumValues) == 0 && len(f.Examples) == 0 {
 					continue
 				}
-				if _, err := fmt.Fprintf(w, "\n%s\n", strings.ToUpper(f.Field)); err != nil {
-					gologger.Error().Msgf("Failed to write field name: %s", err)
-				}
+				fmt.Printf("\n%s\n", strings.ToUpper(f.Field))
 				if len(f.EnumValues) > 0 {
-					if _, err := fmt.Fprintf(w, "  Enum Values : %s\n", strings.Join(f.EnumValues, ", ")); err != nil {
-						gologger.Error().Msgf("Failed to write enum values: %s", err)
-					}
+					fmt.Printf("  Enum Values : %s\n", strings.Join(f.EnumValues, ", "))
 				}
 				if len(f.Examples) > 0 {
-					if _, err := fmt.Fprintf(w, "  Examples    : %s\n", strings.Join(f.Examples, ", ")); err != nil {
-						gologger.Error().Msgf("Failed to write examples: %s", err)
-					}
+					fmt.Printf("  Examples    : %s\n", strings.Join(f.Examples, ", "))
 				}
 			}
 		},
@@ -140,10 +108,3 @@ func boolToYN(b bool) string {
 	}
 	return "-"
 }
-
-// nopWriteCloser wraps an io.Writer to satisfy io.WriteCloser when no pager is used.
-type nopWriteCloser struct {
-	io.Writer
-}
-
-func (nopWriteCloser) Close() error { return nil }

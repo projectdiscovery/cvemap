@@ -14,7 +14,6 @@ import (
 
 	"github.com/jedib0t/go-pretty/v6/table"
 	groupbytool "github.com/projectdiscovery/cvemap/pkg/tools/groupby"
-	"github.com/projectdiscovery/cvemap/pkg/utils"
 )
 
 var (
@@ -112,20 +111,10 @@ Global flags:
 			}
 
 			// Render facet tables
-			w, closePager, err := utils.OpenPager(noPager)
-			if err != nil {
-				w = os.Stdout
-				closePager = func() error { return nil }
-			}
-			defer func() { _ = closePager() }()
-
 			for facetName, facetAny := range resp.Facets {
-				if _, err := fmt.Fprintf(w, "\nField: %s\n", facetName); err != nil {
-					gologger.Error().Msgf("Failed to write facet name: %s", err)
-				}
+				fmt.Printf("\nField: %s\n", facetName)
 
 				tbl := table.NewWriter()
-				tbl.SetOutputMirror(w)
 				tbl.SetStyle(table.StyleRounded)
 				tbl.AppendHeader(table.Row{"Value", "Count"})
 

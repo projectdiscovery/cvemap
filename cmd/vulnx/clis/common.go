@@ -46,9 +46,6 @@ var (
 	debugReq  bool
 	debugResp bool
 
-	// Add global noPager flag
-	noPager bool
-
 	// Add global json and output flags
 	jsonOutput bool
 	outputFile string
@@ -145,9 +142,6 @@ func init() {
 
 	rootCmd.PersistentFlags().BoolVar(&debugReq, "debug-req", false, "Dump HTTP requests to stdout")
 	rootCmd.PersistentFlags().BoolVar(&debugResp, "debug-resp", false, "Dump HTTP responses to stdout")
-
-	// Add persistent no-pager flag
-	rootCmd.PersistentFlags().BoolVar(&noPager, "no-pager", false, "Disable use of pager for output")
 
 	// Add persistent json and output flags
 	rootCmd.PersistentFlags().BoolVarP(&jsonOutput, "json", "j", false, "Output raw JSON (for piping, disables YAML output)")

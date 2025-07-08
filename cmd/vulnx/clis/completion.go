@@ -133,7 +133,7 @@ _vulnx_completion() {
     shells="bash zsh fish powershell"
     
     # Global flags (available for all commands)
-    global_flags="--help --debug --verbose --json --output --silent --no-color --no-pager --proxy --timeout --debug-req --debug-resp"
+    global_flags="--help --debug --verbose --json --output --silent --no-color --proxy --timeout --debug-req --debug-resp"
     
     case "${prev}" in
         vulnx)

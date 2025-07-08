@@ -9,7 +9,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/projectdiscovery/cvemap/pkg/tools/filters"
-	"github.com/projectdiscovery/cvemap/pkg/utils"
 )
 
 var (
@@ -46,32 +45,14 @@ Example invocations:
                 -q 'template_coverage:planned || template_coverage:covered'
 `
 
-			// Use a pager when available
-			w, closePager, err := utils.OpenPager(noPager)
-			if err != nil {
-				w = nopWriteCloser{Writer: cmd.OutOrStdout()}
-				closePager = func() error { return nil }
-			}
-			defer func() { _ = closePager() }()
-
 			// Print overview
-			if _, err := fmt.Fprintln(w, overview); err != nil {
-				gologger.Error().Msgf("Failed to write overview: %s", err)
-			}
-			if _, err := fmt.Fprintln(w, strings.Repeat("-", 120)); err != nil {
-				gologger.Error().Msgf("Failed to write separator: %s", err)
-			}
+			fmt.Println(overview)
+			fmt.Println(strings.Repeat("-", 120))
 
 			// Print command usage & flags (default Cobra output) before examples
-			if _, err := fmt.Fprintln(w, "COMMAND USAGE & FLAGS"); err != nil {
-				gologger.Error().Msgf("Failed to write command usage: %s", err)
-			}
-			if _, err := fmt.Fprintln(w, strings.Repeat("-", 120)); err != nil {
-				gologger.Error().Msgf("Failed to write separator: %s", err)
-			}
-			if _, err := fmt.Fprintln(w, cmd.UsageString()); err != nil {
-				gologger.Error().Msgf("Failed to write usage string: %s", err)
-			}
+			fmt.Println("COMMAND USAGE & FLAGS")
+			fmt.Println(strings.Repeat("-", 120))
+			fmt.Println(cmd.UsageString())
 
 			// Fetch filters via handler
 			h := filters.NewHandler(cvemapClient)
@@ -82,7 +63,6 @@ Example invocations:
 
 			// Render table with only facet-capable fields
 			tbl := table.NewWriter()
-			tbl.SetOutputMirror(w)
 			tbl.SetStyle(table.StyleRounded)
 			tbl.AppendHeader(table.Row{"Field", "Data Type", "Description", "Facet"})
 			tbl.SetColumnConfigs([]table.ColumnConfig{
@@ -107,5 +87,3 @@ Example invocations:
 		},
 	}
 )
-
-// Note: nopWriteCloser is defined in searchhelp.go and reused here

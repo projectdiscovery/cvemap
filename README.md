@@ -199,7 +199,6 @@ export PDCP_API_KEY="your-key-here"     # Environment variable
 ```bash
 vulnx --json search apache              # JSON output
 vulnx --silent search apache            # No banner
-vulnx --no-pager search apache          # No paging
 vulnx --timeout 60s search apache       # Custom timeout
 ```
 
