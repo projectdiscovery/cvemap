@@ -1,10 +1,17 @@
-# vulnx - the swiss army knife for vulnerability intelligence
-
-**Modern CLI for exploring vulnerability data with powerful search, filtering, and analysis capabilities**
+<h1 align="center"> vulnx </h1>
 
 <p align="center">
-  <img src="static/cvemap.png" alt="vulnx" width="200px">
+<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-_red.svg"></a>
+<a href="https://goreportcard.com/badge/github.com/projectdiscovery/tlsx"><img src="https://goreportcard.com/badge/github.com/projectdiscovery/tlsx"></a>
+<a href="https://pkg.go.dev/github.com/projectdiscovery/tlsx/pkg/tlsx"><img src="https://img.shields.io/badge/go-reference-blue"></a>
+<a href="https://github.com/projectdiscovery/tlsx/releases"><img src="https://img.shields.io/github/release/projectdiscovery/tlsx"></a>
+<a href="https://twitter.com/pdiscoveryio"><img src="https://img.shields.io/twitter/follow/pdiscoveryio.svg?logo=twitter"></a>
+<a href="https://discord.gg/projectdiscovery"><img src="https://img.shields.io/discord/695645237418131507.svg?logo=discord"></a>
 </p>
+
+<h4 align="center"> Modern CLI for exploring vulnerability data with powerful search, filtering, and analysis capabilities </h4>
+
+![image](https://github.com/user-attachments/assets/d60a1d43-27d8-4874-9459-046b7d8c633a)
 
 ## Quick Start
 
