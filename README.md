@@ -127,6 +127,8 @@ Use this command to discover new search possibilities and understand field synta
 **Find high-risk vulnerabilities:**
 ```bash
 vulnx search "severity:critical && is_remote:true && is_kev:true"
+vulnx search "cvss_score:>8.0 && cve_created_at:>=2024"  # High CVSS from 2024
+vulnx search "is_kev:true && age_in_days:<90"            # Recent KEV exploits
 ```
 
 **Search by technology:**
@@ -145,8 +147,9 @@ vulnx search "epss_score:>0.8"            # High EPSS score
 
 **Time-based searches:**
 ```bash
-vulnx search "cve_created_at:2024"        # Published in 2024
-vulnx search "cve_created_at:[2024-01-01 TO 2024-06-30]"  # Date range
+vulnx search "cve_created_at:>=2024"      # Published in 2024 or later
+vulnx search "cve_created_at:>=2024-01-01 && cve_created_at:<2024-07-01"  # First half of 2024
+vulnx search "age_in_days:<30"            # Recent vulnerabilities (last 30 days)
 ```
 
 **Find exploitable vulnerabilities:**
@@ -165,19 +168,18 @@ vulnx search --detailed "log4j"          # Detailed analysis of specific vuln
 |------|-------|-------------|---------|
 | `--product` | `-p` | Filter by products | `--product apache,nginx` |
 | `--vendor` | | Filter by vendors | `--vendor microsoft,oracle` |
-| `--exclude-product` | | Exclude products | `--exclude-product apache` |
-| `--exclude-vendor` | | Exclude vendors | `--exclude-vendor microsoft` |
 | `--severity` | `-s` | Filter by severity | `--severity critical,high` |
-| `--exclude-severity` | | Exclude severities | `--exclude-severity low,medium` |
-| `--assignee` | `-a` | Filter by assignee | `--assignee cve@mitre.org` |
-| `--cpe` | `-c` | Filter by CPE string | `--cpe "cpe:2.3:a:apache:*"` |
-| `--vstatus` | | Filter by vuln status | `--vstatus confirmed` |
+| `--tags` | | Filter by tags | `--tags rce,injection` |
+| `--cvss-score` | | Filter by CVSS score | `--cvss-score ">8.0"` |
+| `--epss-score` | | Filter by EPSS score | `--epss-score ">0.8"` |
 | `--vuln-age` | | Filter by age | `--vuln-age "<30"` |
+| `--vuln-type` | | Filter by vulnerability type | `--vuln-type sql_injection` |
 | `--kev-only` | | KEV vulnerabilities only | `--kev-only` |
 | `--template` | `-t` | Has Nuclei templates | `--template` |
 | `--poc` | | Has proof of concept | `--poc` |
 | `--hackerone` | | HackerOne reported | `--hackerone` |
 | `--remote-exploit` | | Remotely exploitable | `--remote-exploit` |
+| `--vstatus` | | Filter by vuln status | `--vstatus confirmed` |
 
 
 ### Search Control Flags
@@ -199,27 +201,27 @@ vulnx search --detailed "log4j"          # Detailed analysis of specific vuln
 ```bash
 vulnx search --product apache,nginx     # Filter by products (searches both vendor and product fields)
 vulnx search --vendor microsoft,oracle  # Filter by vendors only
-vulnx search --exclude-product apache   # Exclude products
-vulnx search --exclude-vendor microsoft # Exclude vendors
+vulnx search "NOT apache"               # Exclude products using query syntax
+vulnx search "NOT affected_products.vendor:microsoft"  # Exclude vendors using query syntax
 ```
 
-**Severity and assignment:**
+**Severity and scoring:**
 ```bash
 vulnx search --severity critical,high   # Filter by severity
-vulnx search --exclude-severity low,medium  # Exclude severities
-vulnx search --assignee cve@mitre.org   # Filter by assignee
+vulnx search "NOT severity:low"         # Exclude severities using query syntax
+vulnx search --cvss-score ">8.0"        # Filter by CVSS score
+vulnx search --epss-score ">0.8"        # Filter by EPSS score
 vulnx search --vstatus confirmed         # Filter by status
 vulnx search --vuln-age "<30"           # Recent vulnerabilities
-vulnx search --cpe "cpe:2.3:a:apache:*" # Filter by CPE string
 ```
 
 **Exploit characteristics:**
 ```bash
-vulnx search --kev-only true            # KEV vulnerabilities only
-vulnx search --template true            # Has Nuclei templates
-vulnx search --poc true                 # Has proof of concept
-vulnx search --hackerone true           # HackerOne reported
-vulnx search --remote-exploit true      # Remotely exploitable
+vulnx search --kev-only                 # KEV vulnerabilities only
+vulnx search --template                 # Has Nuclei templates
+vulnx search --poc                      # Has proof of concept
+vulnx search --hackerone                # HackerOne reported
+vulnx search --remote-exploit           # Remotely exploitable
 ```
 
 ## Vulnerability ID Lookup
@@ -264,7 +266,8 @@ cat report.txt | grep -o 'CVE-[0-9]\{4\}-[0-9]\+' | vulnx id --json
 | `is_poc` | Has proof of concept | `true`, `false` |
 | `affected_products.vendor` | Vendor name | `apache`, `microsoft` |
 | `affected_products.product` | Product name | `tomcat`, `windows` |
-| `cve_created_at` | Publication date | `2024`, `2024-01-01` |
+| `cve_created_at` | Publication date | `>=2024`, `>2024-01-01`, `<2023` |
+| `age_in_days` | Days since publication | `<30`, `>365`, `<=90` |
 
 ## Query Syntax
 
@@ -287,8 +290,39 @@ vulnx search "(apache || nginx) && severity:high"  # Grouped
 ```bash
 vulnx search "cvss_score:>8.0"            # Greater than
 vulnx search "cvss_score:<9.0"            # Less than
+vulnx search "cve_created_at:>=2024-01-01" # Date comparison
+vulnx search "age_in_days:<30"            # Recent vulnerabilities
 vulnx search "apache*"                    # Wildcard
 ```
+
+## Date Queries
+
+**Important**: Date fields require comparison operators (`>=`, `>`, `<`, `<=`).
+
+**Single date comparisons:**
+```bash
+vulnx search "cve_created_at:>=2024"      # CVEs from 2024 onward
+vulnx search "cve_created_at:<2024"       # CVEs before 2024
+vulnx search "cve_created_at:>2024-06-01" # CVEs after June 1, 2024
+```
+
+**Date ranges:**
+```bash
+# CVEs from January 2024 only
+vulnx search "cve_created_at:>=2024-01-01 && cve_created_at:<2024-02-01"
+
+# High CVSS CVEs from 2024
+vulnx search "cvss_score:>8.0 && cve_created_at:>=2024"
+
+# Recent vulnerabilities (age-based)
+vulnx search "age_in_days:<30"            # Last 30 days
+vulnx search "age_in_days:>365"           # Older than 1 year
+```
+
+**Supported formats:**
+- `2024` (year)
+- `2024-01` (year-month)  
+- `2024-01-15` (full date)
 
 ## Configuration
 
