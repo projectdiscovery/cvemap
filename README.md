@@ -1,6 +1,6 @@
-# vulnx - The Swiss Army Knife for Vulnerability Intelligence
+# vulnx - the swiss army knife for vulnerability intelligence
 
-> **Modern CLI for exploring CVE data with powerful search, filtering, and analysis capabilities**
+**Modern CLI for exploring vulnerability data with powerful search, filtering, and analysis capabilities**
 
 <p align="center">
   <img src="static/cvemap.png" alt="vulnx" width="200px">
@@ -20,6 +20,7 @@ vulnx search --help
 vulnx auth
 
 # 4. Start exploring vulnerabilities
+vulnx filters                          # See all available search fields
 vulnx search apache
 vulnx id CVE-2021-44228
 ```
@@ -51,6 +52,7 @@ vulnx analyze --fields affected_products.vendor
 |---------|---------|---------|
 | `search` | Find vulnerabilities with advanced filters | `vulnx search "apache && severity:high"` |
 | `id` | Get details for specific CVE | `vulnx id CVE-2021-44228` |
+| `filters` | List all available search fields and filters | `vulnx filters` |
 | `analyze` | Aggregate data by fields | `vulnx analyze -f severity` |
 | `auth` | Configure API access | `vulnx auth` |
 | `version` | Show version info | `vulnx version` |
@@ -80,6 +82,38 @@ vulnx search --highlight "apache"            # Enable search highlighting
 vulnx search --facet-size 20 "nginx"         # More facet buckets
 vulnx search --detailed "xss"                # Detailed output like 'id' command
 ```
+
+## Discovering Available Fields
+
+**Explore what you can search on:**
+```bash
+vulnx filters                           # Show all available search fields
+vulnx filters --json                    # Machine-readable field list
+vulnx filters --output fields.json      # Save field info to file
+```
+
+The `filters` command shows detailed information about all searchable fields including:
+- Field names and data types
+- Descriptions and examples
+- Whether fields support sorting and faceting
+- Available enum values for specific fields
+- Search analyzer types
+
+**Example output:**
+```
+Field: severity
+Data Type: string
+Description: Vulnerability severity level (e.g., critical, high, medium, low, info)
+Can Sort: Yes
+Facet Possible: Yes
+Search Analyzer: keyword-lower
+Examples: severity:critical, severity:high
+Enum Values: critical, high, medium, low, info, unknown
+
+Total: 69 filters available
+```
+
+Use this command to discover new search possibilities and understand field syntax before building complex queries.
 
 ## Common Search Patterns
 
@@ -334,7 +368,9 @@ vulnx version --disable-update-check   # Version info
 ```bash
 vulnx search --help                    # Search command help  
 vulnx id --help                        # ID command help
+vulnx filters --help                   # Filters command help
 vulnx analyze --help                   # Analyze command help
+vulnx filters                          # Show all searchable fields
 vulnx search help                      # Detailed search fields
 vulnx analyze help                     # Available analyze fields
 ```
@@ -343,6 +379,7 @@ vulnx analyze help                     # Available analyze fields
 
 ## Tips
 
+- Use `vulnx filters` to discover all available search fields and their syntax
 - Start with broad searches, then narrow down with filters
 - Use `--json` for scripting and automation
 - Combine multiple filters for precise results

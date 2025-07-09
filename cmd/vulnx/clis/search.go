@@ -45,6 +45,11 @@ var (
 	filterPOC             string
 	filterHackerOne       string
 	filterRemoteExploit   string
+	filterCvssScore       string
+	filterEpssScore       string
+	filterCwe             []string
+	filterTags            []string
+	filterVulnType        []string
 
 	// Security-focused layout for CLI rendering
 	defaultLayoutJSON = `[
@@ -90,6 +95,8 @@ Global flags:
   --output    Write output to file in JSON format (error if file exists)
   --no-color  Disable colored output (colors are auto-disabled for non-terminal output)
   --detailed  Show detailed vulnerability information
+
+To see all available search fields and filters, use: vulnx filters
 `,
 		Example: `
 # Search help
@@ -351,7 +358,7 @@ func buildFilterQuery() (string, error) {
 	*/
 
 	// Build CPE filter
-	// NOTE: CPE filter is disabled because CPE field is not available in search API
+	// NOTE: CPE field is not available in search API - no cpe field exists
 	/*
 		if filterCPE != "" {
 			queryParts = append(queryParts, fmt.Sprintf("affected_products.cpe:%s", filterCPE))
@@ -359,7 +366,8 @@ func buildFilterQuery() (string, error) {
 	*/
 
 	// Build assignee filter
-	// NOTE: Assignee filter is disabled because assignee field is not available/searchable in search API
+	// NOTE: Although 'assignee' field exists in filters API, search queries don't return results
+	// This suggests the field might not be searchable or requires different syntax
 	/*
 		if len(filterAssignee) > 0 {
 			assigneeQuery := buildInQuery("assignee", filterAssignee)
@@ -422,6 +430,45 @@ func buildFilterQuery() (string, error) {
 		}
 	}
 
+	// Build CVSS score filter
+	if filterCvssScore != "" {
+		cvssQuery, err := buildScoreQuery("cvss_score", filterCvssScore)
+		if err != nil {
+			return "", fmt.Errorf("invalid CVSS score filter: %w", err)
+		}
+		queryParts = append(queryParts, cvssQuery)
+	}
+
+	// Build EPSS score filter
+	if filterEpssScore != "" {
+		epssQuery, err := buildScoreQuery("epss_score", filterEpssScore)
+		if err != nil {
+			return "", fmt.Errorf("invalid EPSS score filter: %w", err)
+		}
+		queryParts = append(queryParts, epssQuery)
+	}
+
+	// Build CWE filter
+	// NOTE: CWE filter disabled - weaknesses.cwe_id field doesn't return results in search queries
+	/*
+		if len(filterCwe) > 0 {
+			cweQuery := buildInQuery("weaknesses.cwe_id", filterCwe)
+			queryParts = append(queryParts, cweQuery)
+		}
+	*/
+
+	// Build tags filter
+	if len(filterTags) > 0 {
+		tagsQuery := buildInQuery("tags", filterTags)
+		queryParts = append(queryParts, tagsQuery)
+	}
+
+	// Build vulnerability type filter
+	if len(filterVulnType) > 0 {
+		vulnTypeQuery := buildInQuery("vulnerability_type", filterVulnType)
+		queryParts = append(queryParts, vulnTypeQuery)
+	}
+
 	return strings.Join(queryParts, " && "), nil
 }
 
@@ -475,15 +522,24 @@ func buildInQuery(field string, values []string) string {
 	}
 
 	if len(values) == 1 {
-		return fmt.Sprintf("%s:%s", field, values[0])
+		return fmt.Sprintf("%s:%s", field, quoteValueIfNeeded(values[0]))
 	}
 
 	var parts []string
 	for _, value := range values {
-		parts = append(parts, fmt.Sprintf("%s:%s", field, value))
+		parts = append(parts, fmt.Sprintf("%s:%s", field, quoteValueIfNeeded(value)))
 	}
 
 	return fmt.Sprintf("(%s)", strings.Join(parts, " || "))
+}
+
+// quoteValueIfNeeded quotes values that contain special characters
+func quoteValueIfNeeded(value string) string {
+	// Quote values that contain special characters commonly found in emails, URLs, etc.
+	if strings.ContainsAny(value, "@.:-+") {
+		return fmt.Sprintf(`"%s"`, value)
+	}
+	return value
 }
 
 // buildNotInQuery builds a NOT query for multiple values
@@ -528,6 +584,54 @@ func buildAgeQuery(ageFilter string) (string, error) {
 		return "", fmt.Errorf("invalid age value: %s", ageFilter)
 	}
 	return fmt.Sprintf("age_in_days:%d", age), nil
+}
+
+// buildScoreQuery builds score query with support for <, > operations for CVSS and EPSS scores
+func buildScoreQuery(field, scoreFilter string) (string, error) {
+	scoreFilter = strings.TrimSpace(scoreFilter)
+
+	if strings.HasPrefix(scoreFilter, "<=") {
+		scoreStr := strings.TrimSpace(scoreFilter[2:])
+		score, err := strconv.ParseFloat(scoreStr, 64)
+		if err != nil {
+			return "", fmt.Errorf("invalid score value: %s", scoreStr)
+		}
+		return fmt.Sprintf("%s:<=%g", field, score), nil
+	}
+
+	if strings.HasPrefix(scoreFilter, ">=") {
+		scoreStr := strings.TrimSpace(scoreFilter[2:])
+		score, err := strconv.ParseFloat(scoreStr, 64)
+		if err != nil {
+			return "", fmt.Errorf("invalid score value: %s", scoreStr)
+		}
+		return fmt.Sprintf("%s:>=%g", field, score), nil
+	}
+
+	if strings.HasPrefix(scoreFilter, "<") {
+		scoreStr := strings.TrimSpace(scoreFilter[1:])
+		score, err := strconv.ParseFloat(scoreStr, 64)
+		if err != nil {
+			return "", fmt.Errorf("invalid score value: %s", scoreStr)
+		}
+		return fmt.Sprintf("%s:<%g", field, score), nil
+	}
+
+	if strings.HasPrefix(scoreFilter, ">") {
+		scoreStr := strings.TrimSpace(scoreFilter[1:])
+		score, err := strconv.ParseFloat(scoreStr, 64)
+		if err != nil {
+			return "", fmt.Errorf("invalid score value: %s", scoreStr)
+		}
+		return fmt.Sprintf("%s:>%g", field, score), nil
+	}
+
+	// Exact score
+	score, err := strconv.ParseFloat(scoreFilter, 64)
+	if err != nil {
+		return "", fmt.Errorf("invalid score value: %s", scoreFilter)
+	}
+	return fmt.Sprintf("%s:%g", field, score), nil
 }
 
 // validateSearchInputs performs input validation for search command
@@ -584,8 +688,11 @@ func init() { // Register flags and add command to rootCmd
 	// - exclude-product: NOT operator not supported
 	// - exclude-vendor: NOT operator not supported
 	// - exclude-severity: NOT operator not supported
-	// - assignee: assignee field not available/searchable
 	// - cpe: CPE field not available in search API
+	// - assignee: Field exists in API but search queries don't return results
+	// - cwe: weaknesses.cwe_id field doesn't return results in search queries
+	//
+	// Working filters have been verified against the /v2/vulnerability/filters endpoint and tested.
 
 	/*
 		searchCmd.Flags().StringSliceVar(&filterExcludeProduct, "exclude-product", nil, "Exclude products (comma-separated)")
@@ -596,6 +703,9 @@ func init() { // Register flags and add command to rootCmd
 		// Single value filters
 		searchCmd.Flags().StringVarP(&filterCPE, "cpe", "c", "", "Filter by CPE string")
 	*/
+	// NOTE: Assignee filter commented out as search queries don't return results even though field exists in API
+	// searchCmd.Flags().StringSliceVarP(&filterAssignee, "assignee", "a", nil, "Filter by assignee (comma-separated)")
+
 	searchCmd.Flags().StringVar(&filterVulnStatus, "vstatus", "", "Filter by vulnerability status (new, confirmed, unconfirmed, modified, rejected, unknown)")
 	searchCmd.Flags().StringVar(&filterVulnAge, "vuln-age", "", "Filter by vulnerability age (supports <, >, exact: e.g., '5', '<10', '>30')")
 
@@ -614,6 +724,16 @@ func init() { // Register flags and add command to rootCmd
 
 	searchCmd.Flags().StringVar(&filterRemoteExploit, "remote-exploit", "", "Filter remotely exploitable CVEs (true/false)")
 	searchCmd.Flags().Lookup("remote-exploit").NoOptDefVal = "true"
+
+	// Score-based filters
+	searchCmd.Flags().StringVar(&filterCvssScore, "cvss-score", "", "Filter by CVSS score (supports <, >, <=, >=, exact: e.g., '7.5', '>8.0', '<=6.0')")
+	searchCmd.Flags().StringVar(&filterEpssScore, "epss-score", "", "Filter by EPSS score (supports <, >, <=, >=, exact: e.g., '0.5', '>0.8', '<=0.3')")
+
+	// Additional filters
+	// NOTE: CWE filter disabled - weaknesses.cwe_id field doesn't return results in search queries
+	// searchCmd.Flags().StringSliceVar(&filterCwe, "cwe", nil, "Filter by CWE ID (comma-separated)")
+	searchCmd.Flags().StringSliceVar(&filterTags, "tags", nil, "Filter by tags (comma-separated)")
+	searchCmd.Flags().StringSliceVar(&filterVulnType, "vuln-type", nil, "Filter by vulnerability type (e.g., sql_injection, reflected_xss, stored_xss, command_injection)")
 
 	searchCmd.SetHelpFunc(searchHelpCmd.Run)
 	rootCmd.AddCommand(searchCmd)
