@@ -87,7 +87,7 @@ var (
 
 	searchCmd = &cobra.Command{
 		Use:   "search <query>",
-		Short: "Search vulnerabilities using the Vulnerability search API",
+		Short: "search vulnerabilities using the vulnerability search api",
 		Long: `Search vulnerabilities using the Vulnerability search API.
 
 Global flags:
@@ -668,21 +668,21 @@ func validateSearchInputs() error {
 
 func init() { // Register flags and add command to rootCmd
 	// Existing flags
-	searchCmd.Flags().IntVarP(&searchLimit, "limit", "n", 10, "Number of results to return (0 = server default)")
-	searchCmd.Flags().IntVar(&searchOffset, "offset", 0, "Offset for pagination (start position)")
-	searchCmd.Flags().StringVar(&searchSortAsc, "sort-asc", "", "Field to sort ascending")
-	searchCmd.Flags().StringVar(&searchSortDesc, "sort-desc", "", "Field to sort descending")
-	searchCmd.Flags().StringSliceVar(&searchFields, "fields", nil, "Fields to include in the response (comma-separated)")
-	searchCmd.Flags().StringSliceVar(&searchTermFacets, "term-facets", nil, "Term facets to calculate (comma-separated)")
-	searchCmd.Flags().StringSliceVar(&searchRangeFacets, "range-facets", nil, "Range facets to calculate (comma-separated)")
-	searchCmd.Flags().BoolVar(&searchHighlight, "highlight", false, "Return search highlights where supported")
-	searchCmd.Flags().IntVar(&searchFacetSize, "facet-size", 10, "Number of facet buckets to return")
-	searchCmd.Flags().BoolVar(&searchDetailed, "detailed", false, "Show detailed vulnerability information (similar to 'id' command)")
+	searchCmd.Flags().IntVarP(&searchLimit, "limit", "n", 10, "number of results to return (0 = server default)")
+	searchCmd.Flags().IntVar(&searchOffset, "offset", 0, "offset for pagination (start position)")
+	searchCmd.Flags().StringVar(&searchSortAsc, "sort-asc", "", "field to sort ascending")
+	searchCmd.Flags().StringVar(&searchSortDesc, "sort-desc", "", "field to sort descending")
+	searchCmd.Flags().StringSliceVar(&searchFields, "fields", nil, "fields to include in the response (comma-separated)")
+	searchCmd.Flags().StringSliceVar(&searchTermFacets, "term-facets", nil, "term facets to calculate (comma-separated)")
+	searchCmd.Flags().StringSliceVar(&searchRangeFacets, "range-facets", nil, "range facets to calculate (comma-separated)")
+	searchCmd.Flags().BoolVar(&searchHighlight, "highlight", false, "return search highlights where supported")
+	searchCmd.Flags().IntVar(&searchFacetSize, "facet-size", 10, "number of facet buckets to return")
+	searchCmd.Flags().BoolVar(&searchDetailed, "detailed", false, "show detailed vulnerability information (similar to 'id' command)")
 
 	// Filter flags - String slice filters
-	searchCmd.Flags().StringSliceVarP(&filterProduct, "product", "p", nil, "Filter by product (comma-separated)")
-	searchCmd.Flags().StringSliceVar(&filterVendor, "vendor", nil, "Filter by vendor (comma-separated)")
-	searchCmd.Flags().StringSliceVarP(&filterSeverity, "severity", "s", nil, "Filter by severity (comma-separated)")
+	searchCmd.Flags().StringSliceVarP(&filterProduct, "product", "p", nil, "filter by product (comma-separated)")
+	searchCmd.Flags().StringSliceVar(&filterVendor, "vendor", nil, "filter by vendor (comma-separated)")
+	searchCmd.Flags().StringSliceVarP(&filterSeverity, "severity", "s", nil, "filter by severity (comma-separated)")
 
 	// NOTE: The following filters are disabled because they don't work with the search API:
 	// - exclude-product: NOT operator not supported
@@ -706,34 +706,34 @@ func init() { // Register flags and add command to rootCmd
 	// NOTE: Assignee filter commented out as search queries don't return results even though field exists in API
 	// searchCmd.Flags().StringSliceVarP(&filterAssignee, "assignee", "a", nil, "Filter by assignee (comma-separated)")
 
-	searchCmd.Flags().StringVar(&filterVulnStatus, "vstatus", "", "Filter by vulnerability status (new, confirmed, unconfirmed, modified, rejected, unknown)")
-	searchCmd.Flags().StringVar(&filterVulnAge, "vuln-age", "", "Filter by vulnerability age (supports <, >, exact: e.g., '5', '<10', '>30')")
+	searchCmd.Flags().StringVar(&filterVulnStatus, "vstatus", "", "filter by vulnerability status (new, confirmed, unconfirmed, modified, rejected, unknown)")
+	searchCmd.Flags().StringVar(&filterVulnAge, "vuln-age", "", "filter by vulnerability age (supports <, >, exact: e.g., '5', '<10', '>30')")
 
 	// Boolean filters with default to true when flag is present without value
-	searchCmd.Flags().StringVar(&filterKevOnly, "kev-only", "", "Filter KEV (Known Exploited Vulnerabilities) only (true/false)")
+	searchCmd.Flags().StringVar(&filterKevOnly, "kev-only", "", "filter kev (known exploited vulnerabilities) only (true/false)")
 	searchCmd.Flags().Lookup("kev-only").NoOptDefVal = "true"
 
-	searchCmd.Flags().StringVarP(&filterTemplate, "template", "t", "", "Filter CVEs with Nuclei templates (true/false)")
+	searchCmd.Flags().StringVarP(&filterTemplate, "template", "t", "", "filter cves with nuclei templates (true/false)")
 	searchCmd.Flags().Lookup("template").NoOptDefVal = "true"
 
-	searchCmd.Flags().StringVar(&filterPOC, "poc", "", "Filter CVEs with public POCs (true/false)")
+	searchCmd.Flags().StringVar(&filterPOC, "poc", "", "filter cves with public pocs (true/false)")
 	searchCmd.Flags().Lookup("poc").NoOptDefVal = "true"
 
-	searchCmd.Flags().StringVar(&filterHackerOne, "hackerone", "", "Filter CVEs reported on HackerOne (true/false)")
+	searchCmd.Flags().StringVar(&filterHackerOne, "hackerone", "", "filter cves reported on hackerone (true/false)")
 	searchCmd.Flags().Lookup("hackerone").NoOptDefVal = "true"
 
-	searchCmd.Flags().StringVar(&filterRemoteExploit, "remote-exploit", "", "Filter remotely exploitable CVEs (true/false)")
+	searchCmd.Flags().StringVar(&filterRemoteExploit, "remote-exploit", "", "filter remotely exploitable cves (true/false)")
 	searchCmd.Flags().Lookup("remote-exploit").NoOptDefVal = "true"
 
 	// Score-based filters
-	searchCmd.Flags().StringVar(&filterCvssScore, "cvss-score", "", "Filter by CVSS score (supports <, >, <=, >=, exact: e.g., '7.5', '>8.0', '<=6.0')")
-	searchCmd.Flags().StringVar(&filterEpssScore, "epss-score", "", "Filter by EPSS score (supports <, >, <=, >=, exact: e.g., '0.5', '>0.8', '<=0.3')")
+	searchCmd.Flags().StringVar(&filterCvssScore, "cvss-score", "", "filter by cvss score (supports <, >, <=, >=, exact: e.g., '7.5', '>8.0', '<=6.0')")
+	searchCmd.Flags().StringVar(&filterEpssScore, "epss-score", "", "filter by epss score (supports <, >, <=, >=, exact: e.g., '0.5', '>0.8', '<=0.3')")
 
 	// Additional filters
 	// NOTE: CWE filter disabled - weaknesses.cwe_id field doesn't return results in search queries
 	// searchCmd.Flags().StringSliceVar(&filterCwe, "cwe", nil, "Filter by CWE ID (comma-separated)")
-	searchCmd.Flags().StringSliceVar(&filterTags, "tags", nil, "Filter by tags (comma-separated)")
-	searchCmd.Flags().StringSliceVar(&filterVulnType, "vuln-type", nil, "Filter by vulnerability type (e.g., sql_injection, reflected_xss, stored_xss, command_injection)")
+	searchCmd.Flags().StringSliceVar(&filterTags, "tags", nil, "filter by tags (comma-separated)")
+	searchCmd.Flags().StringSliceVar(&filterVulnType, "vuln-type", nil, "filter by vulnerability type (e.g., sql_injection, reflected_xss, stored_xss, command_injection)")
 
 	searchCmd.SetHelpFunc(searchHelpCmd.Run)
 	rootCmd.AddCommand(searchCmd)

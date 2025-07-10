@@ -29,7 +29,9 @@ import (
 	"github.com/projectdiscovery/cvemap/pkg/tools/analyze"
 	"github.com/projectdiscovery/cvemap/pkg/tools/id"
 	"github.com/projectdiscovery/cvemap/pkg/tools/renderer"
+	"github.com/projectdiscovery/utils/auth/pdcp"
 	fileutil "github.com/projectdiscovery/utils/file"
+	updateutils "github.com/projectdiscovery/utils/update"
 )
 
 //go:embed banner.txt
@@ -67,14 +69,26 @@ var (
 
 	rootCmd = &cobra.Command{
 		Use:   "vulnx",
-		Short: "vulnx — The Swiss Army knife for vulnerability intel",
+		Short: "vulnx — the swiss army knife for vulnerability intel",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// Do not print the banner when running the "mcp" sub-command as it
 			// can interfere with clients expecting clean JSON output.
 			if cmd.Name() != "mcp" && !silent {
 				showBanner()
+				// Don't show version info for the version command itself
+				if cmd.Name() != "version" {
+					showVersionInfo()
+				}
 			}
-			return ensureCvemapClientInitialized(cmd)
+			err := ensureCvemapClientInitialized(cmd)
+			if err != nil {
+				return err
+			}
+			// Show rate limit notification for commands that will make API calls
+			if cmd.Name() != "mcp" && cmd.Name() != "version" && cmd.Name() != "help" && cmd.Name() != "completion" {
+				checkAndNotifyRateLimit()
+			}
+			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// If no subcommand is provided and stdin has data, try to auto-detect the command
@@ -94,7 +108,7 @@ var (
 
 	mcpCmd = &cobra.Command{
 		Use:   "mcp",
-		Short: "Start MCP server for vulnx (ProjectDiscovery vulnerability.sh) tools",
+		Short: "start mcp server for vulnx (projectdiscovery vulnerability.sh) tools",
 		Run: func(cmd *cobra.Command, args []string) {
 			mode, _ := cmd.Flags().GetString("mode")
 			port, _ := cmd.Flags().GetInt("port")
@@ -142,31 +156,35 @@ var (
 
 func init() {
 	// Global flags for gologger
-	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Enable debug output")
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output")
+	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "enable debug output")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose output")
 
 	// HTTP client config flags
-	rootCmd.PersistentFlags().StringVar(&httpProxy, "proxy", "", "HTTP proxy to use (e.g. http://127.0.0.1:8080)")
-	rootCmd.PersistentFlags().DurationVar(&httpTimeout, "timeout", 30*time.Second, "HTTP request timeout (e.g. 30s, 1m)")
+	rootCmd.PersistentFlags().StringVar(&httpProxy, "proxy", "", "http proxy to use (e.g. http://127.0.0.1:8080)")
+	rootCmd.PersistentFlags().DurationVar(&httpTimeout, "timeout", 30*time.Second, "http request timeout (e.g. 30s, 1m)")
 
-	rootCmd.PersistentFlags().BoolVar(&debugReq, "debug-req", false, "Dump HTTP requests to stdout")
-	rootCmd.PersistentFlags().BoolVar(&debugResp, "debug-resp", false, "Dump HTTP responses to stdout")
+	rootCmd.PersistentFlags().BoolVar(&debugReq, "debug-req", false, "dump http requests to stdout")
+	rootCmd.PersistentFlags().BoolVar(&debugResp, "debug-resp", false, "dump http responses to stdout")
 
 	// Add persistent json and output flags
-	rootCmd.PersistentFlags().BoolVarP(&jsonOutput, "json", "j", false, "Output raw JSON (for piping, disables YAML output)")
-	rootCmd.PersistentFlags().StringVarP(&outputFile, "output", "o", "", "Write output to file in JSON format (error if file exists)")
+	rootCmd.PersistentFlags().BoolVarP(&jsonOutput, "json", "j", false, "output raw json (for piping, disables yaml output)")
+	rootCmd.PersistentFlags().StringVarP(&outputFile, "output", "o", "", "write output to file in json format (error if file exists)")
 
 	// Add persistent silent flag
-	rootCmd.PersistentFlags().BoolVar(&silent, "silent", false, "Silent mode (suppress banner and non-essential output)")
+	rootCmd.PersistentFlags().BoolVar(&silent, "silent", false, "silent mode (suppress banner and non-essential output)")
 
 	// Add persistent no-color flag
-	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "Disable colored output")
+	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "disable colored output")
 
 	// Custom help and usage to always show banner
 	defaultHelpFunc := rootCmd.HelpFunc()
 	rootCmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
 		if !silent {
 			showBanner()
+			// Don't show version info for the version command itself
+			if cmd.Name() != "version" {
+				showVersionInfo()
+			}
 		}
 		defaultHelpFunc(cmd, args)
 	})
@@ -174,12 +192,16 @@ func init() {
 	rootCmd.SetUsageFunc(func(cmd *cobra.Command) error {
 		if !silent {
 			showBanner()
+			// Don't show version info for the version command itself
+			if cmd.Name() != "version" {
+				showVersionInfo()
+			}
 		}
 		return defaultUsageFunc(cmd)
 	})
 
-	mcpCmd.Flags().String("mode", "stdio", "MCP server mode: stdio or sse")
-	mcpCmd.Flags().Int("port", 8080, "Port to listen on for SSE mode (default 8080)")
+	mcpCmd.Flags().String("mode", "stdio", "mcp server mode: stdio or sse")
+	mcpCmd.Flags().Int("port", 8080, "port to listen on for sse mode (default 8080)")
 	rootCmd.AddCommand(mcpCmd)
 }
 
@@ -187,6 +209,7 @@ func init() {
 func Execute() error {
 	// Reset bannerShown for each top-level execution
 	bannerShown = false
+	versionShown = false
 	return rootCmd.Execute()
 }
 
@@ -262,6 +285,29 @@ func ensureCvemapClientInitialized(_ *cobra.Command) error {
 	return nil
 }
 
+// checkAndNotifyRateLimit checks if API key is configured and shows rate limit info if needed
+func checkAndNotifyRateLimit() {
+	if silent {
+		return
+	}
+
+	// Check environment variable first
+	envApiKey := os.Getenv("PDCP_API_KEY")
+	if envApiKey != "" {
+		return // API key is configured via environment variable
+	}
+
+	// Check stored credentials
+	ph := pdcp.PDCPCredHandler{}
+	storedCreds, err := ph.GetCreds()
+	if err == nil && storedCreds.APIKey != "" {
+		return // API key is configured via credential store
+	}
+
+	// No API key configured - show rate limit info
+	gologger.Info().Msg("💡 Configure API key to avoid rate limits: vulnx auth")
+}
+
 func showBanner() {
 	if !bannerShown {
 		fmt.Fprintf(os.Stderr, "%s\n", vulnxBanner)
@@ -278,7 +324,7 @@ func showDashboard() error {
 
 	fmt.Printf("\n")
 	fmt.Printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
-	fmt.Printf("📊 vulnerability intelligence dashboard\n")
+	fmt.Printf("📊 vulnerability trends & metrics\n")
 	fmt.Printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n")
 
 	handler := analyze.NewHandler(cvemapClient)
@@ -877,4 +923,37 @@ func renderQuickStartCommands() {
 		fmt.Printf("   %-35s # %s\n", cmd.cmd, cmd.desc)
 	}
 	fmt.Printf("\n")
+}
+
+// versionShown tracks if version has been displayed to avoid showing it multiple times
+var versionShown bool
+
+// showVersionInfo displays version information like other ProjectDiscovery tools
+func showVersionInfo() {
+	if versionShown || silent {
+		return
+	}
+	versionShown = true
+
+	// Get version from the version.go file
+	currentVersion := Version
+
+	// Check for updates using PDTM API
+	latestVersion, err := updateutils.GetToolVersionCallback("cvemap", currentVersion)()
+	if err != nil {
+		// If version check fails, still show current version
+		gologger.Info().Msgf("Current vulnx version %s", currentVersion)
+		if verbose || debug {
+			gologger.Warning().Msgf("Version check failed: %v", err)
+		}
+		return
+	}
+
+	// Format version status
+	status := updateutils.GetVersionDescription(currentVersion, latestVersion)
+	if status == "" || strings.Contains(status, "latest") {
+		status = "latest"
+	}
+
+	gologger.Info().Msgf("Current vulnx version %s (%s)", currentVersion, status)
 }

@@ -121,9 +121,10 @@ func New(opts ...Option) (*Client, error) {
 	for _, opt := range opts {
 		opt(c)
 	}
-	if c.apiKey == "" {
-		return nil, ErrAPIKeyRequired
-	}
+	// API key is now optional - unauthenticated requests are rate limited but still work
+	// if c.apiKey == "" {
+	//     return nil, ErrAPIKeyRequired
+	// }
 	// If a custom httpc was not provided, set the default retryablehttp client
 	if c.httpc == nil {
 		c.httpc = retryablehttp.NewClient(retryablehttp.DefaultOptionsSingle)
@@ -275,7 +276,10 @@ func (c *Client) newRequest(ctx context.Context, method, path string, query url.
 			return nil, errkit.Append(ErrCreateHTTPRequest, err)
 		}
 	}
-	req.Header.Set("X-PDCP-Key", c.apiKey)
+	// Only set API key header if API key is present
+	if c.apiKey != "" {
+		req.Header.Set("X-PDCP-Key", c.apiKey)
+	}
 	req.Header.Set("User-Agent", c.userAgent)
 	return req, nil
 }

@@ -15,7 +15,7 @@ var (
 	searchHelpCmd = &cobra.Command{
 		Use:     "help",
 		Aliases: []string{"search:help", "searchhelp"},
-		Short:   "Detailed help for the 'search' command with available filters",
+		Short:   "detailed help for the 'search' command with available filters",
 		Run: func(cmd *cobra.Command, args []string) {
 			// Defensive: ensure cvemapClient is initialized if not already
 			if cvemapClient == nil {

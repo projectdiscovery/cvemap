@@ -23,7 +23,7 @@ var ( //nolint
 
 	idCmd = &cobra.Command{
 		Use:   "id [vulnID...]",
-		Short: "Get vulnerability details by ID",
+		Short: "get vulnerability details by id",
 		Long: `Get vulnerability details by ID.
 
 Supports multiple input methods:
@@ -350,6 +350,6 @@ func validateSingleID(vulnID string) error {
 }
 
 func init() {
-	idCmd.Flags().StringVar(&idFile, "file", "", "Read vulnerability IDs from file (one per line or comma-separated)")
+	idCmd.Flags().StringVar(&idFile, "file", "", "read vulnerability ids from file (one per line or comma-separated)")
 	rootCmd.AddCommand(idCmd)
 }

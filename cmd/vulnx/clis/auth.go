@@ -16,11 +16,12 @@ import (
 var (
 	authCmd = &cobra.Command{
 		Use:   "auth",
-		Short: "Configure ProjectDiscovery Cloud Platform API key",
+		Short: "configure projectdiscovery cloud platform api key (optional)",
 		Long: `Configure ProjectDiscovery Cloud Platform API key for vulnx.
 
-This command allows you to interactively set up your PDCP API key, which is required
-to access the ProjectDiscovery Vulnerability Database.
+This command allows you to interactively set up your PDCP API key. While API 
+authentication is optional, it enables higher rate limits and better performance.
+Unauthenticated API calls are rate limited.
 
 You can get your free API key by signing up at https://cloud.projectdiscovery.io
 `,
@@ -359,7 +360,7 @@ func validateCurrentAPIKey(apiKey, source string) bool {
 }
 
 func init() {
-	authCmd.Flags().StringVar(&nonInteractiveAPIKey, "api-key", "", "Set API key non-interactively (for automation)")
-	authCmd.Flags().BoolVar(&testCurrentKey, "test", false, "Test current API key without prompting")
+	authCmd.Flags().StringVar(&nonInteractiveAPIKey, "api-key", "", "api key for non-interactive configuration")
+	authCmd.Flags().BoolVar(&testCurrentKey, "test", false, "test current api key configuration")
 	rootCmd.AddCommand(authCmd)
 }

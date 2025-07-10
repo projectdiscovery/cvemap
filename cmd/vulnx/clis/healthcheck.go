@@ -15,7 +15,7 @@ var (
 	healthCmd = &cobra.Command{
 		Use:     "healthcheck",
 		Aliases: []string{"health", "hc"},
-		Short:   "Check vulnx health and connectivity",
+		Short:   "check vulnx health and connectivity",
 		Long: `Check vulnx health and connectivity to the ProjectDiscovery API.
 
 This command performs various checks to ensure vulnx is working correctly:

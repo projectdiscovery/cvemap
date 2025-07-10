@@ -14,7 +14,7 @@ import (
 var (
 	completionCmd = &cobra.Command{
 		Use:   "completion [bash|zsh|fish|powershell]",
-		Short: "Generate completion script for your shell",
+		Short: "generate completion script for your shell",
 		Long: `Generate completion script for your shell.
 
 This command generates shell completion scripts for vulnx. The completion script
@@ -499,7 +499,7 @@ func isWindows() bool {
 }
 
 func init() {
-	completionCmd.Flags().Bool("install", false, "Install completion script to system/user completion directory")
-	completionCmd.Flags().Bool("user", false, "Install completion for current user only (works with --install)")
+	completionCmd.Flags().Bool("install", false, "install completion script to system/user completion directory")
+	completionCmd.Flags().Bool("user", false, "install completion for current user only (works with --install)")
 	rootCmd.AddCommand(completionCmd)
 }

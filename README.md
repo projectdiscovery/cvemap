@@ -13,6 +13,12 @@
 
 ![image](https://github.com/user-attachments/assets/d60a1d43-27d8-4874-9459-046b7d8c633a)
 
+## 🚀 Migration Notice
+
+**vulnx is the next generation of cvemap** - we recommend upgrading to vulnx for the latest features and improvements.
+
+> ⚠️ **Important**: cvemap uses an older API version that will be discontinued on **August 1, 2025**.
+
 ## Quick Start
 
 ```bash
@@ -23,8 +29,8 @@ go install github.com/projectdiscovery/cvemap/cmd/vulnx@latest
 vulnx --help
 vulnx search --help
 
-# 3. Set up your API key (free at https://cloud.projectdiscovery.io)
-vulnx auth
+# 3. Set up your API key (optional, enables higher rate limits)
+vulnx auth                              # Get free API key at https://cloud.projectdiscovery.io
 
 # 4. Start exploring vulnerabilities
 vulnx filters                          # See all available search fields

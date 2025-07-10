@@ -15,7 +15,7 @@ var (
 	analyzeHelpCmd = &cobra.Command{
 		Use:     "help",
 		Aliases: []string{"analyze:help", "analyzehelp"},
-		Short:   "Detailed help for the 'analyze' command with facet-capable fields",
+		Short:   "detailed help for the 'analyze' command with facet-capable fields",
 		Run: func(cmd *cobra.Command, args []string) {
 			// Defensive: ensure cvemapClient is initialized if not already
 			if cvemapClient == nil {

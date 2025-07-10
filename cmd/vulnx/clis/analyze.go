@@ -24,7 +24,7 @@ var (
 
 	analyzeCmd = &cobra.Command{
 		Use:   "analyze",
-		Short: "Group vulnerabilities by one or more fields using term facets",
+		Short: "group vulnerabilities by one or more fields using term facets",
 		Long: `Group vulnerabilities by one or more fields using term facets.
 
 The command internally leverages the Vulnerability Search API's term-facet
@@ -207,9 +207,9 @@ func validateAnalyzeInputs() error {
 }
 
 func init() { // Register flags and add command to rootCmd
-	analyzeCmd.Flags().StringSliceVarP(&analyzeFields, "fields", "f", nil, "Fields to calculate (comma-separated)")
-	analyzeCmd.Flags().IntVar(&analyzeFacetSize, "facet-size", 10, "Number of facet buckets to return")
-	analyzeCmd.Flags().StringVarP(&analyzeQuery, "query", "q", "", "Query to filter results")
+	analyzeCmd.Flags().StringSliceVarP(&analyzeFields, "fields", "f", nil, "fields to calculate (comma-separated)")
+	analyzeCmd.Flags().IntVar(&analyzeFacetSize, "facet-size", 10, "number of facet buckets to return")
+	analyzeCmd.Flags().StringVarP(&analyzeQuery, "query", "q", "", "query to filter results")
 	analyzeCmd.SetHelpFunc(analyzeHelpCmd.Run)
 
 	rootCmd.AddCommand(analyzeCmd)

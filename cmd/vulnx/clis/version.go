@@ -16,7 +16,7 @@ var (
 
 	versionCmd = &cobra.Command{
 		Use:   "version",
-		Short: "Show vulnx version and check for updates",
+		Short: "show vulnx version and check for updates",
 		Long: `Show vulnx version and check for updates.
 
 This command displays the current version of vulnx and checks if a newer version
@@ -75,6 +75,6 @@ func showVersion() {
 }
 
 func init() {
-	versionCmd.Flags().BoolVar(&disableUpdateCheck, "disable-update-check", false, "Disable automatic update check")
+	versionCmd.Flags().BoolVar(&disableUpdateCheck, "disable-update-check", false, "disable automatic update check")
 	rootCmd.AddCommand(versionCmd)
 }

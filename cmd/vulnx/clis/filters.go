@@ -15,7 +15,7 @@ import (
 var (
 	filtersCmd = &cobra.Command{
 		Use:   "filters",
-		Short: "List all available search filters",
+		Short: "list all available search filters",
 		Long: `List all available search filters supported by the Vulnerability search API.
 
 This command shows detailed information about all fields that can be used in search queries, 
