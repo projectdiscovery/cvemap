@@ -24,12 +24,13 @@ import (
 	"github.com/projectdiscovery/gologger/levels"
 	retryablehttp "github.com/projectdiscovery/retryablehttp-go"
 
+	"errors"
+
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/projectdiscovery/cvemap/pkg/tools"
 	"github.com/projectdiscovery/cvemap/pkg/tools/analyze"
 	"github.com/projectdiscovery/cvemap/pkg/tools/id"
 	"github.com/projectdiscovery/cvemap/pkg/tools/renderer"
-	"github.com/projectdiscovery/utils/auth/pdcp"
 	fileutil "github.com/projectdiscovery/utils/file"
 	updateutils "github.com/projectdiscovery/utils/update"
 )
@@ -84,10 +85,7 @@ var (
 			if err != nil {
 				return err
 			}
-			// Show rate limit notification for commands that will make API calls
-			if cmd.Name() != "mcp" && cmd.Name() != "version" && cmd.Name() != "help" && cmd.Name() != "completion" {
-				checkAndNotifyRateLimit()
-			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -278,34 +276,15 @@ func ensureCvemapClientInitialized(_ *cobra.Command) error {
 		}
 		client, err := cvemap.New(opts...)
 		if err != nil {
+			// Check if it's an API key required error
+			if errors.Is(err, cvemap.ErrAPIKeyRequired) {
+				return fmt.Errorf("API key is required. Configure it using: vulnx auth")
+			}
 			return fmt.Errorf("failed to initialize cvemap client: %w", err)
 		}
 		cvemapClient = client
 	}
 	return nil
-}
-
-// checkAndNotifyRateLimit checks if API key is configured and shows rate limit info if needed
-func checkAndNotifyRateLimit() {
-	if silent {
-		return
-	}
-
-	// Check environment variable first
-	envApiKey := os.Getenv("PDCP_API_KEY")
-	if envApiKey != "" {
-		return // API key is configured via environment variable
-	}
-
-	// Check stored credentials
-	ph := pdcp.PDCPCredHandler{}
-	storedCreds, err := ph.GetCreds()
-	if err == nil && storedCreds.APIKey != "" {
-		return // API key is configured via credential store
-	}
-
-	// No API key configured - show rate limit info
-	gologger.Info().Msg("💡 Configure API key to avoid rate limits: vulnx auth")
 }
 
 func showBanner() {

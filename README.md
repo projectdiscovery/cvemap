@@ -29,7 +29,7 @@ go install github.com/projectdiscovery/cvemap/cmd/vulnx@latest
 vulnx --help
 vulnx search --help
 
-# 3. Set up your API key (optional, enables higher rate limits)
+# 3. Set up your API key (required)
 vulnx auth                              # Get free API key at https://cloud.projectdiscovery.io
 
 # 4. Start exploring vulnerabilities

@@ -16,12 +16,11 @@ import (
 var (
 	authCmd = &cobra.Command{
 		Use:   "auth",
-		Short: "configure projectdiscovery cloud platform api key (optional)",
+		Short: "configure projectdiscovery cloud platform api key (required)",
 		Long: `Configure ProjectDiscovery Cloud Platform API key for vulnx.
 
-This command allows you to interactively set up your PDCP API key. While API 
-authentication is optional, it enables higher rate limits and better performance.
-Unauthenticated API calls are rate limited.
+This command allows you to interactively set up your PDCP API key. API 
+authentication is required for all vulnx commands.
 
 You can get your free API key by signing up at https://cloud.projectdiscovery.io
 `,
@@ -35,10 +34,14 @@ vulnx auth --api-key YOUR_API_KEY
 # Test current API key
 vulnx auth --test
 `,
-		Run: func(cmd *cobra.Command, args []string) {
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			// Override the root command's PersistentPreRunE to avoid client initialization
 			if !silent {
 				showBanner()
 			}
+			return nil // Don't initialize client for auth command
+		},
+		Run: func(cmd *cobra.Command, args []string) {
 			runAuthCommand()
 		},
 	}
@@ -72,17 +75,9 @@ func runAuthCommand() {
 			}
 		}()
 
-		// Initialize the cvemap client to test the API key
-		err := ensureCvemapClientInitialized(nil)
-		if err != nil {
-			gologger.Fatal().Msgf("Failed to initialize API client: %s", err)
-		}
-
-		// Make a real API call to validate the key
-		handler := filters.NewHandler(cvemapClient)
-		_, err = handler.List()
-		if err != nil {
-			gologger.Fatal().Msgf("API key validation failed: %s", err)
+		// Validate the API key with the server
+		if !validateCurrentAPIKey(nonInteractiveAPIKey, "provided API key") {
+			gologger.Fatal().Msg("API key validation failed")
 		}
 
 		// Key is valid, now save it
@@ -93,7 +88,7 @@ func runAuthCommand() {
 		}
 
 		// Save the credentials
-		err = ph.SaveCreds(creds)
+		err := ph.SaveCreds(creds)
 		if err != nil {
 			gologger.Fatal().Msgf("Failed to save credentials: %s", err)
 		}
