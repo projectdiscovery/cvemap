@@ -4,12 +4,15 @@ RUN apk add --no-cache build-base
 WORKDIR /app
 COPY . /app
 RUN go mod download
-RUN go build ./cmd/cvemap
+
+# Use build argument for version
+ARG VERSION=dev
+RUN go build -ldflags="-s -w -X github.com/projectdiscovery/cvemap/cmd/vulnx/clis.Version=${VERSION}" ./cmd/vulnx
 
 # Release
 FROM alpine:3.18.2
 RUN apk -U upgrade --no-cache \
     && apk add --no-cache bind-tools ca-certificates
-COPY --from=builder /app/cvemap /usr/local/bin/
+COPY --from=builder /app/vulnx /usr/local/bin/
 
-ENTRYPOINT ["cvemap"]
+ENTRYPOINT ["vulnx"]

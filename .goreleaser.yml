@@ -58,6 +58,32 @@ archives:
 checksum:
   algorithm: sha256
 
+dockers:
+  # CVEMap Docker image
+  - image_templates:
+      - "projectdiscovery/cvemap:latest"
+      - "projectdiscovery/cvemap:{{ .Tag }}"
+      - "projectdiscovery/cvemap:v{{ .Major }}"
+    dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - --platform=linux/amd64
+      - --platform=linux/arm64
+      - --platform=linux/arm/v7
+
+  # VulnX Docker image
+  - image_templates:
+      - "projectdiscovery/vulnx:latest"
+      - "projectdiscovery/vulnx:{{ .Tag }}"
+      - "projectdiscovery/vulnx:v{{ .Major }}"
+    dockerfile: Dockerfile.vulnx
+    use: buildx
+    build_flag_templates:
+      - --platform=linux/amd64
+      - --platform=linux/arm64
+      - --platform=linux/arm/v7
+      - --build-arg=VERSION={{ .Version }}
+
 announce:
   slack:
     enabled: true
