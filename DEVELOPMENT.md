@@ -50,7 +50,7 @@ make pre-push
 
 # Or run individual checks
 make fmt      # Format code
-make test     # Run tests  
+make test     # Run tests
 make lint     # Run linter
 make vet      # Static analysis
 make tidy     # Tidy dependencies
@@ -154,7 +154,7 @@ cvemap/
 ## Contributing
 
 1. **Issues**: Check existing issues before creating new ones
-2. **Pull Requests**: 
+2. **Pull Requests**:
    - Keep them focused and small
    - Include tests for new features
    - Update documentation as needed
@@ -175,4 +175,4 @@ cvemap/
 - Review the main README for user documentation
 - Join our community for development questions
 
-These checks include Go formatting, import fixing, testing, linting, and building. Running them locally prevents GitHub CI failures and keeps the codebase clean. 
+These checks include Go formatting, import fixing, testing, linting, and building. Running them locally prevents GitHub CI failures and keeps the codebase clean.

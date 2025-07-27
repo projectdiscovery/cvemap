@@ -18,7 +18,7 @@ var (
 		Short: "list all available search filters",
 		Long: `List all available search filters supported by the Vulnerability search API.
 
-This command shows detailed information about all fields that can be used in search queries, 
+This command shows detailed information about all fields that can be used in search queries,
 including their data types, descriptions, examples, and enum values.`,
 		Example: `
 # List all available filters with detailed information

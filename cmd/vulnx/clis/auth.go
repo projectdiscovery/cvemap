@@ -19,7 +19,7 @@ var (
 		Short: "configure projectdiscovery cloud platform api key (required)",
 		Long: `Configure ProjectDiscovery Cloud Platform API key for vulnx.
 
-This command allows you to interactively set up your PDCP API key. API 
+This command allows you to interactively set up your PDCP API key. API
 authentication is required for all vulnx commands.
 
 You can get your free API key by signing up at https://cloud.projectdiscovery.io

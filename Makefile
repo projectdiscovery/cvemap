@@ -10,7 +10,7 @@ LDFLAGS := -s -w
 ifneq ($(shell go env GOOS),darwin)
 LDFLAGS := -extldflags "-static"
 endif
-    
+
 all: build
 build:
 	$(GOBUILD) $(GOFLAGS) -ldflags '$(LDFLAGS)' -o "cvemap" cmd/cvemap/main.go

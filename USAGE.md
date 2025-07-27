@@ -99,7 +99,7 @@ vulnx id --file cve_list.txt --json | jq '.[] | .cve_id + ": " + .severity'
 # 1. Start with technology
 vulnx search "apache"
 
-# 2. Add severity filter  
+# 2. Add severity filter
 vulnx search "apache && severity:high"
 
 # 3. Add time constraint
@@ -116,7 +116,7 @@ vulnx search "apache && severity:high && cve_created_at:2024 && is_remote:true"
 vulnx search "(apache || nginx || tomcat) && severity:high"
 vulnx search "affected_products.vendor:apache" --limit 100
 
-# Database vulnerabilities  
+# Database vulnerabilities
 vulnx search "(mysql || postgresql || mongodb) && severity:critical"
 vulnx search "affected_products.product:mysql && cve_created_at:2024"
 

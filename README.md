@@ -139,7 +139,7 @@ vulnx search "is_kev:true && age_in_days:<90"            # Recent KEV exploits
 
 **Search by technology:**
 ```bash
-vulnx search "apache"                     # Apache vulnerabilities  
+vulnx search "apache"                     # Apache vulnerabilities
 vulnx search "apache || nginx"          # Multiple technologies
 vulnx search "affected_products.vendor:microsoft"  # By vendor
 ```
@@ -287,7 +287,7 @@ vulnx search "severity:critical"          # Field search
 **Boolean logic:**
 ```bash
 vulnx search "apache && nginx"           # Both terms
-vulnx search "apache || nginx"            # Either term  
+vulnx search "apache || nginx"            # Either term
 vulnx search "apache NOT tomcat"          # Exclude term
 vulnx search "(apache || nginx) && severity:high"  # Grouped
 ```
@@ -327,7 +327,7 @@ vulnx search "age_in_days:>365"           # Older than 1 year
 
 **Supported formats:**
 - `2024` (year)
-- `2024-01` (year-month)  
+- `2024-01` (year-month)
 - `2024-01-15` (full date)
 
 ## Configuration
@@ -413,7 +413,7 @@ vulnx version --disable-update-check   # Version info
 
 **Command help (requires API key):**
 ```bash
-vulnx search --help                    # Search command help  
+vulnx search --help                    # Search command help
 vulnx id --help                        # ID command help
 vulnx filters --help                   # Filters command help
 vulnx analyze --help                   # Analyze command help

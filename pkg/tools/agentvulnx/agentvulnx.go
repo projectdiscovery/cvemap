@@ -77,9 +77,9 @@ Start with Field Discovery to identify all available fields and examples. Use in
 
 # Steps
 
-1. **Field Discovery**: 
+1. **Field Discovery**:
    - Use *vulnx_fields_list* to enumerate available fields and example values.
-   
+
 2. **Query Design**:
    - Draft Bleve-inspired queries based on the insights from Field Discovery.
 
@@ -107,7 +107,7 @@ The output should summarize key findings in a clear and structured format, captu
 
 - **Field Discovery & Query Design**:
    - "Using *vulnx_fields_list*, identified fields: severity, cvss_score, tags. Constructed initial query: 'severity:critical && tags:rce'."
-  
+
 - **vulnx_search Execution & Result Analysis**:
    - "Executed query and observed 50 relevant results indicating high-risk vulnerabilities. Refined query by adjusting filters to: 'severity:critical && cvss_score:>7'."
 

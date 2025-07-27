@@ -125,16 +125,16 @@ _vulnx_completion() {
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    
+
     # Available commands
     commands="analyze auth completion healthcheck id mcp search version help"
-    
+
     # Available shells for completion command
     shells="bash zsh fish powershell"
-    
+
     # Global flags (available for all commands)
     global_flags="--help --debug --verbose --json --output --silent --no-color --proxy --timeout --debug-req --debug-resp"
-    
+
     case "${prev}" in
         vulnx)
             COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )

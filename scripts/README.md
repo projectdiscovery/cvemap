@@ -121,4 +121,4 @@ If you need to skip pre-commit hooks temporarily:
 git commit --no-verify -m "emergency commit"
 ```
 
-**Note:** Only use `--no-verify` in genuine emergencies, as it defeats the purpose of these quality checks. 
+**Note:** Only use `--no-verify` in genuine emergencies, as it defeats the purpose of these quality checks.

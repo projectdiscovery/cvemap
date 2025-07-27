@@ -18,7 +18,7 @@ package main
 import (
     "fmt"
     "log"
-    
+
     "github.com/projectdiscovery/cvemap/pkg/tools/renderer"
     "github.com/projectdiscovery/cvemap"
 )
@@ -37,17 +37,17 @@ func main() {
             "omit_if": ["authors.length == 0", "epss_score == 0", "cvss_score == 0"]
         }
     ]`
-    
+
     // Parse layout
     layout, err := renderer.ParseLayout([]byte(layoutJSON))
     if err != nil {
         log.Fatal(err)
     }
-    
+
     // Convert vulnerability to entry
     entry := renderer.FromVulnerability(vuln)
     entries := []*renderer.Entry{entry}
-    
+
     // Render output
     result := renderer.Render(entries, layout, 1, 1)
     fmt.Println(result)
@@ -130,7 +130,7 @@ The `omit_if` array contains conditions that will cause a line to be omitted:
 
 ### Age Urgency Indicators
 - `≤7 days` → `"5d (NEW)"` - Shows NEW indicator for recently disclosed vulnerabilities
-- `≤30 days` → `"25d (RECENT)"` - Shows RECENT indicator for recently disclosed vulnerabilities  
+- `≤30 days` → `"25d (RECENT)"` - Shows RECENT indicator for recently disclosed vulnerabilities
 - `>30 days` → `"90d"` - Shows age only for older vulnerabilities
 
 ## Exploit Detection
@@ -151,7 +151,7 @@ The renderer includes intelligent color highlighting for better readability:
 
 ### Severity Colors
 - **Critical** - Bright red for maximum urgency
-- **High** - Red for high importance  
+- **High** - Red for high importance
 - **Medium** - Yellow for moderate attention
 - **Low** - Green for low priority
 
@@ -245,4 +245,4 @@ The package includes comprehensive tests covering:
 - Formatting functions
 - Exploit detection
 - List truncation
-- Expected output validation 
+- Expected output validation

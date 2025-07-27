@@ -105,7 +105,7 @@ Based on the user's intent, construct Bleve query syntax using available fields:
 ## Query Translation Examples:
 
 **Generic Query**: "Show me critical web application vulnerabilities"
-**Structured Approach**: 
+**Structured Approach**:
 1. vulnx_fields_list (understand available fields)
 2. vulnx_search with query: "severity:critical && (tags:web || tags:http || tags:webapp)"
 3. vulnx_analyze with fields: ["tags", "cvss_score"] for pattern analysis
@@ -235,7 +235,7 @@ Tool Sequence:
 
 ### Phase 3: Technology Impact Assessment
 Tool Sequence:
-1. vulnx_analyze with fields: ["tags", "is_exploited"] 
+1. vulnx_analyze with fields: ["tags", "is_exploited"]
 2. vulnx_search for high-risk technology stacks
 3. Cross-reference with public exploit databases
 

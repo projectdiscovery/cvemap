@@ -30,26 +30,20 @@ var (
 	searchDetailed    bool
 
 	// Filter flags
-	filterProduct         []string
-	filterVendor          []string
-	filterExcludeProduct  []string
-	filterExcludeVendor   []string
-	filterSeverity        []string
-	filterExcludeSeverity []string
-	filterCPE             string
-	filterAssignee        []string
-	filterVulnStatus      string
-	filterVulnAge         string
-	filterKevOnly         string
-	filterTemplate        string
-	filterPOC             string
-	filterHackerOne       string
-	filterRemoteExploit   string
-	filterCvssScore       string
-	filterEpssScore       string
-	filterCwe             []string
-	filterTags            []string
-	filterVulnType        []string
+	filterProduct       []string
+	filterVendor        []string
+	filterSeverity      []string
+	filterVulnStatus    string
+	filterVulnAge       string
+	filterKevOnly       string
+	filterTemplate      string
+	filterPOC           string
+	filterHackerOne     string
+	filterRemoteExploit string
+	filterCvssScore     string
+	filterEpssScore     string
+	filterTags          []string
+	filterVulnType      []string
 
 	// Security-focused layout for CLI rendering
 	defaultLayoutJSON = `[
@@ -89,6 +83,9 @@ var (
 		Use:   "search <query>",
 		Short: "search vulnerabilities using the vulnerability search api",
 		Long: `Search vulnerabilities using the Vulnerability search API.
+
+By default, results are sorted by latest CVE published date (newest first).
+Use --sort-asc or --sort-desc to override this default behavior.
 
 Global flags:
   --json      Output raw JSON (for piping, disables CLI output)
@@ -141,11 +138,17 @@ vulnx search --term-facets tags=10,severity=4 "is_remote:true"
 			if searchOffset > 0 {
 				params.Offset = cvemap.Ptr(searchOffset)
 			}
-			if searchSortAsc != "" {
-				params.SortAsc = cvemap.Ptr(searchSortAsc)
-			}
-			if searchSortDesc != "" {
-				params.SortDesc = cvemap.Ptr(searchSortDesc)
+
+			// Set default sorting to latest CVE published date if no sort options provided
+			if searchSortAsc == "" && searchSortDesc == "" {
+				params.SortDesc = cvemap.Ptr("cve_created_at")
+			} else {
+				if searchSortAsc != "" {
+					params.SortAsc = cvemap.Ptr(searchSortAsc)
+				}
+				if searchSortDesc != "" {
+					params.SortDesc = cvemap.Ptr(searchSortDesc)
+				}
 			}
 			if len(searchFields) > 0 {
 				params.Fields = searchFields
@@ -313,53 +316,11 @@ func buildFilterQuery() (string, error) {
 		queryParts = append(queryParts, vendorQuery)
 	}
 
-	// Build exclude product filter
-	// NOTE: Exclude filters are disabled because NOT operator is not supported by search API
-	/*
-		if len(filterExcludeProduct) > 0 {
-			excludeQuery := buildNotInQuery("affected_products.product", filterExcludeProduct)
-			queryParts = append(queryParts, excludeQuery)
-		}
-
-		// Build exclude vendor filter
-		if len(filterExcludeVendor) > 0 {
-			excludeQuery := buildNotInQuery("affected_products.vendor", filterExcludeVendor)
-			queryParts = append(queryParts, excludeQuery)
-		}
-	*/
-
 	// Build severity filter
 	if len(filterSeverity) > 0 {
 		severityQuery := buildInQuery("severity", filterSeverity)
 		queryParts = append(queryParts, severityQuery)
 	}
-
-	// Build exclude severity filter
-	// NOTE: Exclude filters are disabled because NOT operator is not supported by search API
-	/*
-		if len(filterExcludeSeverity) > 0 {
-			excludeQuery := buildNotInQuery("severity", filterExcludeSeverity)
-			queryParts = append(queryParts, excludeQuery)
-		}
-	*/
-
-	// Build CPE filter
-	// NOTE: CPE field is not available in search API - no cpe field exists
-	/*
-		if filterCPE != "" {
-			queryParts = append(queryParts, fmt.Sprintf("affected_products.cpe:%s", filterCPE))
-		}
-	*/
-
-	// Build assignee filter
-	// NOTE: Although 'assignee' field exists in filters API, search queries don't return results
-	// This suggests the field might not be searchable or requires different syntax
-	/*
-		if len(filterAssignee) > 0 {
-			assigneeQuery := buildInQuery("assignee", filterAssignee)
-			queryParts = append(queryParts, assigneeQuery)
-		}
-	*/
 
 	// Build vulnerability status filter
 	if filterVulnStatus != "" {
@@ -433,15 +394,6 @@ func buildFilterQuery() (string, error) {
 		}
 		queryParts = append(queryParts, epssQuery)
 	}
-
-	// Build CWE filter
-	// NOTE: CWE filter disabled - weaknesses.cwe_id field doesn't return results in search queries
-	/*
-		if len(filterCwe) > 0 {
-			cweQuery := buildInQuery("weaknesses.cwe_id", filterCwe)
-			queryParts = append(queryParts, cweQuery)
-		}
-	*/
 
 	// Build tags filter
 	if len(filterTags) > 0 {
@@ -526,20 +478,6 @@ func quoteValueIfNeeded(value string) string {
 		return fmt.Sprintf(`"%s"`, value)
 	}
 	return value
-}
-
-// buildNotInQuery builds a NOT query for multiple values
-func buildNotInQuery(field string, values []string) string {
-	if len(values) == 0 {
-		return ""
-	}
-
-	var parts []string
-	for _, value := range values {
-		parts = append(parts, fmt.Sprintf("NOT %s:%s", field, value))
-	}
-
-	return fmt.Sprintf("(%s)", strings.Join(parts, " && "))
 }
 
 // buildAgeQuery builds age query with support for <, > operations
