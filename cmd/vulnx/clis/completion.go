@@ -127,7 +127,7 @@ _vulnx_completion() {
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     # Available commands
-    commands="analyze auth completion healthcheck id mcp search version help"
+    commands="analyze auth completion filters healthcheck id mcp search update version help"
 
     # Available shells for completion command
     shells="bash zsh fish powershell"
@@ -149,7 +149,7 @@ _vulnx_completion() {
             return 0
             ;;
         search)
-            COMPREPLY=( $(compgen -W "--limit -n --offset --sort-asc --sort-desc --fields --term-facets --range-facets --highlight --facet-size --product -p --vendor --exclude-product --exclude-vendor --severity -s --exclude-severity --cpe -c --assignee -a --vstatus --vuln-age --product-file --vendor-file --exclude-product-file --exclude-vendor-file --severity-file --exclude-severity-file --assignee-file --kev-only --template -t --poc --hackerone --remote-exploit ${global_flags}" -- ${cur}) )
+            COMPREPLY=( $(compgen -W "--limit -n --offset --sort-asc --sort-desc --fields --term-facets --range-facets --highlight --facet-size --detailed --product -p --vendor --severity -s --vuln-status --vuln-age -a --kev --template -t --poc --hackerone --remote-exploit --cvss-score --epss-score --tags --vuln-type ${global_flags}" -- ${cur}) )
             return 0
             ;;
         id)
@@ -166,6 +166,14 @@ _vulnx_completion() {
             ;;
         mcp)
             COMPREPLY=( $(compgen -W "--mode --port ${global_flags}" -- ${cur}) )
+            return 0
+            ;;
+        update)
+            COMPREPLY=( $(compgen -W "--disable-update-check ${global_flags}" -- ${cur}) )
+            return 0
+            ;;
+        filters)
+            COMPREPLY=( $(compgen -W "${global_flags}" -- ${cur}) )
             return 0
             ;;
         version)

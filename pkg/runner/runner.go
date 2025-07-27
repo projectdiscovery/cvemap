@@ -158,6 +158,9 @@ func ParseOptions() *Options {
 		options.Debug = env.GetEnvOrDefault("DEBUG", false)
 	}
 	if options.Version {
+		gologger.Info().Msgf("⚠️  Important: cvemap uses an older API version that will be discontinued on August 1, 2025.")
+		gologger.Info().Msgf("Please migrate to 'vulnx' for continued access to vulnerability data.")
+		gologger.Info().Msgf("Install: go install github.com/projectdiscovery/cvemap/cmd/vulnx@latest")
 		gologger.Info().Msgf("Current Version: %s\n", Version)
 		os.Exit(0)
 	}
