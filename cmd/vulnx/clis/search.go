@@ -633,12 +633,12 @@ func init() { // Register flags and add command to rootCmd
 	// NOTE: Assignee filter commented out as search queries don't return results even though field exists in API
 	// searchCmd.Flags().StringSliceVarP(&filterAssignee, "assignee", "a", nil, "Filter by assignee (comma-separated)")
 
-	searchCmd.Flags().StringVar(&filterVulnStatus, "vstatus", "", "filter by vulnerability status (new, confirmed, unconfirmed, modified, rejected, unknown)")
-	searchCmd.Flags().StringVar(&filterVulnAge, "vuln-age", "", "filter by vulnerability age (supports <, >, exact: e.g., '5', '<10', '>30')")
+	searchCmd.Flags().StringVar(&filterVulnStatus, "vuln-status", "", "filter by vulnerability status (new, confirmed, unconfirmed, modified, rejected, unknown)")
+	searchCmd.Flags().StringVarP(&filterVulnAge, "vuln-age", "a", "", "filter by vulnerability age (supports <, >, exact: e.g., '5', '<10', '>30')")
 
 	// Boolean filters with default to true when flag is present without value
-	searchCmd.Flags().StringVar(&filterKevOnly, "kev-only", "", "filter kev (known exploited vulnerabilities) only (true/false)")
-	searchCmd.Flags().Lookup("kev-only").NoOptDefVal = "true"
+	searchCmd.Flags().StringVar(&filterKevOnly, "kev", "", "filter kev (known exploited vulnerabilities) only (true/false)")
+	searchCmd.Flags().Lookup("kev").NoOptDefVal = "true"
 
 	searchCmd.Flags().StringVarP(&filterTemplate, "template", "t", "", "filter cves with nuclei templates (true/false)")
 	searchCmd.Flags().Lookup("template").NoOptDefVal = "true"

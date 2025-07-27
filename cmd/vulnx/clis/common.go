@@ -61,6 +61,9 @@ var (
 	// Add global no-color flag
 	noColor bool
 
+	// Global disable update check flag
+	globalDisableUpdateCheck bool
+
 	// Track if the banner has already been shown for this invocation
 	bannerShown bool
 
@@ -182,6 +185,9 @@ func init() {
 
 	// Add persistent no-color flag
 	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "disable colored output")
+
+	// Add persistent disable update check flag
+	rootCmd.PersistentFlags().BoolVar(&globalDisableUpdateCheck, "disable-update-check", false, "disable automatic vulnx update check")
 
 	// Update flag
 	rootCmd.Flags().Bool("update", false, "update vulnx to latest version")
@@ -1007,7 +1013,7 @@ func renderQuickStartCommands() {
 
 // showVersionInfo displays version information like other ProjectDiscovery tools
 func showVersionInfo() {
-	if versionShown || silent {
+	if versionShown || silent || globalDisableUpdateCheck {
 		return
 	}
 	versionShown = true
@@ -1018,21 +1024,16 @@ func showVersionInfo() {
 	// Check for updates using PDTM API
 	latestVersion, err := updateutils.GetToolVersionCallback("vulnx", currentVersion)()
 	if err != nil {
-		// If version check fails, still show current version
-		gologger.Info().Msgf("Current vulnx version %s", currentVersion)
+		// If version check fails, show error only in verbose/debug mode
 		if verbose || debug {
-			gologger.Warning().Msgf("Version check failed: %v", err)
+			gologger.Error().Msgf("vulnx version check failed: %v", err.Error())
 		}
 		return
 	}
 
-	// Format version status
-	status := updateutils.GetVersionDescription(currentVersion, latestVersion)
-	if status == "" || strings.Contains(status, "latest") {
-		status = "latest"
-	}
-
-	gologger.Info().Msgf("Current vulnx version %s (%s)", currentVersion, status)
+	// Format version status exactly like cvemap
+	description := updateutils.GetVersionDescription(currentVersion, latestVersion)
+	gologger.Info().Msgf("Current vulnx version %s %s", currentVersion, description)
 }
 
 // GetUpdateCallback returns a callback function that updates vulnx

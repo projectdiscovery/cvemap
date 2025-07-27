@@ -25,9 +25,9 @@ func showBanner() {
 	gologger.Print().Msgf("\t\tprojectdiscovery.io\n\n")
 
 	// Show deprecation warning
-	gologger.Print().Msgf("⚠️  Important: cvemap uses an older API version that will be discontinued on August 1, 2025.")
-	gologger.Info().Msgf("   Please migrate to 'vulnx' for continued access to vulnerability data.")
-	gologger.Info().Msgf("   Install: go install github.com/projectdiscovery/cvemap/cmd/vulnx@latest\n")
+	gologger.Info().Msgf("⚠️ Important: cvemap uses an older API version that will be discontinued on August 1, 2025.")
+	gologger.Info().Msgf("Please migrate to 'vulnx' for continued access to vulnerability data.")
+	gologger.Info().Msgf("Install: go install github.com/projectdiscovery/cvemap/cmd/vulnx@latest\n")
 }
 
 // GetUpdateCallback returns a callback function that updates proxify

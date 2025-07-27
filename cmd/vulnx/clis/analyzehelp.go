@@ -2,7 +2,6 @@ package clis
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/projectdiscovery/gologger"
@@ -24,34 +23,7 @@ var (
 				}
 			}
 
-			overview := `ANALYZE COMMAND — OVERVIEW
-
-The analyze command provides a convenient shorthand for performing
-"GROUP BY"-style aggregations over the ProjectDiscovery Vulnerability Database.
-It leverages the Search API's term-facet capability internally, automatically
-setting 'fields' to 'doc_id' and 'limit' to 1.
-
-It supports:
-  • --fields / -f   Comma-separated list of facet fields (required)
-  • --facet-size    Default bucket size (overridden per-field via field=size)
-  • --query  / -q   Optional Lucene-style search filter before aggregation
-
-Example invocations:
-  # Analyze by severity (top 5 buckets)
-  vulnx analyze -f severity=5
-
-  # Analyze by vendor and product for templates with planned / covered coverage
-  vulnx analyze -f affected_products.vendor,affected_products.product \
-                -q 'template_coverage:planned || template_coverage:covered'
-`
-
-			// Print overview
-			fmt.Println(overview)
-			fmt.Println(strings.Repeat("-", 120))
-
 			// Print command usage & flags (default Cobra output) before examples
-			fmt.Println("COMMAND USAGE & FLAGS")
-			fmt.Println(strings.Repeat("-", 120))
 			fmt.Println(cmd.UsageString())
 
 			// Fetch filters via handler

@@ -71,7 +71,8 @@ vulnx analyze --fields affected_products.vendor
 | `filters` | List all available search fields and filters | `vulnx filters` |
 | `analyze` | Aggregate data by fields | `vulnx analyze -f severity` |
 | `auth` | Configure API access | `vulnx auth` |
-| `version` | Show version info | `vulnx version` |
+| `version` | Show version info and check for updates | `vulnx version` |
+| `update` | Update vulnx to latest version | `vulnx update` |
 | `healthcheck` | Test connectivity | `vulnx healthcheck` |
 
 ## Essential Options
@@ -181,14 +182,14 @@ vulnx search --detailed "log4j"          # Detailed analysis of specific vuln
 | `--tags` | | Filter by tags | `--tags rce,injection` |
 | `--cvss-score` | | Filter by CVSS score | `--cvss-score ">8.0"` |
 | `--epss-score` | | Filter by EPSS score | `--epss-score ">0.8"` |
-| `--vuln-age` | | Filter by age | `--vuln-age "<30"` |
+| `--vuln-age` | `-a` | Filter by age | `--vuln-age "<30"` |
 | `--vuln-type` | | Filter by vulnerability type | `--vuln-type sql_injection` |
-| `--kev-only` | | KEV vulnerabilities only | `--kev-only` |
+| `--kev` | | KEV vulnerabilities only | `--kev` |
 | `--template` | `-t` | Has Nuclei templates | `--template` |
 | `--poc` | | Has proof of concept | `--poc` |
 | `--hackerone` | | HackerOne reported | `--hackerone` |
 | `--remote-exploit` | | Remotely exploitable | `--remote-exploit` |
-| `--vstatus` | | Filter by vuln status | `--vstatus confirmed` |
+| `--vuln-status` | | Filter by vuln status | `--vuln-status confirmed` |
 
 
 ### Search Control Flags
@@ -220,13 +221,13 @@ vulnx search --severity critical,high   # Filter by severity
 vulnx search "NOT severity:low"         # Exclude severities using query syntax
 vulnx search --cvss-score ">8.0"        # Filter by CVSS score
 vulnx search --epss-score ">0.8"        # Filter by EPSS score
-vulnx search --vstatus confirmed         # Filter by status
+vulnx search --vuln-status confirmed     # Filter by status
 vulnx search --vuln-age "<30"           # Recent vulnerabilities
 ```
 
 **Exploit characteristics:**
 ```bash
-vulnx search --kev-only                 # KEV vulnerabilities only
+vulnx search --kev                      # KEV vulnerabilities only
 vulnx search --template                 # Has Nuclei templates
 vulnx search --poc                      # Has proof of concept
 vulnx search --hackerone                # HackerOne reported
@@ -361,11 +362,20 @@ export PDCP_API_KEY="your-key-here"     # Environment variable
 - **Non-interactive**: `vulnx auth --api-key KEY` - Perfect for automation/CI/CD
 - **Test only**: `vulnx auth --test` - Validate current configuration
 
+**Version management:**
+```bash
+vulnx version                            # Show version and check for updates
+vulnx version --disable-update-check     # Show version without update check
+vulnx update                             # Update to latest version
+vulnx --update                           # Alternative update command
+```
+
 **Global options:**
 ```bash
 vulnx --json search "apache"              # JSON output
 vulnx --silent search "apache"            # No banner
 vulnx --timeout 60s search "apache"       # Custom timeout
+vulnx --disable-update-check search "apache"  # Disable automatic update checks
 ```
 
 ## Troubleshooting
@@ -428,7 +438,8 @@ vulnx search --help                    # Search command help
 vulnx id --help                        # ID command help
 vulnx filters --help                   # Filters command help
 vulnx analyze --help                   # Analyze command help
-vulnx version --disable-update-check   # Version info
+vulnx version                          # Version info with update check
+vulnx version --disable-update-check   # Version info without update check
 ```
 
 **Data exploration (subject to rate limits without API key):**
@@ -444,6 +455,7 @@ vulnx analyze help                     # Available analyze fields
 
 - **Start immediately**: vulnx works without an API key - just run `vulnx search apache`
 - **Avoid rate limits**: Configure API key with `vulnx auth` for heavy usage
+- **Stay updated**: vulnx automatically checks for updates; use `--disable-update-check` to disable
 - Use `vulnx filters` to discover all available search fields and their syntax
 - Start with broad searches, then narrow down with filters
 - Use `--json` for scripting and automation

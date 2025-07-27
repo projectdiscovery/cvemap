@@ -19,8 +19,6 @@ var (
 
 This command displays the current version of vulnx and checks if a newer version
 is available. Update checking can be disabled with the --disable-update-check flag.
-
-Note: Currently uses 'cvemap' for version checking until server-side support is added.
 `,
 		Example: `
 # Show version and check for updates
@@ -43,24 +41,25 @@ vulnx version --disable-update-check
 )
 
 func showVersion() {
-	gologger.Info().Msgf("vulnx version %s", Version)
+	gologger.Info().Msgf("Current vulnx version %s", Version)
 
 	if disableUpdateCheck {
 		return
 	}
 
-	// Use vulnx for version checks - pdtm now supports vulnx directly
+	// Check for latest version using PDTM API
 	latestVersion, err := updateutils.GetToolVersionCallback("vulnx", Version)()
 	if err != nil {
 		if verbose || debug {
-			gologger.Warning().Msgf("Version check failed: %v", err)
+			gologger.Error().Msgf("vulnx version check failed: %v", err.Error())
 		}
 		return
 	}
 
+	// Show version comparison in the same format as cvemap
 	description := updateutils.GetVersionDescription(Version, latestVersion)
 	if description != "" {
-		gologger.Info().Msgf("Update status: %s", description)
+		gologger.Info().Msgf("Current vulnx version %s %s", Version, description)
 
 		// If there's a newer version available, provide helpful information
 		if latestVersion != Version {
@@ -68,6 +67,8 @@ func showVersion() {
 			gologger.Info().Msg("vulnx --update  or  vulnx update")
 			gologger.Info().Msg("Or install via pdtm: pdtm -u vulnx")
 		}
+	} else {
+		gologger.Info().Msgf("Current vulnx version %s (latest)", Version)
 	}
 }
 
