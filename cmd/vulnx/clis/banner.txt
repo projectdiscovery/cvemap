@@ -4,4 +4,3 @@
    \_/  \_,_||_||_||_|/_/\_\
 
     the swiss army knife for vulnerability intelligence
-    by ProjectDiscovery (vulnerability.sh)

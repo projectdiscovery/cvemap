@@ -133,6 +133,9 @@ vulnx id --no-color CVE-2024-1234
 							gologger.Warning().Msgf("Vulnerability not found: %s", vulnID)
 							continue
 						}
+						if errors.Is(err, cvemap.ErrTooManyRequests) {
+							handleRateLimitError()
+						}
 						gologger.Error().Msgf("Failed to fetch vulnerability %s: %s", vulnID, err)
 						continue
 					}
@@ -203,6 +206,9 @@ vulnx id --no-color CVE-2024-1234
 					if errors.Is(err, cvemap.ErrNotFound) {
 						gologger.Warning().Msgf("Vulnerability not found: %s", vulnID)
 						continue
+					}
+					if errors.Is(err, cvemap.ErrTooManyRequests) {
+						handleRateLimitError()
 					}
 					gologger.Error().Msgf("Failed to fetch vulnerability %s: %s", vulnID, err)
 					continue

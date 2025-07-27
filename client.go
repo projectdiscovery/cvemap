@@ -6,9 +6,9 @@
 //
 // # Quick Start
 //
-// The snippet below demonstrates a minimal, production-ready workflow. The
-// example uses an API key that is resolved from your local ProjectDiscovery
-// credential store, falling back to the `PDCP_API_KEY` environment variable.
+// The snippet below demonstrates a minimal, production-ready workflow. While
+// authentication is optional, using an API key is strongly recommended to
+// avoid rate limiting and ensure better performance:
 //
 //	ctx := context.Background()
 //
@@ -28,6 +28,12 @@
 //	}
 //
 //	fmt.Println(len(out.Vulnerabilities))
+//
+// # Rate Limiting
+//
+// Unauthenticated requests are subject to strict rate limits. If you encounter
+// 429 (Too Many Requests) errors, configure an API key using WithPDCPKey() or
+// WithKeyFromEnv() to get higher rate limits and better service reliability.
 //
 // The client is safe for concurrent use by multiple goroutines.
 //
@@ -51,17 +57,17 @@ import (
 
 const (
 	// DefaultBaseURL is the default base URL for the API.
-	DefaultBaseURL = "https://api.projectdiscovery.io"
+	DefaultBaseURL = "https://pb-feat-rate-limiting-s-1312.dev.projectdiscovery.io"
 	// UserAgent is the default user agent for the client.
 	UserAgent = "cvemap-client/1.0"
 )
 
 // Client errors
 var (
-	ErrAPIKeyRequired      = errkit.New("api key is required (use WithPDCPKey or WithKeyFromEnv)")
 	ErrBadRequest          = errkit.New("bad request: client sent an invalid request")
 	ErrUnauthorized        = errkit.New("unauthorized: invalid or missing API key")
 	ErrNotFound            = errkit.New("not found: resource does not exist")
+	ErrTooManyRequests     = errkit.New("too many requests: rate limit exceeded - consider using an API key for higher limits")
 	ErrInternalServerError = errkit.New("internal server error: something went wrong on the server")
 	ErrUnknownAPIError     = errkit.New("unknown api error")
 
@@ -101,13 +107,18 @@ type Client struct {
 	debugResponse func(*http.Response)
 }
 
-// New returns a new *Client* configured by the supplied *Option*s. At least one
-// option that sets an authentication key—*WithPDCPKey* or *WithKeyFromEnv*—must
-// be provided or the constructor returns *ErrAPIKeyRequired*.
+// New returns a new *Client* configured by the supplied *Option*s. Authentication
+// is optional but strongly recommended - unauthenticated requests are subject
+// to strict rate limits. Use *WithPDCPKey* or *WithKeyFromEnv* to configure
+// an API key for better performance and higher rate limits.
 //
 // The returned client is ready for immediate use:
 //
 //	c, err := cvemap.New(cvemap.WithPDCPKey("<YOUR_KEY>"))
+//	if err != nil { /* handle */ }
+//
+//	// Or without authentication (subject to rate limits):
+//	c, err := cvemap.New()
 //	if err != nil { /* handle */ }
 //
 // Custom HTTP behaviour (timeouts, retries, logging) can be injected via
@@ -121,9 +132,7 @@ func New(opts ...Option) (*Client, error) {
 	for _, opt := range opts {
 		opt(c)
 	}
-	if c.apiKey == "" {
-		return nil, ErrAPIKeyRequired
-	}
+	// API key is now optional - authentication is not required but recommended
 	// If a custom httpc was not provided, set the default retryablehttp client
 	if c.httpc == nil {
 		c.httpc = retryablehttp.NewClient(retryablehttp.DefaultOptionsSingle)
@@ -251,6 +260,12 @@ func (c *Client) GetVulnerabilityFilters(ctx context.Context) ([]VulnerabilityFi
 	return filters, nil
 }
 
+// IsAuthenticated returns true if the client has an API key configured.
+// This can be used to provide better UX messaging about rate limits.
+func (c *Client) IsAuthenticated() bool {
+	return c.apiKey != ""
+}
+
 // newRequest builds an HTTP request with authentication and query params.
 func (c *Client) newRequest(ctx context.Context, method, path string, query url.Values, body any) (*http.Request, error) {
 	requestURL := c.baseURL + path
@@ -275,7 +290,10 @@ func (c *Client) newRequest(ctx context.Context, method, path string, query url.
 			return nil, errkit.Append(ErrCreateHTTPRequest, err)
 		}
 	}
-	req.Header.Set("X-PDCP-Key", c.apiKey)
+	// Only set API key header if one is provided
+	if c.apiKey != "" {
+		req.Header.Set("X-PDCP-Key", c.apiKey)
+	}
 	req.Header.Set("User-Agent", c.userAgent)
 	return req, nil
 }
@@ -352,6 +370,8 @@ func (c *Client) handleAPIError(resp *http.Response) error {
 		return errkit.Append(ErrBadRequest, detailedErr)
 	case http.StatusUnauthorized:
 		return errkit.Append(ErrUnauthorized, detailedErr)
+	case http.StatusTooManyRequests:
+		return errkit.Append(ErrTooManyRequests, detailedErr)
 	case http.StatusInternalServerError:
 		return errkit.Append(ErrInternalServerError, detailedErr)
 	default:

@@ -193,6 +193,9 @@ vulnx search --term-facets tags=10,severity=4 "is_remote:true"
 				if errors.Is(err, cvemap.ErrNotFound) {
 					gologger.Fatal().Msgf("No results found for query: %s", query)
 				}
+				if errors.Is(err, cvemap.ErrTooManyRequests) {
+					handleRateLimitError()
+				}
 				gologger.Fatal().Msgf("Failed to perform search: %s", err)
 			}
 			if resp.Count == 0 {

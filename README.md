@@ -25,17 +25,20 @@
 # 1. Get vulnx
 go install github.com/projectdiscovery/cvemap/cmd/vulnx@latest
 
-# 2. Explore commands (no API key needed for help)
+# 2. Explore commands
 vulnx --help
 vulnx search --help
 
-# 3. Set up your API key (required)
+# 3. Start exploring vulnerabilities (no API key required)
+vulnx filters                          # See all available search fields
+vulnx search apache                    # Basic search (subject to rate limits)
+
+# 4. Set up your API key (recommended to avoid rate limits)
 vulnx auth                              # Get free API key at https://cloud.projectdiscovery.io
 
-# 4. Start exploring vulnerabilities
-vulnx filters                          # See all available search fields
-vulnx search apache
-vulnx id CVE-2021-44228
+# 5. Enhanced exploration with higher limits
+vulnx search apache                    # No rate limits
+vulnx id CVE-2021-44228               # Faster responses
 ```
 
 ## What vulnx Does
@@ -332,6 +335,19 @@ vulnx search "age_in_days:>365"           # Older than 1 year
 
 ## Configuration
 
+### Authentication (Optional)
+
+**vulnx works without an API key**, but authentication provides significant benefits:
+
+**⚠️ Without API key:**
+- Limited to 10 requests per minutes
+- Subject to strict rate limits
+- May encounter "429 Too Many Requests" errors
+
+**✅ With API key:**
+- Much higher rate limits
+- Access to all the filters
+
 **Set up authentication:**
 ```bash
 vulnx auth                              # Interactive setup
@@ -354,10 +370,10 @@ vulnx --timeout 60s search "apache"       # Custom timeout
 
 ## Troubleshooting
 
-**API key issues:**
+**Rate limit issues:**
 ```
-Error: api key is required
-→ Run: vulnx auth
+Rate limit exceeded! API key required for higher limits.
+→ Run: vulnx auth to configure API key and get higher limits
 ```
 
 **Automation/CI/CD setup:**
@@ -375,12 +391,12 @@ vulnx auth --api-key "$(cat /secrets/api-key)"
 vulnx auth --test && echo "Auth OK" || echo "Auth failed"
 ```
 
-**Help commands requiring API key:**
+**Rate limit suggestions:**
 ```
-Error: api key is required (when running vulnx search --help)
-→ This is a known limitation. Either:
-  1. Set up API key first: vulnx auth
-  2. Use this documentation for command help
+Configure API key with 'vulnx auth' to avoid rate limits
+→ This appears when no API key is configured. To remove:
+  1. Set up API key: vulnx auth
+  2. Or use --silent flag to suppress informational messages
 ```
 
 **No results:**
@@ -399,33 +415,35 @@ vulnx search --fields cve_id,severity "apache"  # Fewer fields
 **Connection issues:**
 ```bash
 vulnx --timeout 60s search "apache"       # Increase timeout
-vulnx --proxy http://proxy:8080 search "apache"  # Use proxy
+vulnx --proxy http://localhost:8080 search "apache"  # Use proxy
 vulnx --debug search "apache"             # Debug mode
 ```
 
 ## Getting Help
 
-**Main help (no API key required):**
+**Help commands (no API key required):**
 ```bash
 vulnx --help                           # All commands overview
-vulnx version --disable-update-check   # Version info
-```
-
-**Command help (requires API key):**
-```bash
 vulnx search --help                    # Search command help
 vulnx id --help                        # ID command help
 vulnx filters --help                   # Filters command help
 vulnx analyze --help                   # Analyze command help
+vulnx version --disable-update-check   # Version info
+```
+
+**Data exploration (subject to rate limits without API key):**
+```bash
 vulnx filters                          # Show all searchable fields
 vulnx search help                      # Detailed search fields
 vulnx analyze help                     # Available analyze fields
 ```
 
-> **Note:** Currently, command-specific help requires API authentication. Run `vulnx auth` first to set up your API key.
+> **Note:** All commands work without an API key, but are subject to rate limits. Configure an API key with `vulnx auth` for higher limits and better performance.
 
 ## Tips
 
+- **Start immediately**: vulnx works without an API key - just run `vulnx search apache`
+- **Avoid rate limits**: Configure API key with `vulnx auth` for heavy usage
 - Use `vulnx filters` to discover all available search fields and their syntax
 - Start with broad searches, then narrow down with filters
 - Use `--json` for scripting and automation

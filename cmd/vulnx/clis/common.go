@@ -2,6 +2,7 @@ package clis
 
 import (
 	"encoding/json"
+	"errors"
 
 	"github.com/spf13/cobra"
 
@@ -23,8 +24,6 @@ import (
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/gologger/levels"
 	retryablehttp "github.com/projectdiscovery/retryablehttp-go"
-
-	"errors"
 
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/projectdiscovery/cvemap/pkg/tools"
@@ -289,15 +288,21 @@ func ensureCvemapClientInitialized(_ *cobra.Command) error {
 		}
 		client, err := cvemap.New(opts...)
 		if err != nil {
-			// Check if it's an API key required error
-			if errors.Is(err, cvemap.ErrAPIKeyRequired) {
-				return fmt.Errorf("API key is required. Configure it using: vulnx auth")
-			}
 			return fmt.Errorf("failed to initialize cvemap client: %w", err)
 		}
 		cvemapClient = client
+
+		// Show proactive message about API key configuration if not authenticated
+		if !client.IsAuthenticated() && !silent {
+			gologger.Info().Msg("Configure API key with 'vulnx auth' to avoid rate limits")
+		}
 	}
 	return nil
+}
+
+// handleRateLimitError provides a common, user-friendly rate limit error message
+func handleRateLimitError() {
+	gologger.Fatal().Msg("Rate limit exceeded! API key required for higher limits.")
 }
 
 func showBanner() {
@@ -327,6 +332,12 @@ func showDashboard() error {
 		FacetSize: cvemap.Ptr(8),
 	})
 	if err != nil {
+		if errors.Is(err, cvemap.ErrTooManyRequests) {
+			fmt.Printf("⚠️  Dashboard unavailable due to rate limits. Configure API key with 'vulnx auth'.\n\n")
+			// Still show the help menu even with rate limits
+			renderQuickStartCommands()
+			return nil
+		}
 		return fmt.Errorf("failed to fetch dashboard data: %v", err)
 	}
 
@@ -335,7 +346,7 @@ func showDashboard() error {
 	// Render clean dashboard sections
 	renderSeverityDistribution(handler, totalCount)
 	renderVendorBreakdown(handler)
-	renderRecentCVEs(handler)
+	renderVulnerabilityTypes(handler)
 	renderKEVAndThreats(handler)
 	renderEPSSDistribution(handler)
 	renderQuickStartCommands()
@@ -355,6 +366,15 @@ func showDashboardJSON() error {
 
 	resp, err := handler.Analyze(params)
 	if err != nil {
+		if errors.Is(err, cvemap.ErrTooManyRequests) {
+			// Return minimal JSON for rate limited requests
+			dashboardData := map[string]interface{}{
+				"error": "Dashboard unavailable due to rate limits. Configure API key with 'vulnx auth'.",
+			}
+			jsonBytes, _ := json.MarshalIndent(dashboardData, "", "  ")
+			fmt.Printf("%s\n", jsonBytes)
+			return nil
+		}
 		return fmt.Errorf("failed to fetch dashboard data: %v", err)
 	}
 
@@ -692,25 +712,50 @@ func renderSeverityDistribution(handler *analyze.Handler, totalCount int) {
 		FacetSize: cvemap.Ptr(8),
 	})
 	if err != nil {
+		if errors.Is(err, cvemap.ErrTooManyRequests) {
+			// Skip this section due to rate limits
+			return
+		}
 		fmt.Printf("⚠️  Unable to fetch severity data: %v\n\n", err)
 		return
 	}
 
-	fmt.Printf("🧮 severity distribution (total: %s)\n", formatNumber(totalCount))
-
 	severityBuckets := extractBuckets(severityResp.Facets, "severity")
 
-	// Create severity order for better presentation
-	severityOrder := []string{"critical", "high", "medium", "low", "info", "n/a", "unknown", "none"}
+	// Create severity order for better presentation (excluding non-informative values)
+	severityOrder := []string{"critical", "high", "medium", "low", "info"}
 	orderedBuckets := make(map[string]int)
 
 	for _, bucket := range severityBuckets {
-		orderedBuckets[bucket.key] = bucket.count
+		// Only include meaningful severity values
+		lowerKey := strings.ToLower(strings.TrimSpace(bucket.key))
+		if lowerKey != "" &&
+			lowerKey != "undefined" &&
+			lowerKey != "unassigned" &&
+			lowerKey != "unknown" &&
+			lowerKey != "n/a" &&
+			lowerKey != "none" &&
+			lowerKey != "null" {
+			orderedBuckets[bucket.key] = bucket.count
+		}
 	}
+
+	// Calculate total count for meaningful severities only
+	meaningfulTotal := 0
+	for _, count := range orderedBuckets {
+		meaningfulTotal += count
+	}
+
+	// Skip section if no meaningful severities found
+	if meaningfulTotal == 0 {
+		return
+	}
+
+	fmt.Printf("🧮 severity distribution (total: %s)\n", formatNumber(meaningfulTotal))
 
 	for _, severity := range severityOrder {
 		if count, exists := orderedBuckets[severity]; exists && count > 0 {
-			percentage := float64(count) / float64(totalCount) * 100
+			percentage := float64(count) / float64(meaningfulTotal) * 100
 			barLength := int(percentage / 2.0) // Scale to 50 chars max
 			if barLength > 50 {
 				barLength = 50
@@ -736,6 +781,10 @@ func renderVendorBreakdown(handler *analyze.Handler) {
 		FacetSize: cvemap.Ptr(5),
 	})
 	if err != nil {
+		if errors.Is(err, cvemap.ErrTooManyRequests) {
+			// Skip this section due to rate limits
+			return
+		}
 		fmt.Printf("⚠️  Unable to fetch vendor data: %v\n\n", err)
 		return
 	}
@@ -772,26 +821,61 @@ func renderVendorBreakdown(handler *analyze.Handler) {
 	fmt.Printf("\n")
 }
 
-// renderRecentCVEs displays recent CVEs published by year
-func renderRecentCVEs(handler *analyze.Handler) {
-	fmt.Printf("🏢 new cves published in recent years\n")
-
-	// Placeholder data - in real implementation would fetch from API by year
-	years := []struct {
-		year  string
-		count int
-	}{
-		{"2025", 12712},
-		{"2024", 11851},
-		{"2023", 9885},
-		{"2022", 9244},
-		{"2021", 7978},
+// renderVulnerabilityTypes displays top vulnerability types
+func renderVulnerabilityTypes(handler *analyze.Handler) {
+	vulnTypeResp, err := handler.Analyze(analyze.Params{
+		Fields:    []string{"vulnerability_type=5"},
+		FacetSize: cvemap.Ptr(5),
+	})
+	if err != nil {
+		if errors.Is(err, cvemap.ErrTooManyRequests) {
+			// Skip this section due to rate limits
+			return
+		}
+		fmt.Printf("⚠️  Unable to fetch vulnerability type data: %v\n\n", err)
+		return
 	}
 
-	maxCount := years[0].count
+	fmt.Printf("🔍 top vulnerability types\n")
 
-	for _, year := range years {
-		percentage := float64(year.count) / float64(maxCount) * 100
+	vulnTypeBuckets := extractBuckets(vulnTypeResp.Facets, "vulnerability_type")
+
+	// Filter out undefined/unassigned vulnerability types
+	var filteredBuckets []struct {
+		key   string
+		count int
+	}
+	for _, bucket := range vulnTypeBuckets {
+		// Skip non-informative vulnerability types
+		lowerKey := strings.ToLower(strings.TrimSpace(bucket.key))
+		if lowerKey != "" &&
+			lowerKey != "undefined" &&
+			lowerKey != "unassigned" &&
+			lowerKey != "unknown" &&
+			lowerKey != "n/a" &&
+			lowerKey != "none" &&
+			lowerKey != "null" {
+			filteredBuckets = append(filteredBuckets, bucket)
+		}
+	}
+	vulnTypeBuckets = filteredBuckets
+
+	if len(vulnTypeBuckets) > 5 {
+		vulnTypeBuckets = vulnTypeBuckets[:5]
+	}
+
+	// Skip section if no meaningful vulnerability types found
+	if len(vulnTypeBuckets) == 0 {
+		return
+	}
+
+	maxCount := 0
+	if len(vulnTypeBuckets) > 0 {
+		maxCount = vulnTypeBuckets[0].count
+	}
+
+	for _, vulnType := range vulnTypeBuckets {
+		percentage := float64(vulnType.count) / float64(maxCount) * 100
 		barLength := int(percentage / 5) // Scale to 20 chars max
 		if barLength > 20 {
 			barLength = 20
@@ -802,14 +886,14 @@ func renderRecentCVEs(handler *analyze.Handler) {
 
 		bar := strings.Repeat("█", barLength) + strings.Repeat("▁", 20-barLength)
 
-		fmt.Printf("   %s │%s│ %s\n", year.year, bar, formatNumber(year.count))
+		fmt.Printf("   %-20s │%s│ %s\n", vulnType.key, bar, formatNumber(vulnType.count))
 	}
 	fmt.Printf("\n")
 }
 
 // renderEPSSDistribution displays EPSS score distribution
 func renderEPSSDistribution(handler *analyze.Handler) {
-	fmt.Printf("📈 exploit prediction scoring system overview (epss) distribution\n")
+	fmt.Printf("📈 exploit prediction scoring system (epss) distribution\n")
 
 	// Placeholder data - in real implementation would fetch from API
 	epssRanges := []struct {
@@ -853,6 +937,10 @@ func renderKEVAndThreats(handler *analyze.Handler) {
 		FacetSize: cvemap.Ptr(2),
 	})
 	if err != nil {
+		if errors.Is(err, cvemap.ErrTooManyRequests) {
+			// Skip this section due to rate limits
+			return
+		}
 		fmt.Printf("⚠️  Unable to fetch KEV data: %v\n\n", err)
 		return
 	}
