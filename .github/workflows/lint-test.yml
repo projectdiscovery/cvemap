@@ -14,12 +14,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-    
+
       - name: "Set up Go"
         uses: actions/setup-go@v4
-        with: 
+        with:
           go-version: 1.21.x
-      
+
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3.6.0
         with:

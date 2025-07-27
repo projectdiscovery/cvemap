@@ -1,0 +1,239 @@
+# CVEMap Cursor Rules
+# ProjectDiscovery CVE Navigation Tool - Go CLI Application
+
+## Project Overview
+This is a Go-based CLI tool for navigating CVE (Common Vulnerabilities and Exposures) data, developed by ProjectDiscovery. The tool provides structured access to vulnerability databases with filtering, searching, and mapping capabilities.
+
+## Language & Framework
+- **Language**: Go 1.22+
+- **CLI Framework**: goflags (ProjectDiscovery)
+- **HTTP Client**: retryablehttp-go (ProjectDiscovery)
+- **Logging**: gologger (ProjectDiscovery)
+- **Table Rendering**: go-pretty/v6
+- **JSON Handling**: Standard library with extensive struct tags
+
+## Project Structure
+```
+cmd/cvemap/          # Main application entry point
+pkg/runner/          # Core application logic, CLI handling, and table rendering
+pkg/service/         # API service layer for CVE data retrieval
+pkg/types/           # Type definitions and data structures
+pkg/testutils/       # Testing utilities
+static/              # Static assets (images, etc.)
+```
+
+## MCP Tool Integration & Workflow
+
+### Tool Priority & Philosophy
+- **ALWAYS prioritize MCP tools over manual operations** - These tools provide enhanced capabilities and should be your first choice for any development task
+- Use MCP tools as the primary method for code exploration, modification, testing, and documentation
+- Combine multiple tools strategically to create efficient workflows
+- Fall back to manual methods only when MCP tools are unavailable or insufficient
+
+### Core Development Workflow Tools
+
+#### Code Exploration & Analysis
+- **`codebase_search`**: Use for semantic code searches to understand patterns, find similar implementations, and locate relevant code by meaning rather than exact text
+- **`read_file`**: Primary method for examining file contents - always prefer this over manual file opening
+- **`list_dir`**: Use for exploring project structure and understanding directory organization
+- **`file_search`**: Employ fuzzy file path searches when you need to locate files without knowing exact paths
+- **`grep_search`**: Perform exact text or regex searches across the codebase for precise pattern matching
+
+#### Code Modification & Management
+- **`edit_file`**: Primary tool for all code modifications, file creation, and content updates
+- **`delete_file`**: Use for file removal operations instead of manual deletion
+- **`reapply`**: Leverage for repeating similar edits across multiple files efficiently
+- **`run_terminal_cmd`**: Execute all build, test, deployment, and command-line operations through this tool
+
+### Knowledge Management & Documentation Tools
+
+#### Information Gathering
+- **`web_search`** and **`mcp_MCP_DOCKER_web_search_exa`**: Use for real-time information lookup, latest documentation, and current best practices
+- **`get-library-docs`**: Fetch up-to-date library documentation instead of relying on potentially outdated local docs
+- **`resolve-library-id`**: Identify and resolve package names to proper library identifiers
+- **`fetch_pull_request`**: Look up PRs, issues, and commits for context and historical information
+
+#### Documentation & Visualization
+- **`create_diagram`**: Create Mermaid diagrams to visualize system architecture, data flows, and relationships
+- **`update_memory`**: Maintain persistent knowledge base for project insights, decisions, and patterns
+- **`todo_write`**: Create and manage structured task lists for complex development workflows
+
+### Advanced Analysis & Planning Tools
+
+#### Problem Solving & Planning
+- **`sequentialthinking`**: Use for complex problem-solving, detailed analysis, and step-by-step reasoning before implementing solutions
+- **Knowledge Graph Tools**: Leverage `create_entities`, `create_relations`, `search_nodes`, `read_graph`, etc. for:
+  - Mapping complex relationships between code components
+  - Understanding system dependencies and interactions
+  - Documenting architectural decisions and patterns
+  - Managing complex data structures and their relationships
+
+### Tool Integration Patterns
+
+#### Recommended Workflows
+1. **Code Investigation**: `codebase_search` → `read_file` → `grep_search` (if needed) → `sequentialthinking` (for analysis)
+2. **Feature Implementation**: `sequentialthinking` (planning) → `codebase_search` (understanding existing patterns) → `edit_file` → `run_terminal_cmd` (testing)
+3. **Bug Fixing**: `grep_search` (find issue) → `read_file` (understand context) → `codebase_search` (find related code) → `edit_file` (fix) → `run_terminal_cmd` (verify)
+4. **Documentation**: `read_file` → `create_diagram` → `update_memory` → `edit_file` (update docs)
+5. **Research & Learning**: `web_search` → `get-library-docs` → `update_memory` → `create_diagram` (if complex)
+
+#### Best Practices
+- Start complex tasks with `sequentialthinking` to break down the problem
+- Use `codebase_search` to understand existing patterns before implementing new features
+- Combine `create_diagram` with `update_memory` to document architectural decisions
+- Leverage knowledge graph tools for managing complex system relationships
+- Always use `run_terminal_cmd` for testing and validation after code changes
+- Use `todo_write` to track multi-step development tasks
+
+## Code Style & Conventions
+
+### Naming Conventions
+- Use CamelCase for exported functions, types, and variables
+- Use lowercase for internal/private functions and variables
+- Package names should be lowercase, single words when possible
+- Constants should be UPPER_CASE with underscores
+- Use descriptive names that clearly indicate purpose
+
+### Error Handling
+- Use `gologger` for all logging instead of standard log package
+- Prefer `gologger.Fatal().Msgf()` for fatal errors
+- Use `gologger.Error().Msgf()` for recoverable errors
+- Use `gologger.Info().Msgf()` for informational messages
+- Use `gologger.Debug().Msgf()` for debug information
+- Always check errors and handle them appropriately
+- Use `errorutil.New()` from ProjectDiscovery utils for custom errors
+
+### Struct Definitions
+- Always use JSON tags with `omitempty` for optional fields
+- Use pointer types for optional struct fields that might be nil
+- Group related fields together in structs
+- Add comments for exported types and complex fields
+- Use consistent field ordering (required fields first, optional last)
+
+Example:
+```go
+type CVEData struct {
+    CveID          string       `json:"cve_id,omitempty"`
+    CveDescription string       `json:"cve_description,omitempty"`
+    Severity       string       `json:"severity,omitempty"`
+    CvssScore      float64      `json:"cvss_score,omitempty"`
+    CvssMetrics    *CvssMetrics `json:"cvss_metrics,omitempty"`
+    IsTemplate     bool         `json:"is_template"`
+    IsKev          bool         `json:"is_exploited"`
+}
+```
+
+### HTTP Client Patterns
+- Use `retryablehttp.Client` for all HTTP requests
+- Set appropriate headers including `X-PDCP-Key` for authentication
+- Always defer `response.Body.Close()`
+- Check status codes before processing responses
+- Use JSON decoder for response parsing: `json.NewDecoder(response.Body).Decode()`
+- Handle 401 unauthorized responses with meaningful error messages
+
+### CLI Flag Handling
+- Use `goflags.NewFlagSet()` for flag management
+- Group related flags using `flagset.CreateGroup()`
+- Use appropriate flag types: `StringSliceVar`, `BoolVar`, `IntVar`, etc.
+- Provide clear descriptions for all flags
+- Use short and long flag names where appropriate
+- Validate flag values after parsing
+
+### Environment Variables
+- Use `env.GetEnvOrDefault()` for environment variable handling
+- Provide sensible defaults for all environment variables
+- Document environment variables in code comments
+- Use UPPER_CASE naming for environment variable names
+
+### Table Rendering
+- Use `go-pretty/v6/table` for formatted output
+- Set `table.StyleRounded` for consistent styling
+- Use `table.NewWriter()` and set output to `os.Stdout`
+- Limit column widths for readability
+- Handle empty/nil values gracefully in table cells
+
+### JSON Handling
+- Use `json.MarshalIndent()` for pretty-printed output
+- Handle JSON unmarshaling errors appropriately
+- Use struct tags consistently across all types
+- Implement custom JSON marshaling/unmarshaling when needed
+
+### Package Organization
+- Keep packages focused on single responsibilities
+- Use internal packages for code not meant to be imported
+- Avoid circular dependencies between packages
+- Export only what needs to be public
+
+### Testing Patterns
+- Place tests in same package with `_test.go` suffix
+- Use table-driven tests for multiple test cases
+- Mock external dependencies (HTTP clients, APIs)
+- Test error conditions and edge cases
+- Use integration tests for end-to-end scenarios
+
+### Constants and Variables
+- Define constants at package level when used across functions
+- Use `const` blocks for related constants
+- Initialize variables close to their usage
+- Use meaningful variable names even for short-lived variables
+
+### Function Design
+- Keep functions focused on single responsibilities
+- Use early returns to reduce nesting
+- Pass context when making HTTP requests or long-running operations
+- Return errors as the last return value
+- Use receiver methods appropriately for type-specific behavior
+
+### Configuration Patterns
+- Use struct-based configuration with validation
+- Support multiple configuration sources (flags, env vars, files)
+- Provide reasonable defaults for all configuration options
+- Validate configuration early in application startup
+
+### API Integration
+- Use structured query parameters with `url.Values` or custom types
+- Handle rate limiting and retries appropriately
+- Parse API responses into well-defined structs
+- Handle API versioning in URL construction
+- Log API requests in debug mode
+
+### Security Considerations
+- Never log API keys or sensitive information
+- Use HTTPS for all external API calls
+- Validate and sanitize user inputs
+- Handle authentication errors gracefully
+
+## Dependencies
+- Prefer ProjectDiscovery ecosystem packages when available
+- Use standard library when possible
+- Minimize external dependencies
+- Keep dependencies up to date and secure
+
+## Build & Deployment
+- Use Makefile for build automation
+- Support cross-platform builds
+- Use ldflags for version information and binary optimization
+- Include integration tests in CI/CD pipeline
+
+## Documentation
+- Document all exported functions and types
+- Include usage examples in package documentation
+- Keep README.md updated with current features
+- Document configuration options and environment variables
+
+## Performance Considerations
+- Use connection pooling for HTTP clients
+- Implement pagination for large result sets
+- Cache frequently accessed data when appropriate
+- Profile memory usage for large data processing
+
+## Code Review Guidelines
+- Ensure all error paths are tested
+- Verify proper resource cleanup (defer statements)
+- Check for potential race conditions in concurrent code
+- Validate input sanitization and bounds checking
+- Ensure consistent logging levels and messages
+
+
+## OpenAPI File
+./dist/openapi.yaml

@@ -1,4 +1,4 @@
-<h1 align="center">CVEMap</h1>
+<h1 align="center"> vulnx </h1>
 
 <p align="center">
 <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-_red.svg"></a>
@@ -8,150 +8,455 @@
 <a href="https://twitter.com/pdiscoveryio"><img src="https://img.shields.io/twitter/follow/pdiscoveryio.svg?logo=twitter"></a>
 <a href="https://discord.gg/projectdiscovery"><img src="https://img.shields.io/discord/695645237418131507.svg?logo=discord"></a>
 </p>
-<p align="center">
-  <a href="#features">Features</a> •
-  <a href="#installation">Installation</a> •
-  <a href="#usage">Usage</a> •
-  <a href="#examples">Example</a> •
-  <a href="https://discord.gg/projectdiscovery">Join Discord</a>
-</p>
 
-Navigate the Common Vulnerabilities and Exposures (CVE) jungle with ease using CVEMAP, a command-line interface (CLI) tool designed to provide a structured and easily navigable interface to various vulnerability databases.
+<h4 align="center"> Modern CLI for exploring vulnerability data with powerful search, filtering, and analysis capabilities </h4>
 
-   
-# Features
+![image](https://github.com/user-attachments/assets/d60a1d43-27d8-4874-9459-046b7d8c633a)
 
-![image](static/cvemap.png)
+## 🚀 Migration Notice
 
- - **CVE Dataset Search & Query**
- - **CVE to EPSS Mapping**
- - **CVE to KEV Mapping**
- - **CVE to CPE Mapping**
- - **CVE to GitHub POCs Mapping**
- - **CVE to Nuclei Template Mapping**
- - **CVE to HackerOne report Mapping**
- - Customizable Filters on CVE data
- - STDIN Input / JSONL Output
+**vulnx is the next generation of cvemap** - we recommend upgrading to vulnx for the latest features and improvements.
 
+> ⚠️ **Important**: cvemap uses an older API version that will be discontinued on **August 1, 2025**.
 
-## Installation
+## Quick Start
 
-cvemap requires **Go 1.21** to install successfully. To install, just run the below command or download pre-compiled binary from [release page](https://github.com/projectdiscovery/cvemap/releases).
+```bash
+# 1. Get vulnx
+go install github.com/projectdiscovery/cvemap/cmd/vulnx@latest
 
-```console
-go install github.com/projectdiscovery/cvemap/cmd/cvemap@latest
+# 2. Explore commands
+vulnx --help
+vulnx search --help
+
+# 3. Start exploring vulnerabilities (no API key required)
+vulnx filters                          # See all available search fields
+vulnx search apache                    # Basic search (subject to rate limits)
+
+# 4. Set up your API key (recommended to avoid rate limits)
+vulnx auth                              # Get free API key at https://cloud.projectdiscovery.io
+
+# 5. Enhanced exploration with higher limits
+vulnx search apache                    # No rate limits
+vulnx id CVE-2021-44228               # Faster responses
 ```
 
-## Usage
-```console
-cvemap -h
-```
-This will display help for the tool. Here are all the switches it supports.
+## What vulnx Does
 
-```console
-Usage:
-  cvemap [flags]
-
-Flags:
-CONFIG:
-   -auth  configure projectdiscovery cloud (pdcp) api key (default true)
-
-OPTIONS:
-   -id string[]                    cve to list for given id
-   -cwe, -cwe-id string[]          cve to list for given cwe id
-   -v, -vendor string[]            cve to list for given vendor
-   -p, -product string[]           cve to list for given product
-   -eproduct string[]              cves to exclude based on products
-   -s, -severity string[]          cve to list for given severity
-   -cs, -cvss-score string[]       cve to list for given cvss score
-   -c, -cpe string                 cve to list for given cpe
-   -es, -epss-score string         cve to list for given epss score
-   -ep, -epss-percentile string[]  cve to list for given epss percentile
-   -age string                     cve to list published by given age in days
-   -a, -assignee string[]          cve to list for given publisher assignee
-   -vs, -vstatus value             cve to list for given vulnerability status in cli output. supported: new, confirmed, unconfirmed, modified, rejected, unknown
-
-UPDATE:
-   -up, -update                 update cvemap to latest version
-   -duc, -disable-update-check  disable automatic cvemap update check
-
-FILTER:
-   -q, -search string  search in cve data
-   -k, -kev            display cves marked as exploitable vulnerabilities by cisa (default true)
-   -t, -template       display cves that has public nuclei templates (default true)
-   -poc                display cves that has public published poc (default true)
-   -h1, -hackerone     display cves reported on hackerone (default true)
-   -re, -remote        display remotely exploitable cves (AV:N & PR:N | PR:L) (default true)
-
-OUTPUT:
-   -f, -field value         fields to display in cli output. supported: product, vendor, assignee, age, poc, cwe, epss, vstatus, kev, template
-   -fe, -exclude value      fields to exclude from cli output. supported: product, vendor, assignee, age, poc, cwe, epss, vstatus, kev, template
-   -lsi, -list-id           list only the cve ids in the output
-   -l, -limit int           limit the number of results to display (default 50)
-   -offset int              offset the results to display
-   -j, -json                return output in json format
-   -epk, -enable-page-keys  enable page keys to navigate results
-
-DEBUG:
-   -version            Version
-   -silent             Silent
-   -verbose            Verbose
-   -debug              Debug
-   -hc, -health-check  run diagnostic check up
+**Search vulnerabilities with precision:**
+```bash
+vulnx search "severity:critical && is_remote:true"
+vulnx search "apache || nginx" --limit 20
+vulnx search "cvss_score:>8.0 && cve_created_at:2024"
 ```
 
-## Configuring CVEMap CLI
-
-CVEMap CLI is built on top of the CVEMap API that requires API Token from [ProjectDiscovery Cloud Platform](https://cloud.projectdiscovery.io/?ref=api_key) that can be configured using environment variable named `PDCP_API_KEY` or using interactive `-auth` option as shown below.
-
-### Using environment variable
-
-```console
-export PDCP_API_KEY=*************
+**Get detailed vulnerability info:**
+```bash
+vulnx id CVE-2021-44228
+vulnx id CVE-2024-1234 --json
 ```
 
-### Using auth option
-
-```console
-cvemap -auth
-
-
-   ______   _____  ____ ___  ____  ____
-  / ___/ | / / _ \/ __ \__ \/ __ \/ __ \
- / /__ | |/ /  __/ / / / / / /_/ / /_/ /
- \___/ |___/\___/_/ /_/ /_/\__,_/ .___/ 
-                               /_/
-            
-
-    projectdiscovery.io
-
-[INF] Get your free api key by signing up at https://cloud.projectdiscovery.io
-[*] Enter PDCP API Key (exit to abort): *************
-[INF] Successfully logged in as (@user)
+**Analyze vulnerability patterns:**
+```bash
+vulnx analyze --fields severity
+vulnx analyze --fields affected_products.vendor
 ```
 
-## Running CVEMap
+## Core Commands
 
-For details about running cvemap, see https://docs.projectdiscovery.io/tools/cvemap/running.
+| Command | Purpose | Example |
+|---------|---------|---------|
+| `search` | Find vulnerabilities with advanced filters | `vulnx search "apache && severity:high"` |
+| `id` | Get details for specific CVE | `vulnx id CVE-2021-44228` |
+| `filters` | List all available search fields and filters | `vulnx filters` |
+| `analyze` | Aggregate data by fields | `vulnx analyze -f severity` |
+| `auth` | Configure API access | `vulnx auth` |
+| `version` | Show version info | `vulnx version` |
+| `healthcheck` | Test connectivity | `vulnx healthcheck` |
+
+## Essential Options
+
+**Output formats:**
+```bash
+vulnx search "apache" --json              # Machine-readable JSON
+vulnx search "apache" --output results.json  # Save to file
+vulnx search "apache" --silent            # Quiet output
+```
+
+**Search control:**
+```bash
+vulnx search "apache" --limit 50          # Get 50 results
+vulnx search "apache" --sort-desc cvss_score  # Sort by CVSS score
+vulnx search "apache" --fields cve_id,severity  # Specific fields only
+```
+
+**Advanced search:**
+```bash
+vulnx search --term-facets severity=5,tags=10 "apache"
+vulnx search --range-facets numeric:cvss_score:high:8:10 "remote"
+vulnx search --highlight "apache"            # Enable search highlighting
+vulnx search --facet-size 20 "nginx"         # More facet buckets
+vulnx search --detailed "xss"                # Detailed output like 'id' command
+```
+
+## Discovering Available Fields
+
+**Explore what you can search on:**
+```bash
+vulnx filters                           # Show all available search fields
+vulnx filters --json                    # Machine-readable field list
+vulnx filters --output fields.json      # Save field info to file
+```
+
+The `filters` command shows detailed information about all searchable fields including:
+- Field names and data types
+- Descriptions and examples
+- Whether fields support sorting and faceting
+- Available enum values for specific fields
+- Search analyzer types
+
+**Example output:**
+```
+Field: severity
+Data Type: string
+Description: Vulnerability severity level (e.g., critical, high, medium, low, info)
+Can Sort: Yes
+Facet Possible: Yes
+Search Analyzer: keyword-lower
+Examples: severity:critical, severity:high
+Enum Values: critical, high, medium, low, info, unknown
+
+Total: 69 filters available
+```
+
+Use this command to discover new search possibilities and understand field syntax before building complex queries.
+
+## Common Search Patterns
+
+**Find high-risk vulnerabilities:**
+```bash
+vulnx search "severity:critical && is_remote:true && is_kev:true"
+vulnx search "cvss_score:>8.0 && cve_created_at:>=2024"  # High CVSS from 2024
+vulnx search "is_kev:true && age_in_days:<90"            # Recent KEV exploits
+```
+
+**Search by technology:**
+```bash
+vulnx search "apache"                     # Apache vulnerabilities
+vulnx search "apache || nginx"          # Multiple technologies
+vulnx search "affected_products.vendor:microsoft"  # By vendor
+```
+
+**Filter by severity and scores:**
+```bash
+vulnx search "severity:high"              # High severity
+vulnx search "cvss_score:>7.0"            # CVSS score above 7
+vulnx search "epss_score:>0.8"            # High EPSS score
+```
+
+**Time-based searches:**
+```bash
+vulnx search "cve_created_at:>=2024"      # Published in 2024 or later
+vulnx search "cve_created_at:>=2024-01-01 && cve_created_at:<2024-07-01"  # First half of 2024
+vulnx search "age_in_days:<30"            # Recent vulnerabilities (last 30 days)
+```
+
+**Find exploitable vulnerabilities:**
+```bash
+vulnx search "is_poc:true"                # Has proof of concept
+vulnx search "is_kev:true"                # Known exploited vulns
+vulnx search "is_template:true"           # Has Nuclei templates
+vulnx search --detailed "log4j"          # Detailed analysis of specific vuln
+```
+
+## Filter Flags
+
+### Filter Flags Reference
+
+| Flag | Short | Description | Example |
+|------|-------|-------------|---------|
+| `--product` | `-p` | Filter by products | `--product apache,nginx` |
+| `--vendor` | | Filter by vendors | `--vendor microsoft,oracle` |
+| `--severity` | `-s` | Filter by severity | `--severity critical,high` |
+| `--tags` | | Filter by tags | `--tags rce,injection` |
+| `--cvss-score` | | Filter by CVSS score | `--cvss-score ">8.0"` |
+| `--epss-score` | | Filter by EPSS score | `--epss-score ">0.8"` |
+| `--vuln-age` | | Filter by age | `--vuln-age "<30"` |
+| `--vuln-type` | | Filter by vulnerability type | `--vuln-type sql_injection` |
+| `--kev-only` | | KEV vulnerabilities only | `--kev-only` |
+| `--template` | `-t` | Has Nuclei templates | `--template` |
+| `--poc` | | Has proof of concept | `--poc` |
+| `--hackerone` | | HackerOne reported | `--hackerone` |
+| `--remote-exploit` | | Remotely exploitable | `--remote-exploit` |
+| `--vstatus` | | Filter by vuln status | `--vstatus confirmed` |
 
 
-## Note
+### Search Control Flags
 
-- CVE dataset gets updated in every 6 hours.
+| Flag | Short | Description | Example |
+|------|-------|-------------|---------|
+| `--detailed` | | Detailed output like 'id' | `--detailed` |
+| `--highlight` | | Enable search highlighting | `--highlight` |
+| `--limit` | `-n` | Number of results | `--limit 50` |
+| `--offset` | | Pagination offset | `--offset 100` |
+| `--sort-asc` | | Sort ascending | `--sort-asc cvss_score` |
+| `--sort-desc` | | Sort descending | `--sort-desc cve_created_at` |
+| `--fields` | | Select specific fields | `--fields cve_id,severity` |
+| `--term-facets` | | Calculate term facets | `--term-facets severity=5` |
+| `--range-facets` | | Calculate range facets | `--range-facets numeric:cvss_score:high:8:10` |
+| `--facet-size` | | Facet bucket count | `--facet-size 20` |
 
-## References
+**Product and vendor filtering:**
+```bash
+vulnx search --product apache,nginx     # Filter by products (searches both vendor and product fields)
+vulnx search --vendor microsoft,oracle  # Filter by vendors only
+vulnx search "NOT apache"               # Exclude products using query syntax
+vulnx search "NOT affected_products.vendor:microsoft"  # Exclude vendors using query syntax
+```
 
-- **[National Vulnerability Database (NVD)](https://nvd.nist.gov/developers)**: Comprehensive CVE vulnerability data.
-- **[Known Exploited Vulnerabilities Catalog (KEV)](https://www.cisa.gov/known-exploited-vulnerabilities-catalog)**: Exploited vulnerabilities catalog.
-- **[Exploit Prediction Scoring System (EPSS)](https://www.first.org/epss/data_stats)**: Exploit prediction scores.
-- **[HackerOne](https://hackerone.com/hacktivity/cve_discovery)**: CVE discoveries disclosure.
-- **[Nuclei Templates](https://github.com/projectdiscovery/nuclei-templates)**: Vulnerability validation templates.
-- **[Trickest CVE](https://github.com/trickest/cve) / [PoC-in-GitHub](https://github.com/nomi-sec/PoC-in-GitHub/)** GitHub Repository: Vulnerability PoCs references.
---------
+**Severity and scoring:**
+```bash
+vulnx search --severity critical,high   # Filter by severity
+vulnx search "NOT severity:low"         # Exclude severities using query syntax
+vulnx search --cvss-score ">8.0"        # Filter by CVSS score
+vulnx search --epss-score ">0.8"        # Filter by EPSS score
+vulnx search --vstatus confirmed         # Filter by status
+vulnx search --vuln-age "<30"           # Recent vulnerabilities
+```
 
-<div align="center">
+**Exploit characteristics:**
+```bash
+vulnx search --kev-only                 # KEV vulnerabilities only
+vulnx search --template                 # Has Nuclei templates
+vulnx search --poc                      # Has proof of concept
+vulnx search --hackerone                # HackerOne reported
+vulnx search --remote-exploit           # Remotely exploitable
+```
 
-**cvemap** is made with ❤️ by the [projectdiscovery](https://projectdiscovery.io) team and distributed under [MIT License](LICENSE).
+## Vulnerability ID Lookup
 
-   
-<a href="https://discord.gg/projectdiscovery"><img src="https://raw.githubusercontent.com/projectdiscovery/nuclei-burp-plugin/main/static/join-discord.png" width="300" alt="Join Discord"></a>
+**Multiple input methods:**
+```bash
+# Single ID lookup
+vulnx id CVE-2024-1234
+
+# Multiple IDs (comma-separated)
+vulnx id CVE-2024-1234,CVE-2024-5678,CVE-2023-9999
+
+# Auto-detection from stdin (no 'id' command needed!)
+echo "CVE-2024-1234" | vulnx
+echo -e "CVE-2024-1234\nCVE-2024-5678" | vulnx
+
+# File input
+vulnx id --file ids.txt
+```
+
+**Batch processing:**
+```bash
+# JSON output for automation
+vulnx id --json CVE-2024-1234 CVE-2024-5678
+
+# Save to file
+vulnx id --output vulns.json --file ids.txt
+
+# Pipeline integration
+cat report.txt | grep -o 'CVE-[0-9]\{4\}-[0-9]\+' | vulnx id --json
+```
+
+## Useful Field Names
+
+| Field | Description | Example Values |
+|-------|-------------|----------------|
+| `severity` | Vulnerability severity | `low`, `medium`, `high`, `critical` |
+| `cvss_score` | CVSS score (0-10) | `7.5`, `>8.0`, `<9.0` |
+| `cve_id` | CVE identifier | `CVE-2021-44228` |
+| `is_remote` | Remotely exploitable | `true`, `false` |
+| `is_kev` | Known exploited vuln | `true`, `false` |
+| `is_poc` | Has proof of concept | `true`, `false` |
+| `affected_products.vendor` | Vendor name | `apache`, `microsoft` |
+| `affected_products.product` | Product name | `tomcat`, `windows` |
+| `cve_created_at` | Publication date | `>=2024`, `>2024-01-01`, `<2023` |
+| `age_in_days` | Days since publication | `<30`, `>365`, `<=90` |
+
+## Query Syntax
+
+**Basic searches:**
+```bash
+vulnx search "apache"                     # Simple term
+vulnx search "remote code execution"    # Phrase search
+vulnx search "severity:critical"          # Field search
+```
+
+**Boolean logic:**
+```bash
+vulnx search "apache && nginx"           # Both terms
+vulnx search "apache || nginx"            # Either term
+vulnx search "apache NOT tomcat"          # Exclude term
+vulnx search "(apache || nginx) && severity:high"  # Grouped
+```
+
+**Ranges and wildcards:**
+```bash
+vulnx search "cvss_score:>8.0"            # Greater than
+vulnx search "cvss_score:<9.0"            # Less than
+vulnx search "cve_created_at:>=2024-01-01" # Date comparison
+vulnx search "age_in_days:<30"            # Recent vulnerabilities
+vulnx search "apache*"                    # Wildcard
+```
+
+## Date Queries
+
+**Important**: Date fields require comparison operators (`>=`, `>`, `<`, `<=`).
+
+**Single date comparisons:**
+```bash
+vulnx search "cve_created_at:>=2024"      # CVEs from 2024 onward
+vulnx search "cve_created_at:<2024"       # CVEs before 2024
+vulnx search "cve_created_at:>2024-06-01" # CVEs after June 1, 2024
+```
+
+**Date ranges:**
+```bash
+# CVEs from January 2024 only
+vulnx search "cve_created_at:>=2024-01-01 && cve_created_at:<2024-02-01"
+
+# High CVSS CVEs from 2024
+vulnx search "cvss_score:>8.0 && cve_created_at:>=2024"
+
+# Recent vulnerabilities (age-based)
+vulnx search "age_in_days:<30"            # Last 30 days
+vulnx search "age_in_days:>365"           # Older than 1 year
+```
+
+**Supported formats:**
+- `2024` (year)
+- `2024-01` (year-month)
+- `2024-01-15` (full date)
+
+## Configuration
+
+### Authentication (Optional)
+
+**vulnx works without an API key**, but authentication provides significant benefits:
+
+**⚠️ Without API key:**
+- Limited to 10 requests per minutes
+- Subject to strict rate limits
+- May encounter "429 Too Many Requests" errors
+
+**✅ With API key:**
+- Much higher rate limits
+- Access to all the filters
+
+**Set up authentication:**
+```bash
+vulnx auth                              # Interactive setup
+vulnx auth --api-key YOUR_API_KEY       # Non-interactive (automation)
+vulnx auth --test                       # Test current API key
+export PDCP_API_KEY="your-key-here"     # Environment variable
+```
+
+**Authentication modes:**
+- **Interactive**: `vulnx auth` - Guided setup with prompts
+- **Non-interactive**: `vulnx auth --api-key KEY` - Perfect for automation/CI/CD
+- **Test only**: `vulnx auth --test` - Validate current configuration
+
+**Global options:**
+```bash
+vulnx --json search "apache"              # JSON output
+vulnx --silent search "apache"            # No banner
+vulnx --timeout 60s search "apache"       # Custom timeout
+```
+
+## Troubleshooting
+
+**Rate limit issues:**
+```
+Rate limit exceeded! API key required for higher limits.
+→ Run: vulnx auth to configure API key and get higher limits
+```
+
+**Automation/CI/CD setup:**
+```bash
+# Docker containers
+vulnx auth --api-key "$SECRET_API_KEY"
+
+# CI/CD pipelines
+vulnx auth --api-key "${PDCP_API_KEY}"
+
+# Kubernetes init containers
+vulnx auth --api-key "$(cat /secrets/api-key)"
+
+# Test authentication in scripts
+vulnx auth --test && echo "Auth OK" || echo "Auth failed"
+```
+
+**Rate limit suggestions:**
+```
+Configure API key with 'vulnx auth' to avoid rate limits
+→ This appears when no API key is configured. To remove:
+  1. Set up API key: vulnx auth
+  2. Or use --silent flag to suppress informational messages
+```
+
+**No results:**
+```bash
+vulnx search "is_kev:true" --limit 1      # Test with known results
+vulnx healthcheck                       # Check connectivity
+```
+
+**Large result sets:**
+```bash
+vulnx search "apache" --limit 100         # Increase limit
+vulnx search "apache" --offset 100        # Pagination
+vulnx search --fields cve_id,severity "apache"  # Fewer fields
+```
+
+**Connection issues:**
+```bash
+vulnx --timeout 60s search "apache"       # Increase timeout
+vulnx --proxy http://localhost:8080 search "apache"  # Use proxy
+vulnx --debug search "apache"             # Debug mode
+```
+
+## Getting Help
+
+**Help commands (no API key required):**
+```bash
+vulnx --help                           # All commands overview
+vulnx search --help                    # Search command help
+vulnx id --help                        # ID command help
+vulnx filters --help                   # Filters command help
+vulnx analyze --help                   # Analyze command help
+vulnx version --disable-update-check   # Version info
+```
+
+**Data exploration (subject to rate limits without API key):**
+```bash
+vulnx filters                          # Show all searchable fields
+vulnx search help                      # Detailed search fields
+vulnx analyze help                     # Available analyze fields
+```
+
+> ⚠️ **Note** All commands work without an API key, but are subject to rate limits. Configure an API key with `vulnx auth` for higher limits and better performance.
+
+## Tips
+
+- **Start immediately**: vulnx works without an API key - just run `vulnx search apache`
+- **Avoid rate limits**: Configure API key with `vulnx auth` for heavy usage
+- Use `vulnx filters` to discover all available search fields and their syntax
+- Start with broad searches, then narrow down with filters
+- Use `--json` for scripting and automation
+- Combine multiple filters for precise results
+- Use `analyze` to understand data patterns
+- Save frequently used queries as shell aliases
+
+For advanced usage patterns and examples, see [USAGE.md](USAGE.md).
+
+## Development
+
+For development setup, code quality checks, and contribution guidelines, see [DEVELOPMENT.md](DEVELOPMENT.md).
+
+## License
+
+vulnx is distributed under [MIT License](LICENSE).

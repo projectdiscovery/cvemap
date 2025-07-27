@@ -9,6 +9,7 @@ import (
 	"github.com/logrusorgru/aurora"
 	"github.com/pkg/errors"
 	"github.com/projectdiscovery/cvemap/pkg/testutils"
+	"github.com/projectdiscovery/gologger"
 )
 
 var (
@@ -17,13 +18,18 @@ var (
 	success             = aurora.Green("[✓]").String()
 	failed              = aurora.Red("[✘]").String()
 	currentCvemapBinary = flag.String("current", "", "Current Branch Cvemap Binary")
+	currentVulnxBinary  = flag.String("vulnx", "", "Current Branch Vulnx Binary")
 )
 
 func main() {
 	flag.Parse()
 	SetupMockServer()
-	os.Setenv("CVEMAP_API_URL", "http://localhost:8080/api/v1")
-	os.Setenv("PDCP_API_KEY", xPDCPHeaderTestKey)
+	if err := os.Setenv("CVEMAP_API_URL", "http://localhost:8080/api/v1"); err != nil {
+		gologger.Error().Msgf("Failed to set CVEMAP_API_URL: %s", err)
+	}
+	if err := os.Setenv("PDCP_API_KEY", xPDCPHeaderTestKey); err != nil {
+		gologger.Error().Msgf("Failed to set PDCP_API_KEY: %s", err)
+	}
 	if err := runIntegrationTests(); err != nil {
 		fmt.Println("Error running integration tests:", err)
 	}
@@ -50,13 +56,29 @@ func (c *CveIDTestCase) Execute() error {
 }
 
 func runIntegrationTests() error {
-
+	// Run cvemap tests
+	fmt.Println("Running CVEMap integration tests...")
 	for testName, testcase := range testCases {
 		if err := testcase.Execute(); err != nil {
-			fmt.Fprintf(os.Stderr, "%s Test \"%s\" failed: %s\n", failed, testName, err)
+			fmt.Fprintf(os.Stderr, "%s CVEMap Test \"%s\" failed: %s\n", failed, testName, err)
 		} else {
-			fmt.Printf("%s Test \"%s\" passed!\n", success, testName)
+			fmt.Printf("%s CVEMap Test \"%s\" passed!\n", success, testName)
 		}
 	}
+
+	// Run vulnx tests if binary is provided
+	if currentVulnxBinary != nil && *currentVulnxBinary != "" {
+		fmt.Println("\nRunning Vulnx integration tests...")
+		for testName, testcase := range vulnxTestCases {
+			if err := testcase.Execute(); err != nil {
+				fmt.Fprintf(os.Stderr, "%s Vulnx Test \"%s\" failed: %s\n", failed, testName, err)
+			} else {
+				fmt.Printf("%s Vulnx Test \"%s\" passed!\n", success, testName)
+			}
+		}
+	} else {
+		fmt.Println("\nSkipping Vulnx tests (no binary provided)")
+	}
+
 	return nil
 }
