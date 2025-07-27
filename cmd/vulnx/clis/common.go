@@ -65,6 +65,9 @@ var (
 	// Track if the banner has already been shown for this invocation
 	bannerShown bool
 
+	// Track if version has been shown for this invocation
+	versionShown bool
+
 	// CVE ID regex pattern
 	cveIDRegex = regexp.MustCompile(`CVE-\d{4}-\d{4,}`)
 
@@ -72,6 +75,13 @@ var (
 		Use:   "vulnx",
 		Short: "vulnx — the swiss army knife for vulnerability intel",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			// Check for update flag
+			update, _ := cmd.Flags().GetBool("update")
+			if update {
+				GetUpdateCallback()()
+				return nil
+			}
+
 			// Do not print the banner when running the "mcp" sub-command as it
 			// can interfere with clients expecting clean JSON output.
 			if cmd.Name() != "mcp" && !silent {
@@ -173,6 +183,9 @@ func init() {
 
 	// Add persistent no-color flag
 	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "disable colored output")
+
+	// Update flag
+	rootCmd.Flags().BoolP("update", "u", false, "update vulnx to latest version")
 
 	// Custom help and usage to always show banner
 	defaultHelpFunc := rootCmd.HelpFunc()
@@ -904,9 +917,6 @@ func renderQuickStartCommands() {
 	fmt.Printf("\n")
 }
 
-// versionShown tracks if version has been displayed to avoid showing it multiple times
-var versionShown bool
-
 // showVersionInfo displays version information like other ProjectDiscovery tools
 func showVersionInfo() {
 	if versionShown || silent {
@@ -935,4 +945,12 @@ func showVersionInfo() {
 	}
 
 	gologger.Info().Msgf("Current vulnx version %s (%s)", currentVersion, status)
+}
+
+// GetUpdateCallback returns a callback function that updates vulnx
+func GetUpdateCallback() func() {
+	return func() {
+		showBanner()
+		updateutils.GetUpdateToolCallback("cvemap", Version)()
+	}
 }
