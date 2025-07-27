@@ -6,12 +6,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	// TODO: Update version as needed - this should be set via ldflags during build
-	Version = "v1.0.0"
-)
-
 var (
+	// Version can be set via ldflags during build
+	Version = "v1.0.0"
+
 	disableUpdateCheck bool
 
 	versionCmd = &cobra.Command{

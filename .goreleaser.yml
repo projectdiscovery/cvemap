@@ -52,8 +52,17 @@ builds:
       - -s -w -X github.com/projectdiscovery/cvemap/cmd/vulnx/clis.Version={{.Version}}
 
 archives:
-- format: zip
-  name_template: '{{ .ProjectName }}_{{ .Version }}_{{ if eq .Os "darwin" }}macOS{{ else }}{{ .Os }}{{ end }}_{{ .Arch }}'
+  # CVEMap archives
+  - id: cvemap
+    builds: ['cvemap']
+    format: zip
+    name_template: 'cvemap_{{ .Version }}_{{ if eq .Os "darwin" }}macOS{{ else }}{{ .Os }}{{ end }}_{{ .Arch }}'
+
+  # VulnX archives
+  - id: vulnx
+    builds: ['vulnx']
+    format: zip
+    name_template: 'vulnx_{{ .Version }}_{{ if eq .Os "darwin" }}macOS{{ else }}{{ .Os }}{{ end }}_{{ .Arch }}'
 
 checksum:
   algorithm: sha256
