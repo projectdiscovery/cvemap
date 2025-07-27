@@ -38,9 +38,8 @@ func runUpdate() {
 
 	gologger.Info().Msg("Checking for vulnx updates...")
 
-	// Use cvemap name temporarily until server-side support is added for vulnx
-	// TODO: Change "cvemap" to "vulnx" once server-side support is implemented
-	updateutils.GetUpdateToolCallback("cvemap", Version)()
+	// Use vulnx for update checks - pdtm now supports vulnx directly
+	updateutils.GetUpdateToolCallback("vulnx", Version)()
 }
 
 func init() {

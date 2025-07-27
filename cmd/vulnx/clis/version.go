@@ -49,9 +49,8 @@ func showVersion() {
 		return
 	}
 
-	// Use cvemap name temporarily until server-side support is added for vulnx
-	// TODO: Change "cvemap" to "vulnx" once server-side support is implemented
-	latestVersion, err := updateutils.GetToolVersionCallback("cvemap", Version)()
+	// Use vulnx for version checks - pdtm now supports vulnx directly
+	latestVersion, err := updateutils.GetToolVersionCallback("vulnx", Version)()
 	if err != nil {
 		if verbose || debug {
 			gologger.Warning().Msgf("Version check failed: %v", err)
@@ -65,9 +64,9 @@ func showVersion() {
 
 		// If there's a newer version available, provide helpful information
 		if latestVersion != Version {
-			gologger.Info().Msg("To update vulnx, please check the latest release at:")
-			gologger.Info().Msg("https://github.com/projectdiscovery/cvemap/releases")
-			gologger.Info().Msg("Note: vulnx updates will be included in cvemap releases until separate releases are available")
+			gologger.Info().Msg("To update vulnx, use:")
+			gologger.Info().Msg("vulnx --update  or  vulnx update")
+			gologger.Info().Msg("Or install via pdtm: pdtm -u vulnx")
 		}
 	}
 }

@@ -185,7 +185,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "disable colored output")
 
 	// Update flag
-	rootCmd.Flags().BoolP("update", "u", false, "update vulnx to latest version")
+	rootCmd.Flags().Bool("update", false, "update vulnx to latest version")
 
 	// Custom help and usage to always show banner
 	defaultHelpFunc := rootCmd.HelpFunc()
@@ -928,7 +928,7 @@ func showVersionInfo() {
 	currentVersion := Version
 
 	// Check for updates using PDTM API
-	latestVersion, err := updateutils.GetToolVersionCallback("cvemap", currentVersion)()
+	latestVersion, err := updateutils.GetToolVersionCallback("vulnx", currentVersion)()
 	if err != nil {
 		// If version check fails, still show current version
 		gologger.Info().Msgf("Current vulnx version %s", currentVersion)
@@ -951,6 +951,6 @@ func showVersionInfo() {
 func GetUpdateCallback() func() {
 	return func() {
 		showBanner()
-		updateutils.GetUpdateToolCallback("cvemap", Version)()
+		updateutils.GetUpdateToolCallback("vulnx", Version)()
 	}
 }
