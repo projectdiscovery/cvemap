@@ -438,7 +438,7 @@ vulnx search help                      # Detailed search fields
 vulnx analyze help                     # Available analyze fields
 ```
 
-> **Note:** All commands work without an API key, but are subject to rate limits. Configure an API key with `vulnx auth` for higher limits and better performance.
+> ⚠️ **Note** All commands work without an API key, but are subject to rate limits. Configure an API key with `vulnx auth` for higher limits and better performance.
 
 ## Tips
 
