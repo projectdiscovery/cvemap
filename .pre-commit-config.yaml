@@ -31,6 +31,8 @@ repos:
         args: [mod, tidy]
         files: go\.mod$
         pass_filenames: false
+        additional_dependencies: []
+        require_serial: true
 
       - id: go-vet
         name: go vet
