@@ -68,7 +68,7 @@ checksum:
   algorithm: sha256
 
 dockers:
-  # CVEMap Docker image
+  # CVEMap Docker image - amd64 only to avoid manifest list issues
   - image_templates:
       - "projectdiscovery/cvemap:latest"
       - "projectdiscovery/cvemap:{{ .Tag }}"
@@ -77,10 +77,8 @@ dockers:
     use: buildx
     build_flag_templates:
       - --platform=linux/amd64
-      - --platform=linux/arm64
-      - --platform=linux/arm/v7
 
-  # VulnX Docker image
+  # VulnX Docker image - amd64 only to avoid manifest list issues
   - image_templates:
       - "projectdiscovery/vulnx:latest"
       - "projectdiscovery/vulnx:{{ .Tag }}"
@@ -89,8 +87,6 @@ dockers:
     use: buildx
     build_flag_templates:
       - --platform=linux/amd64
-      - --platform=linux/arm64
-      - --platform=linux/arm/v7
       - --build-arg=VERSION={{ .Version }}
 
 announce:
