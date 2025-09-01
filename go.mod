@@ -14,7 +14,7 @@ require (
 	github.com/projectdiscovery/gologger v1.1.54
 	github.com/projectdiscovery/retryablehttp-go v1.0.101
 	github.com/projectdiscovery/utils v0.4.17
-	github.com/spf13/cobra v1.9.1
+	github.com/spf13/cobra v1.10.0
 	golang.org/x/term v0.34.0
 )
 
@@ -95,7 +95,7 @@ require (
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/sorairolake/lzip-go v0.3.5 // indirect
 	github.com/spf13/cast v1.7.1 // indirect
-	github.com/spf13/pflag v1.0.6 // indirect
+	github.com/spf13/pflag v1.0.8 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/therootcompany/xz v1.0.1 // indirect
 	github.com/tidwall/btree v1.7.0 // indirect
