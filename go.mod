@@ -1,6 +1,6 @@
 module github.com/projectdiscovery/cvemap
 
-go 1.23.0
+go 1.24.0
 
 toolchain go1.24.4
 
@@ -15,7 +15,7 @@ require (
 	github.com/projectdiscovery/retryablehttp-go v1.0.101
 	github.com/projectdiscovery/utils v0.4.17
 	github.com/spf13/cobra v1.10.0
-	golang.org/x/term v0.34.0
+	golang.org/x/term v0.35.0
 )
 
 require (
@@ -127,7 +127,7 @@ require (
 	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/oauth2 v0.27.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect
-	golang.org/x/sys v0.35.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
