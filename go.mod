@@ -6,7 +6,7 @@ toolchain go1.24.4
 
 require (
 	github.com/eiannone/keyboard v0.0.0-20220611211555-0d226195f203
-	github.com/jedib0t/go-pretty/v6 v6.7.2
+	github.com/jedib0t/go-pretty/v6 v6.7.5
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/mark3labs/mcp-go v0.43.0
 	github.com/pkg/errors v0.9.1
