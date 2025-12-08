@@ -8,7 +8,7 @@ require (
 	github.com/eiannone/keyboard v0.0.0-20220611211555-0d226195f203
 	github.com/jedib0t/go-pretty/v6 v6.7.5
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/mark3labs/mcp-go v0.43.1
+	github.com/mark3labs/mcp-go v0.43.2
 	github.com/pkg/errors v0.9.1
 	github.com/projectdiscovery/goflags v0.1.74
 	github.com/projectdiscovery/gologger v1.1.54
