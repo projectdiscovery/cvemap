@@ -14,7 +14,7 @@ require (
 	github.com/projectdiscovery/gologger v1.1.54
 	github.com/projectdiscovery/retryablehttp-go v1.0.101
 	github.com/projectdiscovery/utils v0.4.17
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	golang.org/x/term v0.37.0
 )
 
