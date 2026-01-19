@@ -1,5 +1,5 @@
-// Package cvemap provides types for the /v2/vulnerability API client.
-package cvemap
+// Package vulnx provides types for the /v2/vulnerability API client.
+package vulnx
 
 import (
 	"time"

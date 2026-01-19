@@ -19,8 +19,8 @@ import (
     "fmt"
     "log"
 
-    "github.com/projectdiscovery/cvemap/pkg/tools/renderer"
-    "github.com/projectdiscovery/cvemap"
+    "github.com/projectdiscovery/vulnx/pkg/tools/renderer"
+    "github.com/projectdiscovery/vulnx"
 )
 
 func main() {
@@ -202,16 +202,16 @@ type Entry struct {
     AgeInDays          int
     EpssScore          float64
     CvssScore          float64
-    Exposure           *cvemap.VulnExposure
-    AffectedProducts   []*cvemap.ProductInfo
+    Exposure           *vulnx.VulnExposure
+    AffectedProducts   []*vulnx.ProductInfo
     IsPatchAvailable   bool
     PocCount           int
     IsKev              bool
     IsTemplate         bool
-    H1                 *cvemap.H1Stats
+    H1                 *vulnx.H1Stats
     Tags               []string
-    Pocs               []*cvemap.POC
-    Citations          []*cvemap.Citation
+    Pocs               []*vulnx.POC
+    Citations          []*vulnx.Citation
     Description        string
     Impact             string
 }
@@ -223,8 +223,8 @@ type Entry struct {
 // ParseLayout parses layout JSON into LayoutLine structs
 func ParseLayout(layoutJSON []byte) ([]LayoutLine, error)
 
-// FromVulnerability converts a cvemap.Vulnerability to an Entry
-func FromVulnerability(v *cvemap.Vulnerability) *Entry
+// FromVulnerability converts a vulnx.Vulnerability to an Entry
+func FromVulnerability(v *vulnx.Vulnerability) *Entry
 
 // Render generates formatted output for vulnerability entries
 func Render(entries []*Entry, layout []LayoutLine, totalResults, shownResults int) string

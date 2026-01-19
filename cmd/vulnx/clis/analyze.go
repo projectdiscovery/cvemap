@@ -8,12 +8,12 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/projectdiscovery/cvemap"
+	"github.com/projectdiscovery/vulnx"
 	"github.com/projectdiscovery/gologger"
 	"github.com/spf13/cobra"
 
 	"github.com/jedib0t/go-pretty/v6/table"
-	analyzetool "github.com/projectdiscovery/cvemap/pkg/tools/analyze"
+	analyzetool "github.com/projectdiscovery/vulnx/pkg/tools/analyze"
 )
 
 var (
@@ -60,17 +60,17 @@ Global flags:
 				Fields: analyzeFields,
 			}
 			if analyzeFacetSize > 0 {
-				params.FacetSize = cvemap.Ptr(analyzeFacetSize)
+				params.FacetSize = vulnx.Ptr(analyzeFacetSize)
 			}
 			if analyzeQuery != "" {
-				params.Query = cvemap.Ptr(analyzeQuery)
+				params.Query = vulnx.Ptr(analyzeQuery)
 			}
 
-			// Use the global cvemapClient (initialised by rootCmd)
-			handler := analyzetool.NewHandler(cvemapClient)
+			// Use the global vulnxClient (initialised by rootCmd)
+			handler := analyzetool.NewHandler(vulnxClient)
 			resp, err := handler.Analyze(params)
 			if err != nil {
-				if errors.Is(err, cvemap.ErrNotFound) {
+				if errors.Is(err, vulnx.ErrNotFound) {
 					gologger.Fatal().Msg("No results found for the provided facets")
 				}
 				gologger.Fatal().Msgf("Failed to perform analysis: %s", err)

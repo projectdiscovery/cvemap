@@ -7,8 +7,8 @@ labels: 'Type: Enhancement'
 <!--
 1. Please make sure to provide a detailed description with all the relevant information that might be required to start working on this feature.
 2. In case you are not sure about your request or whether the particular feature is already supported or not, please start a discussion instead.
-3. GitHub Discussion: https://github.com/projectdiscovery/cvemap/discussions/categories/ideas
-4. Join our discord server at https://discord.gg/projectdiscovery to discuss the idea on the #cvemap channel.
+3. GitHub Discussion: https://github.com/projectdiscovery/vulnx/discussions/categories/ideas
+4. Join our discord server at https://discord.gg/projectdiscovery to discuss the idea on the #vulnx channel.
 -->
 
 ### Please describe your feature request:

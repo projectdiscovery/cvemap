@@ -10,7 +10,7 @@ This guide contains information for developers working on vulnx.
 ## Building
 
 ```bash
-# Build main cvemap binary
+# Build main vulnx binary
 make build
 
 # Build vulnx binary
@@ -136,10 +136,9 @@ make integration
 ## Project Structure
 
 ```
-cvemap/
+vulnx/
 ├── cmd/
-│   ├── cvemap/          # Main CLI application
-│   ├── vulnx/           # Vulnerability exploration CLI
+│   ├── vulnx/          # Main CLI application
 │   └── integration-test/ # Integration tests
 ├── pkg/
 │   ├── runner/          # Core application logic

@@ -8,13 +8,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/projectdiscovery/cvemap"
+	"github.com/projectdiscovery/vulnx"
 	"github.com/projectdiscovery/gologger"
 	fileutil "github.com/projectdiscovery/utils/file"
 	"github.com/spf13/cobra"
 
-	"github.com/projectdiscovery/cvemap/pkg/tools/id"
-	"github.com/projectdiscovery/cvemap/pkg/tools/renderer"
+	"github.com/projectdiscovery/vulnx/pkg/tools/id"
+	"github.com/projectdiscovery/vulnx/pkg/tools/renderer"
 )
 
 var ( //nolint
@@ -120,20 +120,20 @@ vulnx id --no-color CVE-2024-1234
 				vulnIDs = vulnIDs[:100]
 			}
 
-			// Use the global cvemapClient
-			handler := id.NewHandler(cvemapClient)
+			// Use the global vulnxClient
+			handler := id.NewHandler(vulnxClient)
 
 			// Handle JSON output for multiple IDs
 			if jsonOutput || outputFile != "" {
-				var allVulns []*cvemap.Vulnerability
+				var allVulns []*vulnx.Vulnerability
 				for _, vulnID := range vulnIDs {
 					vuln, err := handler.Get(vulnID)
 					if err != nil {
-						if errors.Is(err, cvemap.ErrNotFound) {
+						if errors.Is(err, vulnx.ErrNotFound) {
 							gologger.Warning().Msgf("Vulnerability not found: %s", vulnID)
 							continue
 						}
-						if errors.Is(err, cvemap.ErrTooManyRequests) {
+						if errors.Is(err, vulnx.ErrTooManyRequests) {
 							handleRateLimitError()
 						}
 						gologger.Error().Msgf("Failed to fetch vulnerability %s: %s", vulnID, err)
@@ -203,11 +203,11 @@ vulnx id --no-color CVE-2024-1234
 			for i, vulnID := range vulnIDs {
 				vuln, err := handler.Get(vulnID)
 				if err != nil {
-					if errors.Is(err, cvemap.ErrNotFound) {
+					if errors.Is(err, vulnx.ErrNotFound) {
 						gologger.Warning().Msgf("Vulnerability not found: %s", vulnID)
 						continue
 					}
-					if errors.Is(err, cvemap.ErrTooManyRequests) {
+					if errors.Is(err, vulnx.ErrTooManyRequests) {
 						handleRateLimitError()
 					}
 					gologger.Error().Msgf("Failed to fetch vulnerability %s: %s", vulnID, err)

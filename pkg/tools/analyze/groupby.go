@@ -7,16 +7,16 @@ import (
 	"strings"
 
 	"github.com/mark3labs/mcp-go/mcp"
-	"github.com/projectdiscovery/cvemap"
+	"github.com/projectdiscovery/vulnx"
 )
 
-// Handler wraps the cvemap.Client for faceted vulnerability analysis operations.
+// Handler wraps the vulnx.Client for faceted vulnerability analysis operations.
 type Handler struct {
-	client *cvemap.Client
+	client *vulnx.Client
 }
 
 // NewHandler constructs a new Handler instance.
-func NewHandler(client *cvemap.Client) *Handler {
+func NewHandler(client *vulnx.Client) *Handler {
 	return &Handler{client: client}
 }
 
@@ -52,7 +52,7 @@ type Params struct {
 // provide at least one term facet via Params.Fields. The function sets
 // Fields to ["doc_id"] and Limit to 1 to minimise response size as we are only
 // interested in the aggregation buckets.
-func (h *Handler) Analyze(params Params) (cvemap.SearchResponse, error) {
+func (h *Handler) Analyze(params Params) (vulnx.SearchResponse, error) {
 	// Enforce maximum facet size of 200 across all inputs to avoid abuse.
 
 	// 1. Clamp FacetSize if provided.
@@ -79,10 +79,10 @@ func (h *Handler) Analyze(params Params) (cvemap.SearchResponse, error) {
 		cappedFields[i] = strings.ReplaceAll(f, "=", ":")
 	}
 
-	sp := cvemap.SearchParams{
+	sp := vulnx.SearchParams{
 		TermFacets: cappedFields,
 		Fields:     []string{"doc_id"},
-		Limit:      cvemap.Ptr(1),
+		Limit:      vulnx.Ptr(1),
 	}
 	if params.Query != nil {
 		sp.Query = params.Query
@@ -113,7 +113,7 @@ func (h *Handler) MCPToolSpec() mcp.Tool {
 }
 
 // MCPHandler returns the MCP handler for this tool.
-func (h *Handler) MCPHandler(client *cvemap.Client) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (h *Handler) MCPHandler(client *vulnx.Client) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		fields, err := request.RequireStringSlice("fields")
 		if err != nil || len(fields) == 0 {

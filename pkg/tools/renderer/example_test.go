@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/projectdiscovery/cvemap"
+	"github.com/projectdiscovery/vulnx"
 )
 
 func ExampleRender() {
@@ -44,7 +44,7 @@ func ExampleRender() {
 	}
 
 	// Create sample vulnerability data
-	vuln := &cvemap.Vulnerability{
+	vuln := &vulnx.Vulnerability{
 		DocID:     "CVE-2024-1234",
 		Name:      "Example Vulnerability",
 		Severity:  "critical",
@@ -52,22 +52,22 @@ func ExampleRender() {
 		AgeInDays: 30,
 		EpssScore: 0.85,
 		CvssScore: 9.1,
-		Exposure: &cvemap.VulnExposure{
+		Exposure: &vulnx.VulnExposure{
 			MaxHosts: 15000,
 		},
-		AffectedProducts: []*cvemap.ProductInfo{
+		AffectedProducts: []*vulnx.ProductInfo{
 			{Vendor: "example-corp", Product: "webapp"},
 			{Vendor: "example-corp", Product: "api-server"},
 		},
 		IsPatchAvailable: true,
 		PocCount:         2,
 		IsKev:            true,
-		Kev: []*cvemap.KevInfo{
+		Kev: []*vulnx.KevInfo{
 			{Source: "cisa"},
 			{Source: "vulcheck"},
 		},
 		IsTemplate:  false,
-		H1:          &cvemap.H1Stats{Reports: 5},
+		H1:          &vulnx.H1Stats{Reports: 5},
 		Tags:        []string{"rce", "auth-bypass"},
 		Description: "Critical vulnerability that has been exploited in the wild",
 	}

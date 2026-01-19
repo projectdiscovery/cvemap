@@ -13,9 +13,7 @@ endif
 
 all: build
 build:
-	$(GOBUILD) $(GOFLAGS) -ldflags '$(LDFLAGS)' -o "cvemap" cmd/cvemap/main.go
-build-vulnx:
-	$(GOBUILD) $(GOFLAGS) -ldflags '$(LDFLAGS) -X github.com/projectdiscovery/cvemap/cmd/vulnx/clis.Version=v1.0.0' -o "vulnx" cmd/vulnx/main.go
+	$(GOBUILD) $(GOFLAGS) -ldflags '$(LDFLAGS)' -o "vulnx" cmd/vulnx/main.go
 integration:
 	cd cmd/integration-test; bash run.sh
 tidy:
@@ -69,4 +67,4 @@ fix-deps:
 	@chmod +x scripts/fix-dependencies.sh
 	@./scripts/fix-dependencies.sh
 
-.PHONY: all build build-vulnx integration tidy fmt vet test lint pre-push pre-commit git-hooks fix-deps
+.PHONY: all build integration tidy fmt vet test lint pre-push pre-commit git-hooks fix-deps

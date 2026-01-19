@@ -8,12 +8,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/projectdiscovery/cvemap"
+	"github.com/projectdiscovery/vulnx"
 	"github.com/projectdiscovery/gologger"
 	"github.com/spf13/cobra"
 
-	"github.com/projectdiscovery/cvemap/pkg/tools/renderer"
-	searchtool "github.com/projectdiscovery/cvemap/pkg/tools/search"
+	"github.com/projectdiscovery/vulnx/pkg/tools/renderer"
+	searchtool "github.com/projectdiscovery/vulnx/pkg/tools/search"
 )
 
 var (
@@ -130,24 +130,24 @@ vulnx search --term-facets tags=10,severity=4 "is_remote:true"
 				gologger.Fatal().Msgf("Failed to build filter query: %s", err)
 			}
 
-			params := cvemap.SearchParams{}
+			params := vulnx.SearchParams{}
 
 			if searchLimit > 0 {
-				params.Limit = cvemap.Ptr(searchLimit)
+				params.Limit = vulnx.Ptr(searchLimit)
 			}
 			if searchOffset > 0 {
-				params.Offset = cvemap.Ptr(searchOffset)
+				params.Offset = vulnx.Ptr(searchOffset)
 			}
 
 			// Set default sorting to latest CVE published date if no sort options provided
 			if searchSortAsc == "" && searchSortDesc == "" {
-				params.SortDesc = cvemap.Ptr("cve_created_at")
+				params.SortDesc = vulnx.Ptr("cve_created_at")
 			} else {
 				if searchSortAsc != "" {
-					params.SortAsc = cvemap.Ptr(searchSortAsc)
+					params.SortAsc = vulnx.Ptr(searchSortAsc)
 				}
 				if searchSortDesc != "" {
-					params.SortDesc = cvemap.Ptr(searchSortDesc)
+					params.SortDesc = vulnx.Ptr(searchSortDesc)
 				}
 			}
 			if len(searchFields) > 0 {
@@ -165,10 +165,10 @@ vulnx search --term-facets tags=10,severity=4 "is_remote:true"
 				params.RangeFacets = searchRangeFacets
 			}
 			if searchHighlight {
-				params.Highlight = cvemap.Ptr(true)
+				params.Highlight = vulnx.Ptr(true)
 			}
 			if searchFacetSize > 0 {
-				params.FacetSize = cvemap.Ptr(searchFacetSize)
+				params.FacetSize = vulnx.Ptr(searchFacetSize)
 			}
 
 			// Combine user query with filter query
@@ -183,17 +183,17 @@ vulnx search --term-facets tags=10,severity=4 "is_remote:true"
 
 			// Set final query
 			if finalQuery != "" {
-				params.Query = cvemap.Ptr(finalQuery)
+				params.Query = vulnx.Ptr(finalQuery)
 			}
 
-			// Use the global cvemapClient
-			handler := searchtool.NewHandler(cvemapClient)
+			// Use the global vulnxClient
+			handler := searchtool.NewHandler(vulnxClient)
 			resp, err := handler.Search(params)
 			if err != nil {
-				if errors.Is(err, cvemap.ErrNotFound) {
+				if errors.Is(err, vulnx.ErrNotFound) {
 					gologger.Fatal().Msgf("No results found for query: %s", query)
 				}
-				if errors.Is(err, cvemap.ErrTooManyRequests) {
+				if errors.Is(err, vulnx.ErrTooManyRequests) {
 					handleRateLimitError()
 				}
 				gologger.Fatal().Msgf("Failed to perform search: %s", err)

@@ -1,4 +1,4 @@
-# CVEMap Cursor Rules
+# vulnx Cursor Rules
 # ProjectDiscovery CVE Navigation Tool - Go CLI Application
 
 ## Project Overview
@@ -14,7 +14,7 @@ This is a Go-based CLI tool for navigating CVE (Common Vulnerabilities and Expos
 
 ## Project Structure
 ```
-cmd/cvemap/          # Main application entry point
+cmd/vulnx/          # Main application entry point
 pkg/runner/          # Core application logic, CLI handling, and table rendering
 pkg/service/         # API service layer for CVE data retrieval
 pkg/types/           # Type definitions and data structures

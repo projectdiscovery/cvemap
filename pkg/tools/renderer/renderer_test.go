@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/projectdiscovery/cvemap"
+	"github.com/projectdiscovery/vulnx"
 )
 
 func TestRender(t *testing.T) {
@@ -14,13 +14,13 @@ func TestRender(t *testing.T) {
 		Severity: "high",
 		Name:     "Placeholder Vulnerability Title",
 		Author:   []string{"author1", "author2", "author3", "author4"},
-		Exposure: &cvemap.VulnExposure{
+		Exposure: &vulnx.VulnExposure{
 			MaxHosts: 42100,
 		},
 		EpssScore: 0.0042,
 		CvssScore: 8.8,
 		AgeInDays: 123,
-		AffectedProducts: []*cvemap.ProductInfo{
+		AffectedProducts: []*vulnx.ProductInfo{
 			{Vendor: "vendor1", Product: "product1"},
 			{Vendor: "vendor2", Product: "product2"},
 			{Vendor: "vendor3", Product: "product3"},
@@ -28,13 +28,13 @@ func TestRender(t *testing.T) {
 		IsPatchAvailable: true,
 		PocCount:         3,
 		IsKev:            true,
-		Kev: []*cvemap.KevInfo{
+		Kev: []*vulnx.KevInfo{
 			{Source: "cisa"},
 		},
 		IsTemplate: true,
-		H1:         &cvemap.H1Stats{Reports: 5},
+		H1:         &vulnx.H1Stats{Reports: 5},
 		Tags:       []string{"cve", "jira", "misconfig"},
-		Pocs: []*cvemap.POC{
+		Pocs: []*vulnx.POC{
 			{Source: "exploit-db"},
 		},
 	}
@@ -269,7 +269,7 @@ func TestExploitSeen(t *testing.T) {
 		{
 			name: "exploit in POC source",
 			entry: &Entry{
-				Pocs: []*cvemap.POC{
+				Pocs: []*vulnx.POC{
 					{Source: "exploit-db"},
 				},
 			},
@@ -278,7 +278,7 @@ func TestExploitSeen(t *testing.T) {
 		{
 			name: "exploit in citation URL",
 			entry: &Entry{
-				Citations: []*cvemap.Citation{
+				Citations: []*vulnx.Citation{
 					{URL: "https://exploit-db.com/exploits/1234"},
 				},
 			},
@@ -319,7 +319,7 @@ func TestExploitSeen(t *testing.T) {
 }
 
 func TestExtractDistinctVendors(t *testing.T) {
-	products := []*cvemap.ProductInfo{
+	products := []*vulnx.ProductInfo{
 		{Vendor: "vendor1", Product: "product1"},
 		{Vendor: "vendor2", Product: "product2"},
 		{Vendor: "vendor1", Product: "product3"}, // duplicate vendor
@@ -347,7 +347,7 @@ func TestExtractDistinctVendors(t *testing.T) {
 }
 
 func TestExtractDistinctProducts(t *testing.T) {
-	products := []*cvemap.ProductInfo{
+	products := []*vulnx.ProductInfo{
 		{Vendor: "vendor1", Product: "product1"},
 		{Vendor: "vendor2", Product: "product2"},
 		{Vendor: "vendor1", Product: "product1"}, // duplicate product
@@ -387,23 +387,23 @@ func TestRenderDetailed(t *testing.T) {
 		CvssScore:   9.8,
 		EpssScore:   0.0417,
 		IsKev:       true,
-		Kev: []*cvemap.KevInfo{
+		Kev: []*vulnx.KevInfo{
 			{Source: "vulncheck"},
 		},
 		IsPatchAvailable: false,
 		PocCount:         8,
 		IsTemplate:       true,
-		H1:               &cvemap.H1Stats{Reports: 0},
+		H1:               &vulnx.H1Stats{Reports: 0},
 		TemplateURI:      "http/cves/2025/CVE-2025-5777.yaml",
-		Pocs: []*cvemap.POC{
+		Pocs: []*vulnx.POC{
 			{URL: "https://github.com/RaR1991/citrix_bleed_2", Source: "gh-nomi-sec"},
 			{URL: "https://github.com/nocerainfosec/cve-2025-5777", Source: "gh-nomi-sec"},
 		},
-		Citations: []*cvemap.Citation{
+		Citations: []*vulnx.Citation{
 			{URL: "https://nvd.nist.gov/vuln/detail/CVE-2025-5777", Source: "nuclei_template"},
 			{URL: "https://dashboard.shadowserver.org/statistics/honeypot/vulnerability/map/?day=2025-05-05&host_type=src&vuln=CVE-2025-5777", Source: "vulncheck"},
 		},
-		AffectedProducts: []*cvemap.ProductInfo{
+		AffectedProducts: []*vulnx.ProductInfo{
 			{Vendor: "citrix", Product: "netscaler_adc"},
 			{Vendor: "citrix", Product: "netscaler_gateway"},
 		},

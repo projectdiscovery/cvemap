@@ -13,8 +13,8 @@ import (
 
 	"github.com/eiannone/keyboard"
 	"github.com/jedib0t/go-pretty/v6/table"
-	"github.com/projectdiscovery/cvemap/pkg/service"
-	"github.com/projectdiscovery/cvemap/pkg/types"
+	"github.com/projectdiscovery/vulnx/pkg/service"
+	"github.com/projectdiscovery/vulnx/pkg/types"
 	"github.com/projectdiscovery/goflags"
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/utils/auth/pdcp"
@@ -118,8 +118,8 @@ func ParseOptions() *Options {
 	)
 
 	flagset.CreateGroup("update", "Update",
-		flagset.CallbackVarP(GetUpdateCallback(), "update", "up", "update cvemap to latest version"),
-		flagset.BoolVarP(&options.DisableUpdateCheck, "disable-update-check", "duc", false, "disable automatic cvemap update check"),
+		flagset.CallbackVarP(GetUpdateCallback(), "update", "up", "update vulnx to latest version"),
+		flagset.BoolVarP(&options.DisableUpdateCheck, "disable-update-check", "duc", false, "disable automatic vulnx update check"),
 	)
 
 	flagset.CreateGroup("FILTER", "filter",
@@ -158,9 +158,6 @@ func ParseOptions() *Options {
 		options.Debug = env.GetEnvOrDefault("DEBUG", false)
 	}
 	if options.Version {
-		gologger.Info().Msgf("⚠️  Important: cvemap uses an older API version that will be discontinued on August 1, 2025.")
-		gologger.Info().Msgf("Please migrate to 'vulnx' for continued access to vulnerability data.")
-		gologger.Info().Msgf("Install: go install github.com/projectdiscovery/cvemap/cmd/vulnx@latest")
 		gologger.Info().Msgf("Current Version: %s\n", Version)
 		os.Exit(0)
 	}
@@ -179,7 +176,7 @@ func ParseOptions() *Options {
 		ph := pdcp.PDCPCredHandler{}
 		if _, err := ph.GetCreds(); err == pdcp.ErrNoCreds {
 			apiServer := env.GetEnvOrDefault("PDCP_API_SERVER", pdcp.DefaultApiServer)
-			if validatedCreds, err := ph.ValidateAPIKey(PDCPApiKey, apiServer, "cvemap"); err == nil {
+			if validatedCreds, err := ph.ValidateAPIKey(PDCPApiKey, apiServer, "vulnx"); err == nil {
 				_ = ph.SaveCreds(validatedCreds)
 			}
 		}
@@ -224,8 +221,8 @@ func ParseOptions() *Options {
 }
 
 type Runner struct {
-	Options       *Options
-	CvemapService *service.Cvemap
+	Options      *Options
+	VulnxService *service.Vulnx
 }
 
 func New(options *Options) (*Runner, error) {
@@ -242,13 +239,13 @@ func New(options *Options) (*Runner, error) {
 			Transport: &http.Transport{
 				Proxy: http.ProxyURL(proxyURL)}}
 	}
-	CvemapService, err := service.NewCvemap(serviceOpts)
+	vulnxService, err := service.NewVulnx(serviceOpts)
 	if err != nil {
 		return nil, err
 	}
 	r := &Runner{
-		Options:       options,
-		CvemapService: CvemapService,
+		Options:      options,
+		VulnxService: vulnxService,
 	}
 	return r, nil
 }
@@ -258,13 +255,13 @@ func (r *Runner) Run() {
 	showBanner()
 
 	if !r.Options.DisableUpdateCheck {
-		latestVersion, err := updateutils.GetToolVersionCallback("cvemap", Version)()
+		latestVersion, err := updateutils.GetToolVersionCallback("vulnx", Version)()
 		if err != nil {
 			if r.Options.Verbose {
-				gologger.Error().Msgf("cvemap version check failed: %v", err.Error())
+				gologger.Error().Msgf("vulnx version check failed: %v", err.Error())
 			}
 		} else {
-			gologger.Info().Msgf("Current cvemap version %v %v", Version, updateutils.GetVersionDescription(Version, latestVersion))
+			gologger.Info().Msgf("Current vulnx version %v %v", Version, updateutils.GetVersionDescription(Version, latestVersion))
 		}
 	}
 
@@ -284,16 +281,16 @@ func (r *Runner) Run() {
 
 func (r *Runner) GetCves() (*types.CVEBulkData, error) {
 	if len(r.Options.CveIds) > 0 {
-		return r.CvemapService.GetCvesByIds(r.Options.CveIds)
+		return r.VulnxService.GetCvesByIds(r.Options.CveIds)
 	}
 	if r.Options.Search != "" {
 		query := constructQueryByOptions(*r.Options)
 		if r.Options.Debug {
 			gologger.Print().Msgf("constructed query: %s\n", query)
 		}
-		return r.CvemapService.GetCvesBySearchString(query, r.Options.Limit, r.Options.Offset)
+		return r.VulnxService.GetCvesBySearchString(query, r.Options.Limit, r.Options.Offset)
 	}
-	return r.CvemapService.GetCvesByFilters(constructQueryParams(r.Options))
+	return r.VulnxService.GetCvesByFilters(constructQueryParams(r.Options))
 }
 
 func (r *Runner) process() *types.CVEBulkData {

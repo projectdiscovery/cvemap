@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/projectdiscovery/cvemap/pkg/types"
+	"github.com/projectdiscovery/vulnx/pkg/types"
 	"github.com/projectdiscovery/gologger"
 )
 
@@ -25,7 +25,7 @@ func SetupMockServer() {
 
 	go func() {
 		// Start the server on port 8080
-		fmt.Println("Cvemap test server listening on 8080...")
+		fmt.Println("Vulnx test server listening on 8080...")
 		if err := http.ListenAndServe(":8080", nil); err != nil {
 			fmt.Println("Error starting server:", err)
 		}

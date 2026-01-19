@@ -19,7 +19,7 @@ type VulnxTestCase struct {
 }
 
 func (v *VulnxTestCase) Execute() error {
-	output, err := runVulnxBinaryAndGetResults(*currentVulnxBinary, debug, v.Args)
+	output, err := runVulnxBinaryAndGetResults(*vulnxBinary, debug, v.Args)
 	if err != nil && !v.ShouldFail {
 		return errors.Wrapf(err, "vulnx test '%s' failed unexpectedly", v.Name)
 	}

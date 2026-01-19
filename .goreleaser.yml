@@ -3,30 +3,6 @@ before:
     - go mod tidy
 
 builds:
-  # CVEMap binary
-  - id: cvemap
-    env:
-      - CGO_ENABLED=0
-    goos:
-      - windows
-      - linux
-      - darwin
-    goarch:
-      - amd64
-      - "386"
-      - arm
-      - arm64
-    ignore:
-      - goos: darwin
-        goarch: "386"
-      - goos: windows
-        goarch: arm
-      - goos: windows
-        goarch: arm64
-    binary: cvemap
-    main: cmd/cvemap/main.go
-
-  # VulnX binary
   - id: vulnx
     env:
       - CGO_ENABLED=0
@@ -49,16 +25,9 @@ builds:
     binary: vulnx
     main: cmd/vulnx/main.go
     ldflags:
-      - -s -w -X github.com/projectdiscovery/cvemap/cmd/vulnx/clis.Version={{.Version}}
+      - -s -w -X github.com/projectdiscovery/vulnx/cmd/vulnx/clis.Version={{.Version}}
 
 archives:
-  # CVEMap archives
-  - id: cvemap
-    builds: ['cvemap']
-    format: zip
-    name_template: 'cvemap_{{ .Version }}_{{ if eq .Os "darwin" }}macOS{{ else }}{{ .Os }}{{ end }}_{{ .Arch }}'
-
-  # VulnX archives
   - id: vulnx
     builds: ['vulnx']
     format: zip
@@ -68,17 +37,6 @@ checksum:
   algorithm: sha256
 
 dockers:
-  # CVEMap Docker image - amd64 only to avoid manifest list issues
-  - image_templates:
-      - "projectdiscovery/cvemap:latest"
-      - "projectdiscovery/cvemap:{{ .Tag }}"
-      - "projectdiscovery/cvemap:v{{ .Major }}"
-    dockerfile: Dockerfile
-    use: buildx
-    build_flag_templates:
-      - --platform=linux/amd64
-
-  # VulnX Docker image - amd64 only to avoid manifest list issues
   - image_templates:
       - "projectdiscovery/vulnx:latest"
       - "projectdiscovery/vulnx:{{ .Tag }}"

@@ -9,10 +9,10 @@ import (
 	"github.com/projectdiscovery/gologger"
 )
 
-// RunCvemapßBinaryAndGetResults returns a list of the results
-func RunCvemapBinaryAndGetResults(cvemapBinary string, debug bool, args []string) ([]string, error) {
+// RunVulnxBinaryAndGetResults returns a list of the results
+func RunVulnxBinaryAndGetResults(vulnxBinary string, debug bool, args []string) ([]string, error) {
 	cmd := exec.Command("bash", "-c")
-	cmdLine := fmt.Sprintf(`./%s `, cvemapBinary)
+	cmdLine := fmt.Sprintf(`./%s `, vulnxBinary)
 	cmdLine += strings.Join(args, " ")
 	if debug {
 		if err := os.Setenv("DEBUG", "1"); err != nil {

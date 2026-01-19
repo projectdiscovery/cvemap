@@ -5,14 +5,14 @@ import (
 	"encoding/json"
 
 	"github.com/mark3labs/mcp-go/mcp"
-	"github.com/projectdiscovery/cvemap"
+	"github.com/projectdiscovery/vulnx"
 )
 
 // Handler provides high-level helpers around the vulnerability search
 // endpoint. It mirrors the design of pkg/tools/id.Handler for
 // consistency across tools.
 //
-// All methods are thin wrappers over the corresponding cvemap.Client
+// All methods are thin wrappers over the corresponding vulnx.Client
 // helpers so that business logic remains decoupled from CLI concerns.
 // The type is intentionally small to keep instantiation and use
 // lightweight.
@@ -20,24 +20,24 @@ import (
 // Example:
 //
 //	h := search.NewHandler(client)
-//	resp, err := h.Search(cvemap.SearchParams{Query: cvemap.Ptr("severity:critical")})
+//	resp, err := h.Search(vulnx.SearchParams{Query: vulnx.Ptr("severity:critical")})
 //
 // The zero value of Handler is not valid; always use NewHandler.
 type Handler struct {
-	client *cvemap.Client
+	client *vulnx.Client
 }
 
 // NewHandler returns a new Handler instance that uses the provided
-// cvemap.Client for all network operations.
-func NewHandler(client *cvemap.Client) *Handler {
+// vulnx.Client for all network operations.
+func NewHandler(client *vulnx.Client) *Handler {
 	return &Handler{client: client}
 }
 
 // Search performs a full-text search across vulnerabilities using the
 // supplied parameters. It delegates the heavy-lifting to
-// cvemap.Client.SearchVulnerabilities and simply forwards the request
+// vulnx.Client.SearchVulnerabilities and simply forwards the request
 // context.
-func (h *Handler) Search(params cvemap.SearchParams) (cvemap.SearchResponse, error) {
+func (h *Handler) Search(params vulnx.SearchParams) (vulnx.SearchResponse, error) {
 	return h.client.SearchVulnerabilities(context.Background(), params)
 }
 
@@ -69,7 +69,7 @@ func (h *Handler) MCPToolSpec() mcp.Tool {
 }
 
 // MCPHandler returns the MCP handler for this tool.
-func (h *Handler) MCPHandler(client *cvemap.Client) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (h *Handler) MCPHandler(client *vulnx.Client) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		query, err := request.RequireString("query")
 		if err != nil || query == "" {
@@ -82,7 +82,7 @@ func (h *Handler) MCPHandler(client *cvemap.Client) func(ctx context.Context, re
 		offset := request.GetInt("offset", 0)
 
 		// Prepare base search parameters
-		params := cvemap.SearchParams{
+		params := vulnx.SearchParams{
 			Query:  &query,
 			Limit:  &limit,
 			Offset: &offset,

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/projectdiscovery/cvemap/pkg/tools/filters"
+	"github.com/projectdiscovery/vulnx/pkg/tools/filters"
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/utils/auth/pdcp"
 	"github.com/spf13/cobra"
@@ -281,14 +281,14 @@ func runAuthCommand() {
 		}
 	}()
 
-	// Initialize the cvemap client to test the API key
-	err = ensureCvemapClientInitialized(nil)
+	// Initialize the vulnx client to test the API key
+	err = ensureVulnxClientInitialized(nil)
 	if err != nil {
 		gologger.Fatal().Msgf("Failed to initialize API client: %s", err)
 	}
 
 	// Make a real API call to validate the key
-	handler := filters.NewHandler(cvemapClient)
+	handler := filters.NewHandler(vulnxClient)
 	_, err = handler.List()
 	if err != nil {
 		gologger.Fatal().Msgf("API key validation failed: %s", err)
@@ -330,20 +330,20 @@ func validateCurrentAPIKey(apiKey, source string) bool {
 		defer os.Unsetenv("PDCP_API_KEY")
 	}
 
-	// Initialize the cvemap client (same method as healthcheck)
-	err := ensureCvemapClientInitialized(nil)
+	// Initialize the vulnx client (same method as healthcheck)
+	err := ensureVulnxClientInitialized(nil)
 	if err != nil {
 		gologger.Error().Msgf("✗ Failed to initialize API client: %s", err)
 		return false
 	}
 
-	if cvemapClient == nil {
+	if vulnxClient == nil {
 		gologger.Error().Msg("✗ API client is nil after initialization")
 		return false
 	}
 
 	// Make a real API call to test the key (same as healthcheck)
-	handler := filters.NewHandler(cvemapClient)
+	handler := filters.NewHandler(vulnxClient)
 	_, err = handler.List()
 	if err != nil {
 		gologger.Error().Msgf("✗ API key validation failed: %s", err)

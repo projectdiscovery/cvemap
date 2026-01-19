@@ -13,9 +13,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - name: cvemap
-            dockerfile: Dockerfile
-            image: projectdiscovery/cvemap
           - name: vulnx
             dockerfile: Dockerfile.vulnx
             image: projectdiscovery/vulnx
@@ -26,7 +23,7 @@ jobs:
       - name: Get Github tag
         id: meta
         run: |
-          curl --silent "https://api.github.com/repos/projectdiscovery/cvemap/releases/latest" | jq -r .tag_name | xargs -I {} echo TAG={} >> $GITHUB_OUTPUT
+          curl --silent "https://api.github.com/repos/projectdiscovery/vulnx/releases/latest" | jq -r .tag_name | xargs -I {} echo TAG={} >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2

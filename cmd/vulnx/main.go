@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/projectdiscovery/cvemap/cmd/vulnx/clis"
+	"github.com/projectdiscovery/vulnx/cmd/vulnx/clis"
 	"github.com/projectdiscovery/gologger"
 )
 

@@ -1,5 +1,5 @@
-// Package cvemap provides a robust, idiomatic Go client for interacting
-// with the ProjectDiscovery CVE Map (CVEMap) REST API. The client focuses on
+// Package vulnx provides a robust, idiomatic Go client for interacting
+// with the ProjectDiscovery vulnx REST API. The client focuses on
 // the "/v2/vulnerability" endpoints, exposing high-level helper methods that
 // handle authentication, request construction, network-level retries, and JSON
 // decoding so that callers can concentrate on business logic.
@@ -12,16 +12,16 @@
 //
 //	ctx := context.Background()
 //
-//	client, err := cvemap.New(
-//	    cvemap.WithKeyFromEnv(), // or cvemap.WithPDCPKey("<YOUR_KEY>")
+//	client, err := vulnx.New(
+//	    vulnx.WithKeyFromEnv(), // or vulnx.WithPDCPKey("<YOUR_KEY>")
 //	)
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
 //
-//	out, err := client.SearchVulnerabilities(ctx, cvemap.SearchParams{
-//	    Query: cvemap.Ptr("id:CVE-2023-4799"),
-//	    Limit: cvemap.Ptr(10),
+//	out, err := client.SearchVulnerabilities(ctx, vulnx.SearchParams{
+//	    Query: vulnx.Ptr("id:CVE-2023-4799"),
+//	    Limit: vulnx.Ptr(10),
 //	})
 //	if err != nil {
 //	    log.Fatal(err)
@@ -38,7 +38,7 @@
 // The client is safe for concurrent use by multiple goroutines.
 //
 // For complete API semantics refer to https://api.projectdiscovery.io/docs.
-package cvemap
+package vulnx
 
 import (
 	"context"
@@ -59,7 +59,7 @@ const (
 	// DefaultBaseURL is the default base URL for the API.
 	DefaultBaseURL = "https://pb-feat-rate-limiting-s-1312.dev.projectdiscovery.io"
 	// UserAgent is the default user agent for the client.
-	UserAgent = "cvemap-client/1.0"
+	UserAgent = "vulnx-client/1.0"
 )
 
 // Client errors
@@ -85,16 +85,16 @@ var (
 //
 // A typical call site looks like this:
 //
-//	client, err := cvemap.New(
-//	    cvemap.WithPDCPKey("<YOUR_KEY>"),
-//	    cvemap.WithRetryableHTTPOptions(retryablehttp.Options{RetryMax: 5}),
+//	client, err := vulnx.New(
+//	    vulnx.WithPDCPKey("<YOUR_KEY>"),
+//	    vulnx.WithRetryableHTTPOptions(retryablehttp.Options{RetryMax: 5}),
 //	)
 //	if err != nil {
 //	    // handle error
 //	}
 type Option func(*Client)
 
-// Client provides high-level helpers around the CVEMap API. It is safe for
+// Client provides high-level helpers around the vulnx API. It is safe for
 // concurrent use. Zero values for *Client* fields are not meaningful—always use
 // the *New* constructor.
 type Client struct {
@@ -114,11 +114,11 @@ type Client struct {
 //
 // The returned client is ready for immediate use:
 //
-//	c, err := cvemap.New(cvemap.WithPDCPKey("<YOUR_KEY>"))
+//	c, err := vulnx.New(vulnx.WithPDCPKey("<YOUR_KEY>"))
 //	if err != nil { /* handle */ }
 //
 //	// Or without authentication (subject to rate limits):
-//	c, err := cvemap.New()
+//	c, err := vulnx.New()
 //	if err != nil { /* handle */ }
 //
 // Custom HTTP behaviour (timeouts, retries, logging) can be injected via

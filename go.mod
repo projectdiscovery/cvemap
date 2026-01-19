@@ -1,4 +1,4 @@
-module github.com/projectdiscovery/cvemap
+module github.com/projectdiscovery/vulnx
 
 go 1.23.0
 
