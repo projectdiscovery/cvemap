@@ -85,7 +85,7 @@ var vulnxTestCases = map[string]*VulnxTestCase{
 	"Help Command": {
 		Name:        "Help Command",
 		Args:        []string{"--help"},
-		ExpectedOut: "vulnx — The Swiss Army knife for vulnerability intel",
+		ExpectedOut: "vulnx — the swiss army knife for vulnerability intel",
 	},
 	"Analyze Command": {
 		Name:        "Analyze Command",

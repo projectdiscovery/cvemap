@@ -41,7 +41,7 @@ var testCases = map[string]testutils.TestCase{
 type CveIDTestCase struct{}
 
 func (c *CveIDTestCase) Execute() error {
-	output, err := testutils.RunVulnxBinaryAndGetResults(*vulnxBinary, debug, []string{"-id", "CVE-1999-0027", "-j", "-silent"})
+	output, err := testutils.RunVulnxBinaryAndGetResults(*vulnxBinary, debug, []string{"id", "CVE-1999-0027", "--json", "--silent"})
 	if err != nil {
 		return errors.Wrap(err, "could not run vulnx test")
 	}
