@@ -26,7 +26,7 @@ func NewHandler(client *vulnx.Client) *Handler {
 }
 
 // List retrieves the full list of vulnerability filter definitions from the
-// CVEMap API. It forwards the call to vulnx.Client.GetVulnerabilityFilters
+// Vulnx API. It forwards the call to vulnx.Client.GetVulnerabilityFilters
 // using a background context.
 func (h *Handler) List() ([]vulnx.VulnerabilityFilter, error) {
 	return h.client.GetVulnerabilityFilters(context.Background())

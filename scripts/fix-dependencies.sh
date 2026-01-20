@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# CVEMap Dependency Fixer
+# Vulnx Dependency Fixer
 # Helps resolve common Go module and dependency issues
 
 set -e
 
-echo "🔧 Fixing CVEMap dependencies..."
+echo "🔧 Fixing Vulnx dependencies..."
 
 # Color codes for output
 RED='\033[0;31m'

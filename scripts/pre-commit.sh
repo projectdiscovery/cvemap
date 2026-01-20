@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# CVEMap Pre-Commit Check Script
+# Vulnx Pre-Commit Check Script
 # Run this script before pushing to GitHub to avoid CI failures
 
 set -e
 
-echo "🚀 Running pre-commit checks for CVEMap..."
+echo "🚀 Running pre-commit checks for Vulnx..."
 
 # Color codes for output
 RED='\033[0;31m'
