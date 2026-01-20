@@ -23,7 +23,7 @@ var (
 func main() {
 	flag.Parse()
 	SetupMockServer()
-	if err := os.Setenv("VULNX_API_URL", "http://localhost:8080/api/v1"); err != nil {
+	if err := os.Setenv("VULNX_API_URL", "http://localhost:8080"); err != nil {
 		gologger.Error().Msgf("Failed to set VULNX_API_URL: %s", err)
 	}
 	if err := os.Setenv("PDCP_API_KEY", xPDCPHeaderTestKey); err != nil {

@@ -70,7 +70,7 @@ var vulnxTestCases = map[string]*VulnxTestCase{
 	"Get By CVE ID": {
 		Name:        "Get By CVE ID",
 		Args:        []string{"id", "CVE-1999-0027", "--json", "--silent"},
-		ExpectedOut: `"cve_id":"CVE-1999-0027"`,
+		ExpectedOut: `"cve_id": "CVE-1999-0027"`,
 	},
 	"Search Command": {
 		Name:        "Search Command",

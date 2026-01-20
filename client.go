@@ -47,6 +47,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/projectdiscovery/gologger"
@@ -60,6 +61,8 @@ const (
 	DefaultBaseURL = "https://pb-feat-rate-limiting-s-1312.dev.projectdiscovery.io"
 	// UserAgent is the default user agent for the client.
 	UserAgent = "vulnx-client/1.0"
+	// BaseURLEnvVar is the environment variable name for overriding the base URL.
+	BaseURLEnvVar = "VULNX_API_URL"
 )
 
 // Client errors
@@ -124,8 +127,14 @@ type Client struct {
 // Custom HTTP behaviour (timeouts, retries, logging) can be injected via
 // *WithClient* or *WithRetryableHTTPOptions*.
 func New(opts ...Option) (*Client, error) {
+	// Check for base URL override from environment
+	baseURL := DefaultBaseURL
+	if envURL := os.Getenv(BaseURLEnvVar); envURL != "" {
+		baseURL = envURL
+	}
+
 	c := &Client{
-		baseURL:   DefaultBaseURL,
+		baseURL:   baseURL,
 		userAgent: UserAgent,
 		httpc:     retryablehttp.NewClient(retryablehttp.DefaultOptionsSingle), // Default retryablehttp client
 	}
