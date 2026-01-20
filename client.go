@@ -58,7 +58,7 @@ import (
 
 const (
 	// DefaultBaseURL is the default base URL for the API.
-	DefaultBaseURL = "https://pb-feat-rate-limiting-s-1312.dev.projectdiscovery.io"
+	DefaultBaseURL = "https://api.projectdiscovery.io"
 	// UserAgent is the default user agent for the client.
 	UserAgent = "vulnx-client/1.0"
 	// BaseURLEnvVar is the environment variable name for overriding the base URL.
