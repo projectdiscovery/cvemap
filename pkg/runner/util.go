@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/projectdiscovery/cvemap/pkg/types"
+	"github.com/projectdiscovery/vulnx/pkg/types"
 	"github.com/projectdiscovery/gologger"
 	fileutil "github.com/projectdiscovery/utils/file"
 )

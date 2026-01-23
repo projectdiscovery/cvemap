@@ -20,16 +20,16 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/projectdiscovery/cvemap"
+	"github.com/projectdiscovery/vulnx"
 	"github.com/projectdiscovery/gologger"
 	"github.com/projectdiscovery/gologger/levels"
 	retryablehttp "github.com/projectdiscovery/retryablehttp-go"
 
 	"github.com/mark3labs/mcp-go/server"
-	"github.com/projectdiscovery/cvemap/pkg/tools"
-	"github.com/projectdiscovery/cvemap/pkg/tools/analyze"
-	"github.com/projectdiscovery/cvemap/pkg/tools/id"
-	"github.com/projectdiscovery/cvemap/pkg/tools/renderer"
+	"github.com/projectdiscovery/vulnx/pkg/tools"
+	"github.com/projectdiscovery/vulnx/pkg/tools/analyze"
+	"github.com/projectdiscovery/vulnx/pkg/tools/id"
+	"github.com/projectdiscovery/vulnx/pkg/tools/renderer"
 	fileutil "github.com/projectdiscovery/utils/file"
 	updateutils "github.com/projectdiscovery/utils/update"
 )
@@ -45,8 +45,8 @@ var (
 	httpProxy   string
 	httpTimeout time.Duration
 
-	// Global cvemap client
-	cvemapClient *cvemap.Client
+	// Global vulnx client
+	vulnxClient *vulnx.Client
 
 	debugReq  bool
 	debugResp bool
@@ -93,7 +93,7 @@ var (
 					showVersionInfo()
 				}
 			}
-			err := ensureCvemapClientInitialized(cmd)
+			err := ensureVulnxClientInitialized(cmd)
 			if err != nil {
 				return err
 			}
@@ -131,8 +131,8 @@ var (
 				server.WithToolCapabilities(false),
 				server.WithRecovery(),
 			)
-			for _, tool := range tools.AllMCPTools(cvemapClient) {
-				s.AddTool(tool.MCPToolSpec(), tool.MCPHandler(cvemapClient))
+			for _, tool := range tools.AllMCPTools(vulnxClient) {
+				s.AddTool(tool.MCPToolSpec(), tool.MCPHandler(vulnxClient))
 			}
 			switch mode {
 			case "stdio":
@@ -229,8 +229,8 @@ func Execute() error {
 	return rootCmd.Execute()
 }
 
-// ensureCvemapClientInitialized initializes the global cvemapClient if it is nil.
-func ensureCvemapClientInitialized(_ *cobra.Command) error {
+// ensureVulnxClientInitialized initializes the global vulnxClient if it is nil.
+func ensureVulnxClientInitialized(_ *cobra.Command) error {
 	// Configure gologger levels based on flags
 	if debug {
 		gologger.DefaultLogger.SetMaxLevel(levels.LevelDebug)
@@ -242,7 +242,7 @@ func ensureCvemapClientInitialized(_ *cobra.Command) error {
 		gologger.DefaultLogger.SetMaxLevel(levels.LevelSilent)
 	}
 
-	if cvemapClient == nil {
+	if vulnxClient == nil {
 		if debug {
 			debugReq = true
 			debugResp = true
@@ -266,10 +266,10 @@ func ensureCvemapClientInitialized(_ *cobra.Command) error {
 		retryOpts.HttpClient = httpClient
 		retryOpts.Verbose = debug
 
-		var opts []cvemap.Option
-		opts = append(opts, cvemap.WithKeyFromEnv(), cvemap.WithRetryableHTTPOptions(retryOpts))
+		var opts []vulnx.Option
+		opts = append(opts, vulnx.WithKeyFromEnv(), vulnx.WithRetryableHTTPOptions(retryOpts))
 		if debugReq {
-			opts = append(opts, cvemap.WithDebugRequest(func(req *http.Request) {
+			opts = append(opts, vulnx.WithDebugRequest(func(req *http.Request) {
 				dump, err := httputil.DumpRequestOut(req, true)
 				if err == nil {
 					var sb strings.Builder
@@ -281,7 +281,7 @@ func ensureCvemapClientInitialized(_ *cobra.Command) error {
 			}))
 		}
 		if debugResp {
-			opts = append(opts, cvemap.WithDebugResponse(func(resp *http.Response) {
+			opts = append(opts, vulnx.WithDebugResponse(func(resp *http.Response) {
 				dump, err := httputil.DumpResponse(resp, true)
 				if err == nil {
 					var sb strings.Builder
@@ -292,11 +292,11 @@ func ensureCvemapClientInitialized(_ *cobra.Command) error {
 				}
 			}))
 		}
-		client, err := cvemap.New(opts...)
+		client, err := vulnx.New(opts...)
 		if err != nil {
-			return fmt.Errorf("failed to initialize cvemap client: %w", err)
+			return fmt.Errorf("failed to initialize vulnx client: %w", err)
 		}
-		cvemapClient = client
+		vulnxClient = client
 
 		// Show proactive message about API key configuration if not authenticated
 		if !client.IsAuthenticated() && !silent {
@@ -330,15 +330,15 @@ func showDashboard() error {
 	fmt.Printf("📊 vulnerability trends & metrics\n")
 	fmt.Printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n")
 
-	handler := analyze.NewHandler(cvemapClient)
+	handler := analyze.NewHandler(vulnxClient)
 
 	// Get overall stats first
 	overallResp, err := handler.Analyze(analyze.Params{
 		Fields:    []string{"severity=8"},
-		FacetSize: cvemap.Ptr(8),
+		FacetSize: vulnx.Ptr(8),
 	})
 	if err != nil {
-		if errors.Is(err, cvemap.ErrTooManyRequests) {
+		if errors.Is(err, vulnx.ErrTooManyRequests) {
 			fmt.Printf("⚠️  Dashboard unavailable due to rate limits. Configure API key with 'vulnx auth'.\n\n")
 			// Still show the help menu even with rate limits
 			renderQuickStartCommands()
@@ -363,16 +363,16 @@ func showDashboard() error {
 func showDashboardJSON() error {
 	// Simple JSON dashboard for silent mode
 
-	handler := analyze.NewHandler(cvemapClient)
+	handler := analyze.NewHandler(vulnxClient)
 
 	params := analyze.Params{
 		Fields:    []string{"severity", "is_kev", "is_template", "is_poc"},
-		FacetSize: cvemap.Ptr(10),
+		FacetSize: vulnx.Ptr(10),
 	}
 
 	resp, err := handler.Analyze(params)
 	if err != nil {
-		if errors.Is(err, cvemap.ErrTooManyRequests) {
+		if errors.Is(err, vulnx.ErrTooManyRequests) {
 			// Return minimal JSON for rate limited requests
 			dashboardData := map[string]interface{}{
 				"error": "Dashboard unavailable due to rate limits. Configure API key with 'vulnx auth'.",
@@ -507,12 +507,12 @@ func runIDCommandWithIDs(cveIDs []string) error {
 		cveIDs = cveIDs[:100]
 	}
 
-	// Use the global cvemapClient
-	handler := id.NewHandler(cvemapClient)
+	// Use the global vulnxClient
+	handler := id.NewHandler(vulnxClient)
 
 	// Handle JSON output for multiple IDs
 	if jsonOutput || outputFile != "" {
-		var allVulns []*cvemap.Vulnerability
+		var allVulns []*vulnx.Vulnerability
 		for _, vulnID := range cveIDs {
 			vuln, err := handler.Get(vulnID)
 			if err != nil {
@@ -715,10 +715,10 @@ func renderSeverityDistribution(handler *analyze.Handler, totalCount int) {
 	// Get severity data
 	severityResp, err := handler.Analyze(analyze.Params{
 		Fields:    []string{"severity=8"},
-		FacetSize: cvemap.Ptr(8),
+		FacetSize: vulnx.Ptr(8),
 	})
 	if err != nil {
-		if errors.Is(err, cvemap.ErrTooManyRequests) {
+		if errors.Is(err, vulnx.ErrTooManyRequests) {
 			// Skip this section due to rate limits
 			return
 		}
@@ -784,10 +784,10 @@ func renderSeverityDistribution(handler *analyze.Handler, totalCount int) {
 func renderVendorBreakdown(handler *analyze.Handler) {
 	vendorResp, err := handler.Analyze(analyze.Params{
 		Fields:    []string{"affected_products.vendor=5"},
-		FacetSize: cvemap.Ptr(5),
+		FacetSize: vulnx.Ptr(5),
 	})
 	if err != nil {
-		if errors.Is(err, cvemap.ErrTooManyRequests) {
+		if errors.Is(err, vulnx.ErrTooManyRequests) {
 			// Skip this section due to rate limits
 			return
 		}
@@ -831,10 +831,10 @@ func renderVendorBreakdown(handler *analyze.Handler) {
 func renderVulnerabilityTypes(handler *analyze.Handler) {
 	vulnTypeResp, err := handler.Analyze(analyze.Params{
 		Fields:    []string{"vulnerability_type=5"},
-		FacetSize: cvemap.Ptr(5),
+		FacetSize: vulnx.Ptr(5),
 	})
 	if err != nil {
-		if errors.Is(err, cvemap.ErrTooManyRequests) {
+		if errors.Is(err, vulnx.ErrTooManyRequests) {
 			// Skip this section due to rate limits
 			return
 		}
@@ -940,10 +940,10 @@ func renderKEVAndThreats(handler *analyze.Handler) {
 	// Get KEV data
 	kevResp, err := handler.Analyze(analyze.Params{
 		Fields:    []string{"is_kev=2"},
-		FacetSize: cvemap.Ptr(2),
+		FacetSize: vulnx.Ptr(2),
 	})
 	if err != nil {
-		if errors.Is(err, cvemap.ErrTooManyRequests) {
+		if errors.Is(err, vulnx.ErrTooManyRequests) {
 			// Skip this section due to rate limits
 			return
 		}
@@ -1031,7 +1031,7 @@ func showVersionInfo() {
 		return
 	}
 
-	// Format version status exactly like cvemap
+	// Format version status exactly like vulnx
 	description := updateutils.GetVersionDescription(currentVersion, latestVersion)
 	gologger.Info().Msgf("Current vulnx version %s %s", currentVersion, description)
 }

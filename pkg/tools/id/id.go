@@ -5,22 +5,22 @@ import (
 	"encoding/json"
 
 	"github.com/mark3labs/mcp-go/mcp"
-	"github.com/projectdiscovery/cvemap"
+	"github.com/projectdiscovery/vulnx"
 )
 
 type Handler struct {
-	client *cvemap.Client
+	client *vulnx.Client
 }
 
 // NewHandler returns a new Handler instance
-func NewHandler(client *cvemap.Client) *Handler {
+func NewHandler(client *vulnx.Client) *Handler {
 	return &Handler{
 		client: client,
 	}
 }
 
 // Get fetches a single vulnerability document by its ID.
-func (h *Handler) Get(id string) (*cvemap.Vulnerability, error) {
+func (h *Handler) Get(id string) (*vulnx.Vulnerability, error) {
 	resp, err := h.client.GetVulnerabilityByID(context.Background(), id, nil)
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func (h *Handler) MCPToolSpec() mcp.Tool {
 }
 
 // MCPHandler returns the MCP handler for this tool.
-func (h *Handler) MCPHandler(client *cvemap.Client) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (h *Handler) MCPHandler(client *vulnx.Client) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		id, err := request.RequireString("id")
 		if err != nil || id == "" {

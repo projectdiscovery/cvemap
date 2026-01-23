@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
-	"github.com/projectdiscovery/cvemap/pkg/types"
 	"github.com/projectdiscovery/gologger"
+	"github.com/projectdiscovery/vulnx"
+	"github.com/projectdiscovery/vulnx/pkg/types"
 )
 
 var cveData *types.CVEBulkData
@@ -20,13 +22,21 @@ func SetupMockServer() {
 		fmt.Println("Error loading data:", err)
 		return
 	}
-	// Setup HTTP server
-	http.HandleFunc("/api/v1/cves", RequireAPIKey(http.HandlerFunc(handleRequest)))
+
+	// Setup HTTP server with mux for path-based routing
+	mux := http.NewServeMux()
+
+	// Legacy v1 endpoint
+	mux.HandleFunc("/api/v1/cves", RequireAPIKey(handleLegacyRequest))
+
+	// New v2 endpoints
+	mux.HandleFunc("/v2/vulnerability/search", RequireAPIKey(handleSearchRequest))
+	mux.HandleFunc("/v2/vulnerability/", RequireAPIKey(handleGetByIDRequest))
 
 	go func() {
 		// Start the server on port 8080
-		fmt.Println("Cvemap test server listening on 8080...")
-		if err := http.ListenAndServe(":8080", nil); err != nil {
+		fmt.Println("Vulnx test server listening on 8080...")
+		if err := http.ListenAndServe(":8080", mux); err != nil {
 			fmt.Println("Error starting server:", err)
 		}
 	}()
@@ -44,12 +54,13 @@ func RequireAPIKey(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// handleRequest handles HTTP requests.
-func handleRequest(w http.ResponseWriter, r *http.Request) {
+// handleLegacyRequest handles the legacy /api/v1/cves endpoint
+func handleLegacyRequest(w http.ResponseWriter, r *http.Request) {
 	// Handle the case where "cve_id" is a query parameter
 	cveID := r.URL.Query().Get("cve_id")
 	if cveID == "" {
 		http.NotFound(w, r)
+		return
 	}
 	for _, data := range cveData.Cves {
 		if data.CveID == cveID {
@@ -61,6 +72,96 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	http.NotFound(w, r)
+}
+
+// handleGetByIDRequest handles GET /v2/vulnerability/{id} endpoint
+func handleGetByIDRequest(w http.ResponseWriter, r *http.Request) {
+	// Extract CVE ID from path: /v2/vulnerability/{id}
+	path := r.URL.Path
+	prefix := "/v2/vulnerability/"
+	if !strings.HasPrefix(path, prefix) {
+		http.NotFound(w, r)
+		return
+	}
+
+	cveID := strings.TrimPrefix(path, prefix)
+	if cveID == "" || cveID == "search" || cveID == "filters" {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Find the CVE in our test data
+	for i := range cveData.Cves {
+		if cveData.Cves[i].CveID == cveID {
+			// Return the v2 response format
+			resp := vulnx.VulnerabilityResponse{
+				Data: convertToVulnerability(&cveData.Cves[i]),
+			}
+			w.Header().Set("Content-Type", "application/json")
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+			return
+		}
+	}
+	http.NotFound(w, r)
+}
+
+// handleSearchRequest handles GET /v2/vulnerability/search endpoint
+func handleSearchRequest(w http.ResponseWriter, r *http.Request) {
+	termFacets := r.URL.Query().Get("term_facets")
+
+	// Build response - always return all test data for search queries
+	resp := vulnx.SearchResponse{
+		Total:   len(cveData.Cves),
+		Results: make([]vulnx.Vulnerability, 0),
+	}
+
+	// If term_facets is provided, return facet data (for analyze command)
+	if termFacets != "" {
+		facets := make(map[string]any)
+		fields := strings.Split(termFacets, ",")
+		for _, field := range fields {
+			fieldName := strings.Split(field, ":")[0]
+			facets[fieldName] = map[string]any{
+				"buckets": []map[string]any{
+					{"key": "critical", "count": 10},
+					{"key": "high", "count": 20},
+					{"key": "medium", "count": 30},
+					{"key": "low", "count": 40},
+				},
+			}
+		}
+		resp.Facets = facets
+	}
+
+	// Add all vulnerabilities to response (mock server returns all test data)
+	for i := range cveData.Cves {
+		resp.Results = append(resp.Results, *convertToVulnerability(&cveData.Cves[i]))
+	}
+
+	resp.Count = len(resp.Results)
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// convertToVulnerability converts legacy CVEData to the new Vulnerability type
+func convertToVulnerability(data *types.CVEData) *vulnx.Vulnerability {
+	return &vulnx.Vulnerability{
+		ID:          data.CveID,
+		CVEID:       data.CveID,
+		Description: data.CveDescription,
+		Severity:    data.Severity,
+		CvssScore:   data.CvssScore,
+		EpssScore:   data.Epss.Score,
+		IsKev:       data.IsKev,
+		IsPoc:       data.IsPoc,
+		IsTemplate:  data.IsTemplate,
+		PocCount:    len(data.Poc),
+	}
 }
 
 // LoadData loads data from a JSON file into a slice of CVEData.

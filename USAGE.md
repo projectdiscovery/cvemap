@@ -16,7 +16,7 @@
 
 ### Multiple Input Methods
 
-The `vulnx id` command supports flexible input methods similar to cvemap:
+The `vulnx id` command supports flexible input methods:
 
 ```bash
 # Single ID lookup

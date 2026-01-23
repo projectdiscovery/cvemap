@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/mark3labs/mcp-go/mcp"
-	"github.com/projectdiscovery/cvemap"
+	"github.com/projectdiscovery/vulnx"
 )
 
 // Handler implements the MCPTool interface for the agent_vulnx planner.
@@ -38,11 +38,11 @@ import (
 // can iterate, revise, and branch their reasoning when needed.
 
 type Handler struct {
-	client *cvemap.Client
+	client *vulnx.Client
 }
 
 // NewHandler returns a new planner handler instance.
-func NewHandler(client *cvemap.Client) *Handler {
+func NewHandler(client *vulnx.Client) *Handler {
 	return &Handler{client: client}
 }
 
@@ -126,7 +126,7 @@ The output should summarize key findings in a clear and structured format, captu
 `
 
 // MCPHandler generates the execution-plan prompt based on the provided task.
-func (h *Handler) MCPHandler(client *cvemap.Client) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (h *Handler) MCPHandler(client *vulnx.Client) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		task, err := request.RequireString("task")
 		if err != nil || task == "" {

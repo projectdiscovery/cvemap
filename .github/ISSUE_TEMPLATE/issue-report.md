@@ -7,16 +7,16 @@ labels: 'Type: Bug'
 
 <!--
 1. Please search to see if an issue already exists for the bug you encountered.
-2. For support requests, FAQs or "How to" questions, please use the GitHub Discussions section instead - https://github.com/projectdiscovery/cvemap/discussions or
-3. Join our discord server at https://discord.gg/projectdiscovery and post the question on the #cvemap channel.
+2. For support requests, FAQs or "How to" questions, please use the GitHub Discussions section instead - https://github.com/projectdiscovery/vulnx/discussions or
+3. Join our discord server at https://discord.gg/projectdiscovery and post the question on the #vulnx channel.
 -->
 
 <!-- ISSUES MISSING IMPORTANT INFORMATION MAY BE CLOSED WITHOUT INVESTIGATION. -->
 
-### cvemap version:
-<!-- You can find current version of cvemap with "cvemap -version" -->
-<!-- We only accept issues that are reproducible on the latest version of cvemap. -->
-<!-- You can find the latest version of project at https://github.com/projectdiscovery/cvemap/releases/ -->
+### vulnx version:
+<!-- You can find current version of vulnx with "vulnx -version" -->
+<!-- We only accept issues that are reproducible on the latest version of vulnx. -->
+<!-- You can find the latest version of project at https://github.com/projectdiscovery/vulnx/releases/ -->
 
 ### Current Behavior:
 <!-- A concise description of what you're experiencing. -->
@@ -27,7 +27,7 @@ labels: 'Type: Bug'
 ### Steps To Reproduce:
 <!--
 Example: steps to reproduce the behavior:
-1. Run 'cvemap ..'
+1. Run 'vulnx ..'
 2. See error...
 -->
 

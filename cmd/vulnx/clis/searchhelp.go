@@ -7,7 +7,7 @@ import (
 	"github.com/projectdiscovery/gologger"
 	"github.com/spf13/cobra"
 
-	"github.com/projectdiscovery/cvemap/pkg/tools/filters"
+	"github.com/projectdiscovery/vulnx/pkg/tools/filters"
 )
 
 var (
@@ -16,17 +16,17 @@ var (
 		Aliases: []string{"search:help", "searchhelp"},
 		Short:   "detailed help for the 'search' command with available filters",
 		Run: func(cmd *cobra.Command, args []string) {
-			// Defensive: ensure cvemapClient is initialized if not already
-			if cvemapClient == nil {
-				if err := ensureCvemapClientInitialized(cmd); err != nil {
-					gologger.Fatal().Msgf("Failed to initialize cvemap client: %s", err)
+			// Defensive: ensure vulnxClient is initialized if not already
+			if vulnxClient == nil {
+				if err := ensureVulnxClientInitialized(cmd); err != nil {
+					gologger.Fatal().Msgf("Failed to initialize vulnx client: %s", err)
 				}
 			}
 			// Print command usage & flags (default Cobra output) before field table
 			fmt.Println(cmd.UsageString())
 
 			// 2. Fetch filters via handler
-			h := filters.NewHandler(cvemapClient)
+			h := filters.NewHandler(vulnxClient)
 			fltrs, err := h.List()
 			if err != nil {
 				gologger.Fatal().Msgf("Failed to fetch vulnerability filters: %s", err)

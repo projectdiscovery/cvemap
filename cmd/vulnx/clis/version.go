@@ -56,7 +56,7 @@ func showVersion() {
 		return
 	}
 
-	// Show version comparison in the same format as cvemap
+	// Show version comparison in the same format as vulnx
 	description := updateutils.GetVersionDescription(Version, latestVersion)
 	if description != "" {
 		gologger.Info().Msgf("Current vulnx version %s %s", Version, description)

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/projectdiscovery/cvemap"
+	"github.com/projectdiscovery/vulnx"
 )
 
 // truncateList formats a string slice to show up to specified items, then " +N" for additional items
@@ -66,7 +66,7 @@ func truncateProductName(productName string, maxLength int) string {
 }
 
 // extractDistinctVendors extracts distinct vendors from a slice of ProductInfo
-func extractDistinctVendors(products []*cvemap.ProductInfo) []string {
+func extractDistinctVendors(products []*vulnx.ProductInfo) []string {
 	seen := make(map[string]bool)
 	var vendors []string
 	for _, product := range products {
@@ -81,7 +81,7 @@ func extractDistinctVendors(products []*cvemap.ProductInfo) []string {
 }
 
 // extractDistinctProducts extracts distinct product names from a slice of ProductInfo
-func extractDistinctProducts(products []*cvemap.ProductInfo) []string {
+func extractDistinctProducts(products []*vulnx.ProductInfo) []string {
 	seen := make(map[string]bool)
 	var productNames []string
 	for _, product := range products {
@@ -230,7 +230,7 @@ func formatKEVEnhanced(entry *Entry) string {
 }
 
 // formatAffectedProducts formats affected products with vendor info (max 10 items)
-func formatAffectedProducts(products []*cvemap.ProductInfo) []string {
+func formatAffectedProducts(products []*vulnx.ProductInfo) []string {
 	if len(products) == 0 {
 		return nil
 	}
@@ -253,7 +253,7 @@ func formatAffectedProducts(products []*cvemap.ProductInfo) []string {
 }
 
 // formatPOCs formats POCs with sources (wrapped URLs)
-func formatPOCs(pocs []*cvemap.POC) []string {
+func formatPOCs(pocs []*vulnx.POC) []string {
 	if len(pocs) == 0 {
 		return nil
 	}
@@ -276,7 +276,7 @@ func formatPOCs(pocs []*cvemap.POC) []string {
 }
 
 // formatCitations formats citations with sources (wrapped URLs, no tags)
-func formatCitations(citations []*cvemap.Citation) []string {
+func formatCitations(citations []*vulnx.Citation) []string {
 	if len(citations) == 0 {
 		return nil
 	}

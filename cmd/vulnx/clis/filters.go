@@ -9,7 +9,7 @@ import (
 	"github.com/projectdiscovery/gologger"
 	"github.com/spf13/cobra"
 
-	"github.com/projectdiscovery/cvemap/pkg/tools/filters"
+	"github.com/projectdiscovery/vulnx/pkg/tools/filters"
 )
 
 var (
@@ -31,7 +31,7 @@ vulnx filters --json
 vulnx filters --output filters.json`,
 		Run: func(cmd *cobra.Command, args []string) {
 			// Use the filters handler to get available filters
-			handler := filters.NewHandler(cvemapClient)
+			handler := filters.NewHandler(vulnxClient)
 			filterList, err := handler.List()
 			if err != nil {
 				gologger.Fatal().Msgf("Failed to fetch vulnerability filters: %s", err)

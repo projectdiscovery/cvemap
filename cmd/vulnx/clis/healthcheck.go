@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/projectdiscovery/cvemap"
-	"github.com/projectdiscovery/cvemap/pkg/tools/filters"
+	"github.com/projectdiscovery/vulnx"
+	"github.com/projectdiscovery/vulnx/pkg/tools/filters"
 	"github.com/projectdiscovery/gologger"
 	"github.com/spf13/cobra"
 )
@@ -99,8 +99,8 @@ func runHealthCheck() {
 func checkAuthentication() HealthCheckResult {
 	start := time.Now()
 
-	// Try to initialize the cvemap client
-	err := ensureCvemapClientInitialized(nil)
+	// Try to initialize the vulnx client
+	err := ensureVulnxClientInitialized(nil)
 	duration := time.Since(start)
 
 	if err != nil {
@@ -112,7 +112,7 @@ func checkAuthentication() HealthCheckResult {
 		}
 	}
 
-	if cvemapClient == nil {
+	if vulnxClient == nil {
 		return HealthCheckResult{
 			Check:    "Authentication",
 			Status:   "FAIL",
@@ -133,7 +133,7 @@ func checkAPIConnectivity() HealthCheckResult {
 	start := time.Now()
 
 	// Try to make a simple API call to test connectivity
-	handler := filters.NewHandler(cvemapClient)
+	handler := filters.NewHandler(vulnxClient)
 
 	// Measure round-trip time
 	_, err := handler.List()
@@ -177,7 +177,7 @@ func checkAPIEndpoint() HealthCheckResult {
 	start := time.Now()
 
 	// Test the filters endpoint functionality
-	handler := filters.NewHandler(cvemapClient)
+	handler := filters.NewHandler(vulnxClient)
 	filters, err := handler.List()
 	duration := time.Since(start)
 
@@ -211,7 +211,7 @@ func checkAPIEndpoint() HealthCheckResult {
 	}
 }
 
-func getSampleFields(filters []cvemap.VulnerabilityFilter, limit int) []string {
+func getSampleFields(filters []vulnx.VulnerabilityFilter, limit int) []string {
 	var fields []string
 	for i, filter := range filters {
 		if i >= limit {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/mark3labs/mcp-go/mcp"
-	"github.com/projectdiscovery/cvemap"
+	"github.com/projectdiscovery/vulnx"
 )
 
 // PromptTemplate defines the interface for vulnerability analysis prompt templates
@@ -13,21 +13,21 @@ type PromptTemplate interface {
 	// MCPPromptSpec returns the MCP prompt spec for registration
 	MCPPromptSpec() mcp.Prompt
 	// MCPPromptHandler returns the MCP prompt handler
-	MCPPromptHandler(client *cvemap.Client) func(ctx context.Context, request mcp.GetPromptRequest) (*mcp.GetPromptResult, error)
+	MCPPromptHandler(client *vulnx.Client) func(ctx context.Context, request mcp.GetPromptRequest) (*mcp.GetPromptResult, error)
 }
 
 // Handler provides prompt template functionality for vulnerability analysis
 type Handler struct {
-	client *cvemap.Client
+	client *vulnx.Client
 }
 
 // NewHandler returns a new prompt template handler
-func NewHandler(client *cvemap.Client) *Handler {
+func NewHandler(client *vulnx.Client) *Handler {
 	return &Handler{client: client}
 }
 
 // AllPromptTemplates returns all available prompt templates
-func AllPromptTemplates(client *cvemap.Client) []PromptTemplate {
+func AllPromptTemplates(client *vulnx.Client) []PromptTemplate {
 	handler := NewHandler(client)
 	return []PromptTemplate{
 		&VulnerabilityAnalysisPrompt{handler: handler},
@@ -57,7 +57,7 @@ func (p *VulnerabilityAnalysisPrompt) MCPPromptSpec() mcp.Prompt {
 	)
 }
 
-func (p *VulnerabilityAnalysisPrompt) MCPPromptHandler(client *cvemap.Client) func(ctx context.Context, request mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+func (p *VulnerabilityAnalysisPrompt) MCPPromptHandler(client *vulnx.Client) func(ctx context.Context, request mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 	return func(ctx context.Context, request mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 		args := request.Params.Arguments
 		query := getStringArg(args, "query", "")
@@ -203,7 +203,7 @@ func (p *ThreatIntelligencePrompt) MCPPromptSpec() mcp.Prompt {
 	)
 }
 
-func (p *ThreatIntelligencePrompt) MCPPromptHandler(client *cvemap.Client) func(ctx context.Context, request mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+func (p *ThreatIntelligencePrompt) MCPPromptHandler(client *vulnx.Client) func(ctx context.Context, request mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 	return func(ctx context.Context, request mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 		args := request.Params.Arguments
 		threatFocus := getStringArg(args, "threat_focus", "")
@@ -325,7 +325,7 @@ func (p *SecurityResearchPrompt) MCPPromptSpec() mcp.Prompt {
 	)
 }
 
-func (p *SecurityResearchPrompt) MCPPromptHandler(client *cvemap.Client) func(ctx context.Context, request mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+func (p *SecurityResearchPrompt) MCPPromptHandler(client *vulnx.Client) func(ctx context.Context, request mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 	return func(ctx context.Context, request mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 		args := request.Params.Arguments
 		objective := getStringArg(args, "research_objective", "")
@@ -436,7 +436,7 @@ func (p *GeneralVulnAssistantPrompt) MCPPromptSpec() mcp.Prompt {
 	)
 }
 
-func (p *GeneralVulnAssistantPrompt) MCPPromptHandler(client *cvemap.Client) func(ctx context.Context, request mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+func (p *GeneralVulnAssistantPrompt) MCPPromptHandler(client *vulnx.Client) func(ctx context.Context, request mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 	return func(ctx context.Context, request mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 		raw := getStringArg(request.Params.Arguments, "user_query", "")
 
@@ -516,7 +516,7 @@ func (p *VulnxSearchReviewPrompt) MCPPromptSpec() mcp.Prompt {
 	)
 }
 
-func (p *VulnxSearchReviewPrompt) MCPPromptHandler(client *cvemap.Client) func(ctx context.Context, request mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+func (p *VulnxSearchReviewPrompt) MCPPromptHandler(client *vulnx.Client) func(ctx context.Context, request mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 	return func(ctx context.Context, request mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 		args := request.Params.Arguments
 		query := getStringArg(args, "search_query", "")

@@ -26,7 +26,7 @@ jobs:
 
       - name: Build
         run: go build .
-        working-directory: cmd/cvemap/
+        working-directory: cmd/vulnx/
 
       - name: Test
         run: go test ./...
@@ -49,11 +49,11 @@ jobs:
 
       - name: Race Condition Tests
         if: github.actor != 'dependabot[bot]'
-        run: go run -race . -id CVE-1999-0027
-        working-directory: cmd/cvemap/
+        run: go run -race . id CVE-1999-0027
+        working-directory: cmd/vulnx/
         env:
           PDCP_API_KEY: "${{ secrets.PDCP_API_KEY }}"
-          PDCP_API_SERVER: https://api.projectdiscovery.io
+          VULNX_API_URL: https://api.projectdiscovery.io
           DEBUG: true
 
       # - name: Test Example Code

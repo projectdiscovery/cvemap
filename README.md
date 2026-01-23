@@ -1,29 +1,23 @@
 <h1 align="center"> vulnx </h1>
 
 <p align="center">
-<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-_red.svg"></a>
-<a href="https://goreportcard.com/badge/github.com/projectdiscovery/cvemap"><img src="https://goreportcard.com/badge/github.com/projectdiscovery/cvemap"></a>
-<a href="https://pkg.go.dev/github.com/projectdiscovery/cvemap/pkg/cvemap"><img src="https://img.shields.io/badge/go-reference-blue"></a>
-<a href="https://github.com/projectdiscovery/cvemap/releases"><img src="https://img.shields.io/github/release/projectdiscovery/cvemap"></a>
-<a href="https://twitter.com/pdiscoveryio"><img src="https://img.shields.io/twitter/follow/pdiscoveryio.svg?logo=twitter"></a>
-<a href="https://discord.gg/projectdiscovery"><img src="https://img.shields.io/discord/695645237418131507.svg?logo=discord"></a>
+<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-_red.svg" alt="MIT License"></a>
+<a href="https://goreportcard.com/badge/github.com/projectdiscovery/vulnx"><img src="https://goreportcard.com/badge/github.com/projectdiscovery/vulnx" alt="Go Report Card"></a>
+<a href="https://pkg.go.dev/github.com/projectdiscovery/vulnx/pkg/vulnx"><img src="https://img.shields.io/badge/go-reference-blue" alt="Go Reference"></a>
+<a href="https://github.com/projectdiscovery/vulnx/releases"><img src="https://img.shields.io/github/release/projectdiscovery/vulnx" alt="GitHub Release"></a>
+<a href="https://twitter.com/pdiscoveryio"><img src="https://img.shields.io/twitter/follow/pdiscoveryio.svg?logo=twitter" alt="Twitter Follow"></a>
+<a href="https://discord.gg/projectdiscovery"><img src="https://img.shields.io/discord/695645237418131507.svg?logo=discord" alt="Discord"></a>
 </p>
 
 <h4 align="center"> Modern CLI for exploring vulnerability data with powerful search, filtering, and analysis capabilities </h4>
 
 ![image](https://github.com/user-attachments/assets/d60a1d43-27d8-4874-9459-046b7d8c633a)
 
-## 🚀 Migration Notice
-
-**vulnx is the next generation of cvemap** - we recommend upgrading to vulnx for the latest features and improvements.
-
-> ⚠️ **Important**: cvemap uses an older API version that will be discontinued on **August 1, 2025**.
-
 ## Quick Start
 
 ```bash
 # 1. Get vulnx
-go install github.com/projectdiscovery/cvemap/cmd/vulnx@latest
+go install github.com/projectdiscovery/vulnx/cmd/vulnx@latest
 
 # 2. Explore commands
 vulnx --help

@@ -1,7 +1,7 @@
 package renderer
 
 import (
-	"github.com/projectdiscovery/cvemap"
+	"github.com/projectdiscovery/vulnx"
 )
 
 // LayoutLine represents a single line in the layout configuration
@@ -20,17 +20,17 @@ type Entry struct {
 	AgeInDays        int                   `json:"age_in_days"`
 	EpssScore        float64               `json:"epss_score"`
 	CvssScore        float64               `json:"cvss_score"`
-	Exposure         *cvemap.VulnExposure  `json:"exposure"`
-	AffectedProducts []*cvemap.ProductInfo `json:"affected_products"`
+	Exposure         *vulnx.VulnExposure  `json:"exposure"`
+	AffectedProducts []*vulnx.ProductInfo `json:"affected_products"`
 	IsPatchAvailable bool                  `json:"is_patch_available"`
 	PocCount         int                   `json:"poc_count"`
 	IsKev            bool                  `json:"is_kev"`
-	Kev              []*cvemap.KevInfo     `json:"kev"`
+	Kev              []*vulnx.KevInfo     `json:"kev"`
 	IsTemplate       bool                  `json:"is_template"`
-	H1               *cvemap.H1Stats       `json:"h1"`
+	H1               *vulnx.H1Stats       `json:"h1"`
 	Tags             []string              `json:"tags"`
-	Pocs             []*cvemap.POC         `json:"pocs"`
-	Citations        []*cvemap.Citation    `json:"citations"`
+	Pocs             []*vulnx.POC         `json:"pocs"`
+	Citations        []*vulnx.Citation    `json:"citations"`
 	Description      string                `json:"description"`
 	Impact           string                `json:"impact"`
 	Remediation      string                `json:"remediation"`
@@ -38,8 +38,8 @@ type Entry struct {
 	TemplateRaw      string                `json:"template_raw"`
 }
 
-// FromVulnerability converts a cvemap.Vulnerability to an Entry
-func FromVulnerability(v *cvemap.Vulnerability) *Entry {
+// FromVulnerability converts a vulnx.Vulnerability to an Entry
+func FromVulnerability(v *vulnx.Vulnerability) *Entry {
 	if v == nil {
 		return nil
 	}

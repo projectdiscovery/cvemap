@@ -19,7 +19,7 @@ type VulnxTestCase struct {
 }
 
 func (v *VulnxTestCase) Execute() error {
-	output, err := runVulnxBinaryAndGetResults(*currentVulnxBinary, debug, v.Args)
+	output, err := runVulnxBinaryAndGetResults(*vulnxBinary, debug, v.Args)
 	if err != nil && !v.ShouldFail {
 		return errors.Wrapf(err, "vulnx test '%s' failed unexpectedly", v.Name)
 	}
@@ -70,7 +70,7 @@ var vulnxTestCases = map[string]*VulnxTestCase{
 	"Get By CVE ID": {
 		Name:        "Get By CVE ID",
 		Args:        []string{"id", "CVE-1999-0027", "--json", "--silent"},
-		ExpectedOut: `"cve_id":"CVE-1999-0027"`,
+		ExpectedOut: `"cve_id": "CVE-1999-0027"`,
 	},
 	"Search Command": {
 		Name:        "Search Command",
@@ -85,7 +85,7 @@ var vulnxTestCases = map[string]*VulnxTestCase{
 	"Help Command": {
 		Name:        "Help Command",
 		Args:        []string{"--help"},
-		ExpectedOut: "vulnx — The Swiss Army knife for vulnerability intel",
+		ExpectedOut: "vulnx — the swiss army knife for vulnerability intel",
 	},
 	"Analyze Command": {
 		Name:        "Analyze Command",

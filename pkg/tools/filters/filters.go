@@ -5,30 +5,30 @@ import (
 	"encoding/json"
 
 	"github.com/mark3labs/mcp-go/mcp"
-	"github.com/projectdiscovery/cvemap"
+	"github.com/projectdiscovery/vulnx"
 )
 
-// Handler provides a thin wrapper around cvemap.Client.GetVulnerabilityFilters so
+// Handler provides a thin wrapper around vulnx.Client.GetVulnerabilityFilters so
 // that CLI tooling can remain decoupled from the API client. The design mirrors
 // pkg/tools/id.Handler and pkg/tools/search.Handler for consistency.
 //
 // The zero value of Handler is not valid; always instantiate the type via
 // NewHandler.
 type Handler struct {
-	client *cvemap.Client
+	client *vulnx.Client
 }
 
-// NewHandler returns a new Handler that will use the supplied *cvemap.Client
+// NewHandler returns a new Handler that will use the supplied *vulnx.Client
 // for all network operations. The provided client must be fully configured and
 // ready for use.
-func NewHandler(client *cvemap.Client) *Handler {
+func NewHandler(client *vulnx.Client) *Handler {
 	return &Handler{client: client}
 }
 
 // List retrieves the full list of vulnerability filter definitions from the
-// CVEMap API. It forwards the call to cvemap.Client.GetVulnerabilityFilters
+// Vulnx API. It forwards the call to vulnx.Client.GetVulnerabilityFilters
 // using a background context.
-func (h *Handler) List() ([]cvemap.VulnerabilityFilter, error) {
+func (h *Handler) List() ([]vulnx.VulnerabilityFilter, error) {
 	return h.client.GetVulnerabilityFilters(context.Background())
 }
 
@@ -40,7 +40,7 @@ func (h *Handler) MCPToolSpec() mcp.Tool {
 }
 
 // MCPHandler returns the MCP handler for this tool.
-func (h *Handler) MCPHandler(client *cvemap.Client) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (h *Handler) MCPHandler(client *vulnx.Client) func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		filters, err := h.List()
 		if err != nil {
