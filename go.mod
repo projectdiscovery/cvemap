@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/jedib0t/go-pretty/v6 v6.8.3
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/mark3labs/mcp-go v1.1.1
+	github.com/mark3labs/mcp-go v1.2.1
 	github.com/pkg/errors v0.9.1
 	github.com/projectdiscovery/gologger v1.1.73
 	github.com/projectdiscovery/retryablehttp-go v1.3.28
