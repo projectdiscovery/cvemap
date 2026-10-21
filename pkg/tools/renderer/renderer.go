@@ -495,6 +495,9 @@ func extractPlaceholders(entry *Entry) map[string]string {
 	// Tags
 	placeholders["tags"] = truncateList(entry.Tags, 3)
 
+	// References for list view (issue #81)
+	placeholders["references"] = formatReferences(entry.Citations)
+
 	// Security-focused placeholders
 	placeholders["exploit_status"] = getExploitStatus(entry)
 	placeholders["research_priority"] = getResearchPriority(entry)
@@ -594,7 +597,7 @@ func evaluateCondition(entry *Entry, condition string) bool {
 	case "pocs.length == 0":
 		return len(entry.Pocs) == 0
 	case "citations.length == 0":
-		return len(entry.Citations) == 0
+		return formatReferences(entry.Citations) == ""
 	case "template_uri.empty":
 		return strings.TrimSpace(entry.TemplateURI) == ""
 	case "affected_products.length == 0":
