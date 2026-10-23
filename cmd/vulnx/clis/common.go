@@ -15,7 +15,9 @@ import (
 
 	_ "embed"
 	"io"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -178,7 +180,7 @@ func init() {
 
 	// Add persistent json and output flags
 	rootCmd.PersistentFlags().BoolVarP(&jsonOutput, "json", "j", false, "output raw json (for piping, disables yaml output)")
-	rootCmd.PersistentFlags().StringVarP(&outputFile, "output", "o", "", "write output to file in json format (error if file exists)")
+	rootCmd.PersistentFlags().StringVarP(&outputFile, "output", "o", "", "write output to file, json or csv by extension (error if file exists)")
 
 	// Add persistent silent flag
 	rootCmd.PersistentFlags().BoolVar(&silent, "silent", false, "silent mode (suppress banner and non-essential output)")
@@ -495,6 +497,66 @@ func removeDuplicateStrings(ids []string) []string {
 	return result
 }
 
+// isCSVOutput reports whether --output asks for CSV. Any other extension keeps the JSON default.
+func isCSVOutput() bool {
+	return strings.EqualFold(filepath.Ext(outputFile), ".csv")
+}
+
+// writeVulnsOutput writes vulns to --output as CSV or JSON, or prints JSON to stdout.
+// A single requested ID is emitted as an object rather than an array.
+func writeVulnsOutput(vulns []*vulnx.Vulnerability, single bool) {
+	var data []byte
+	var err error
+	switch {
+	case isCSVOutput():
+		data, err = renderVulnsCSV(vulns)
+	case single:
+		data, err = json.MarshalIndent(vulns[0], "", "  ")
+	default:
+		data, err = json.MarshalIndent(vulns, "", "  ")
+	}
+	if err != nil {
+		gologger.Fatal().Msgf("Failed to render output: %s", err)
+	}
+
+	if outputFile != "" {
+		if err := writeNewFile(outputFile, data); err != nil {
+			gologger.Fatal().Msgf("%s", err)
+		}
+		gologger.Info().Msgf("Wrote %d vulnerability(s) to file: %s", len(vulns), outputFile)
+		return
+	}
+
+	if _, err := os.Stdout.Write(append(data, '\n')); err != nil {
+		gologger.Error().Msgf("Failed to write JSON to stdout: %s", err)
+	}
+}
+
+// renderVulnsCSV converts vulnerabilities to CSV rows.
+func renderVulnsCSV(vulns []*vulnx.Vulnerability) ([]byte, error) {
+	entries := make([]*renderer.Entry, 0, len(vulns))
+	for _, vuln := range vulns {
+		entries = append(entries, renderer.FromVulnerability(vuln))
+	}
+	return renderer.RenderCSV(entries)
+}
+
+// writeNewFile writes data to path, refusing to overwrite an existing file.
+func writeNewFile(path string, data []byte) error {
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
+	if errors.Is(err, fs.ErrExist) {
+		return fmt.Errorf("output file already exists: %s", path)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to create output file: %w", err)
+	}
+	if _, err := f.Write(data); err != nil {
+		_ = f.Close()
+		return fmt.Errorf("failed to write to output file: %w", err)
+	}
+	return f.Close()
+}
+
 func executeIDWithIDs(cveIDs []string) error {
 	// Call the id command logic directly
 	return runIDCommandWithIDs(cveIDs)
@@ -530,47 +592,7 @@ func runIDCommandWithIDs(cveIDs []string) error {
 			gologger.Fatal().Msg("No vulnerabilities were successfully retrieved")
 		}
 
-		// Marshal single item or array based on input
-		var jsonBytes []byte
-		var err error
-		if len(cveIDs) == 1 && len(allVulns) == 1 {
-			jsonBytes, err = json.MarshalIndent(allVulns[0], "", "  ")
-		} else {
-			jsonBytes, err = json.MarshalIndent(allVulns, "", "  ")
-		}
-
-		if err != nil {
-			gologger.Fatal().Msgf("Failed to marshal JSON: %s", err)
-		}
-
-		if outputFile != "" {
-			// Check if file exists
-			if _, err := os.Stat(outputFile); err == nil {
-				gologger.Fatal().Msgf("Output file already exists: %s", outputFile)
-			}
-			f, err := os.OpenFile(outputFile, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
-			if err != nil {
-				gologger.Fatal().Msgf("Failed to create output file: %s", err)
-			}
-			defer func() {
-				if err := f.Close(); err != nil {
-					gologger.Error().Msgf("Failed to close output file: %s", err)
-				}
-			}()
-			if _, err := f.Write(jsonBytes); err != nil {
-				gologger.Fatal().Msgf("Failed to write to output file: %s", err)
-			}
-			gologger.Info().Msgf("Wrote %d vulnerability(s) to file: %s", len(allVulns), outputFile)
-			return nil
-		}
-
-		// Print to stdout
-		if _, err := os.Stdout.Write(jsonBytes); err != nil {
-			gologger.Error().Msgf("Failed to write JSON to stdout: %s", err)
-		}
-		if _, err := os.Stdout.Write([]byte("\n")); err != nil {
-			gologger.Error().Msgf("Failed to write newline to stdout: %s", err)
-		}
+		writeVulnsOutput(allVulns, len(cveIDs) == 1 && len(allVulns) == 1)
 		return nil
 	}
 

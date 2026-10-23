@@ -3,10 +3,28 @@ package search
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/projectdiscovery/vulnx/v2"
 )
+
+// MaxResultWindow is the deepest hit the search API serves: it rejects
+// offset + limit beyond this with a generic 500 instead of a clear error.
+const MaxResultWindow = 10000
+
+// ValidateResultWindow reports whether offset and limit stay within
+// MaxResultWindow. A limit of 0 means the server default, so only the
+// offset itself is checked.
+func ValidateResultWindow(offset, limit int) error {
+	if offset < 0 || limit < 0 {
+		return fmt.Errorf("offset and limit must be non-negative")
+	}
+	if offset >= MaxResultWindow || offset+limit > MaxResultWindow {
+		return fmt.Errorf("offset + limit must not exceed %d (API result window); narrow the query to reach older results", MaxResultWindow)
+	}
+	return nil
+}
 
 // Handler provides high-level helpers around the vulnerability search
 // endpoint. It mirrors the design of pkg/tools/id.Handler for
@@ -80,6 +98,9 @@ func (h *Handler) MCPHandler(client *vulnx.Client) func(ctx context.Context, req
 			limit = 100
 		}
 		offset := request.GetInt("offset", 0)
+		if err := ValidateResultWindow(offset, limit); err != nil {
+			return mcp.NewToolResultError("ProjectDiscovery vulnx: " + err.Error()), nil
+		}
 
 		// Prepare base search parameters
 		params := vulnx.SearchParams{

@@ -65,34 +65,41 @@ func truncateProductName(productName string, maxLength int) string {
 	return productName[:maxLength-3] + "..."
 }
 
-// extractDistinctVendors extracts distinct vendors from a slice of ProductInfo
-func extractDistinctVendors(products []*vulnx.ProductInfo) []string {
+// distinct returns the unique non-empty values picked from products, in input order.
+func distinct(products []*vulnx.ProductInfo, pick func(*vulnx.ProductInfo) string) []string {
 	seen := make(map[string]bool)
-	var vendors []string
+	var values []string
 	for _, product := range products {
-		if product != nil && product.Vendor != "" && !seen[product.Vendor] {
-			seen[product.Vendor] = true
-			// Truncate long vendor names to prevent line wrapping
-			truncatedName := truncateProductName(product.Vendor, 15)
-			vendors = append(vendors, truncatedName)
+		if product == nil {
+			continue
+		}
+		if v := pick(product); v != "" && !seen[v] {
+			seen[v] = true
+			values = append(values, v)
 		}
 	}
-	return vendors
+	return values
+}
+
+func vendorOf(p *vulnx.ProductInfo) string  { return p.Vendor }
+func productOf(p *vulnx.ProductInfo) string { return p.Product }
+
+// truncateAll truncates each name to prevent line wrapping in terminal output.
+func truncateAll(names []string, maxLength int) []string {
+	for i, name := range names {
+		names[i] = truncateProductName(name, maxLength)
+	}
+	return names
+}
+
+// extractDistinctVendors extracts distinct vendors from a slice of ProductInfo
+func extractDistinctVendors(products []*vulnx.ProductInfo) []string {
+	return truncateAll(distinct(products, vendorOf), 15)
 }
 
 // extractDistinctProducts extracts distinct product names from a slice of ProductInfo
 func extractDistinctProducts(products []*vulnx.ProductInfo) []string {
-	seen := make(map[string]bool)
-	var productNames []string
-	for _, product := range products {
-		if product != nil && product.Product != "" && !seen[product.Product] {
-			seen[product.Product] = true
-			// Truncate long product names to prevent line wrapping
-			truncatedName := truncateProductName(product.Product, 20)
-			productNames = append(productNames, truncatedName)
-		}
-	}
-	return productNames
+	return truncateAll(distinct(products, productOf), 20)
 }
 
 // exploitSeen determines if a vulnerability has been exploited in the wild

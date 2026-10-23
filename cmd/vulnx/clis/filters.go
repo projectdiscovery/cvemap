@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/projectdiscovery/vulnx/v2/pkg/tools/filters"
+	"github.com/projectdiscovery/vulnx/v2/pkg/tools/renderer"
 )
 
 var (
@@ -28,7 +29,10 @@ vulnx filters
 vulnx filters --json
 
 # Write filter information to a file
-vulnx filters --output filters.json`,
+vulnx filters --output filters.json
+
+# Write filter information to a CSV file
+vulnx filters --output filters.csv`,
 		Run: func(cmd *cobra.Command, args []string) {
 			// Use the filters handler to get available filters
 			handler := filters.NewHandler(vulnxClient)
@@ -44,32 +48,24 @@ vulnx filters --output filters.json`,
 
 			// Handle JSON and output file flags
 			if jsonOutput || outputFile != "" {
-				jsonBytes, err := json.Marshal(filterList)
+				var data []byte
+				if isCSVOutput() {
+					data, err = renderer.RenderFiltersCSV(filterList)
+				} else {
+					data, err = json.Marshal(filterList)
+				}
 				if err != nil {
-					gologger.Fatal().Msgf("Failed to marshal JSON: %s", err)
+					gologger.Fatal().Msgf("Failed to render output: %s", err)
 				}
 				if outputFile != "" {
-					// Check if file exists
-					if _, err := os.Stat(outputFile); err == nil {
-						gologger.Fatal().Msgf("Output file already exists: %s", outputFile)
-					}
-					f, err := os.OpenFile(outputFile, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
-					if err != nil {
-						gologger.Fatal().Msgf("Failed to create output file: %s", err)
-					}
-					defer func() {
-						if err := f.Close(); err != nil {
-							gologger.Error().Msgf("Failed to close output file: %s", err)
-						}
-					}()
-					if _, err := f.Write(jsonBytes); err != nil {
-						gologger.Fatal().Msgf("Failed to write to output file: %s", err)
+					if err := writeNewFile(outputFile, data); err != nil {
+						gologger.Fatal().Msgf("%s", err)
 					}
 					gologger.Info().Msgf("Wrote filter information to file: %s", outputFile)
 					return
 				}
 				// Print to stdout
-				if _, err := os.Stdout.Write(jsonBytes); err != nil {
+				if _, err := os.Stdout.Write(data); err != nil {
 					gologger.Error().Msgf("Failed to write JSON output: %s", err)
 				}
 				if _, err := os.Stdout.Write([]byte("\n")); err != nil {

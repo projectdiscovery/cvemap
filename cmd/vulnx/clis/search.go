@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -153,6 +155,10 @@ vulnx search --term-facets tags=10,severity=4 "is_remote:true"
 			if len(searchFields) > 0 {
 				params.Fields = searchFields
 			}
+			// --fields narrows the response, which would leave CSV columns empty
+			if len(params.Fields) > 0 && isCSVOutput() {
+				params.Fields = mergeFields(params.Fields, csvRequiredFields)
+			}
 			if len(searchTermFacets) > 0 {
 				params.TermFacets = searchTermFacets
 				for i, facet := range params.TermFacets {
@@ -191,6 +197,7 @@ vulnx search --term-facets tags=10,severity=4 "is_remote:true"
 			resp, err := handler.Search(params)
 			if err != nil {
 				if errors.Is(err, vulnx.ErrNotFound) {
+					warnUnknownSearchFields(finalQuery)
 					gologger.Fatal().Msgf("No results found for query: %s", query)
 				}
 				if errors.Is(err, vulnx.ErrTooManyRequests) {
@@ -199,6 +206,7 @@ vulnx search --term-facets tags=10,severity=4 "is_remote:true"
 				gologger.Fatal().Msgf("Failed to perform search: %s", err)
 			}
 			if resp.Count == 0 {
+				warnUnknownSearchFields(finalQuery)
 				if query != "" {
 					gologger.Info().Msgf("No results found for query: %s", query)
 				} else {
@@ -209,36 +217,28 @@ vulnx search --term-facets tags=10,severity=4 "is_remote:true"
 
 			// Handle JSON and output file flags
 			if jsonOutput || outputFile != "" {
-				jsonBytes, err := json.Marshal(resp)
+				var data []byte
+				if isCSVOutput() {
+					vulns := make([]*vulnx.Vulnerability, len(resp.Results))
+					for i := range resp.Results {
+						vulns[i] = &resp.Results[i]
+					}
+					data, err = renderVulnsCSV(vulns)
+				} else {
+					data, err = json.Marshal(resp)
+				}
 				if err != nil {
-					gologger.Fatal().Msgf("Failed to marshal JSON: %s", err)
+					gologger.Fatal().Msgf("Failed to render output: %s", err)
 				}
 				if outputFile != "" {
-					// Check if file exists
-					if _, err := os.Stat(outputFile); err == nil {
-						gologger.Fatal().Msgf("Output file already exists: %s", outputFile)
-					}
-					f, err := os.OpenFile(outputFile, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
-					if err != nil {
-						gologger.Fatal().Msgf("Failed to create output file: %s", err)
-					}
-					defer func() {
-						if err := f.Close(); err != nil {
-							gologger.Error().Msgf("Failed to close output file: %s", err)
-						}
-					}()
-					if _, err := f.Write(jsonBytes); err != nil {
-						gologger.Fatal().Msgf("Failed to write to output file: %s", err)
+					if err := writeNewFile(outputFile, data); err != nil {
+						gologger.Fatal().Msgf("%s", err)
 					}
 					gologger.Info().Msgf("Wrote output to file: %s", outputFile)
 					return
 				}
-				// Print to stdout
-				if _, err := os.Stdout.Write(jsonBytes); err != nil {
+				if _, err := os.Stdout.Write(append(data, '\n')); err != nil {
 					gologger.Error().Msgf("Failed to write JSON output: %s", err)
-				}
-				if _, err := os.Stdout.Write([]byte("\n")); err != nil {
-					gologger.Error().Msgf("Failed to write newline: %s", err)
 				}
 				return
 			}
@@ -564,13 +564,16 @@ func buildScoreQuery(field, scoreFilter string) (string, error) {
 // validateSearchInputs performs input validation for search command
 func validateSearchInputs() error {
 	// Validate limit
-	if searchLimit < 0 || searchLimit > 10000 {
-		return fmt.Errorf("limit must be between 0 and 10000")
+	if searchLimit < 0 || searchLimit > searchtool.MaxResultWindow {
+		return fmt.Errorf("limit must be between 0 and %d", searchtool.MaxResultWindow)
 	}
 
 	// Validate offset
 	if searchOffset < 0 {
 		return fmt.Errorf("offset must be non-negative")
+	}
+	if err := searchtool.ValidateResultWindow(searchOffset, searchLimit); err != nil {
+		return err
 	}
 
 	// Validate conflicting sort options
@@ -585,12 +588,31 @@ func validateSearchInputs() error {
 
 	// Validate output file path if specified
 	if outputFile != "" {
-		if !strings.HasSuffix(outputFile, ".json") {
-			return fmt.Errorf("output file must have .json extension")
+		if ext := strings.ToLower(filepath.Ext(outputFile)); ext != ".json" && ext != ".csv" {
+			return fmt.Errorf("output file must have .json or .csv extension")
 		}
 	}
 
 	return nil
+}
+
+// csvRequiredFields are the API fields needed to populate every CSV column.
+// Nested objects must be selected by leaf path; the API returns nothing for "h1" alone.
+var csvRequiredFields = []string{
+	"doc_id", "name", "severity", "cvss_score", "epss_score",
+	"is_kev", "is_template", "poc_count", "h1.reports",
+	"is_patch_available", "age_in_days", "affected_products.vendor", "affected_products.product", "tags",
+}
+
+// mergeFields returns base with any fields from extra that it does not already contain.
+func mergeFields(base, extra []string) []string {
+	result := slices.Clone(base)
+	for _, f := range extra {
+		if !slices.Contains(result, f) {
+			result = append(result, f)
+		}
+	}
+	return result
 }
 
 func init() { // Register flags and add command to rootCmd

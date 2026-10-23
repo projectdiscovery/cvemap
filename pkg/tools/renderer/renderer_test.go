@@ -491,3 +491,73 @@ func TestFormatNucleiTemplateURL(t *testing.T) {
 		})
 	}
 }
+
+func TestRenderCSV(t *testing.T) {
+	entries := []*Entry{
+		{
+			DocID:     "CVE-2024-0001",
+			Severity:  "critical",
+			Name:      "=HYPERLINK(\"http://evil\")",
+			CvssScore: 9.8,
+			EpssScore: 0.5,
+			IsKev:     true,
+			PocCount:  2,
+			H1:        &vulnx.H1Stats{Reports: 1},
+			AgeInDays: 10,
+			AffectedProducts: []*vulnx.ProductInfo{
+				{Vendor: "averyveryverylongvendor", Product: "averyveryverylongproductname"},
+				{Vendor: "averyveryverylongvendor", Product: "other"},
+				nil,
+			},
+			Tags: []string{"rce", "cve"},
+		},
+		nil,
+	}
+
+	got, err := RenderCSV(entries)
+	if err != nil {
+		t.Fatalf("RenderCSV: %v", err)
+	}
+	want := "id,severity,cvss_score,epss_score,is_kev,is_template,poc_count,hackerone,is_patch_available,age_in_days,vendors,products,tags,title\n" +
+		"CVE-2024-0001,critical,9.8,0.5,true,false,2,true,false,10,averyveryverylongvendor,averyveryverylongproductname;other,rce;cve,\"'=HYPERLINK(\"\"http://evil\"\")\"\n"
+	if string(got) != want {
+		t.Errorf("RenderCSV mismatch\ngot:\n%s\nwant:\n%s", got, want)
+	}
+}
+
+func TestEscapeCSVFormula(t *testing.T) {
+	for in, want := range map[string]string{
+		"":         "",
+		"plain":    "plain",
+		"=1+1":     "'=1+1",
+		"+1":       "'+1",
+		"-1":       "'-1",
+		"@SUM(A1)": "'@SUM(A1)",
+		"\tx":      "'\tx",
+		"a=b":      "a=b",
+	} {
+		if got := escapeCSVFormula(in); got != want {
+			t.Errorf("escapeCSVFormula(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestRenderFiltersCSV(t *testing.T) {
+	got, err := RenderFiltersCSV([]vulnx.VulnerabilityFilter{{
+		Field:         "severity",
+		DataType:      "string",
+		Description:   "Severity, e.g. high",
+		CanSort:       true,
+		FacetPossible: true,
+		Examples:      []string{"severity:high", "severity:critical"},
+		EnumValues:    []string{"low", "high"},
+	}})
+	if err != nil {
+		t.Fatalf("RenderFiltersCSV: %v", err)
+	}
+	want := "field,data_type,description,can_sort,facet_possible,search_analyzer,examples,enum_values\n" +
+		"severity,string,\"Severity, e.g. high\",true,true,,severity:high;severity:critical,low;high\n"
+	if string(got) != want {
+		t.Errorf("RenderFiltersCSV mismatch\ngot:\n%s\nwant:\n%s", got, want)
+	}
+}
