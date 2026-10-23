@@ -61,8 +61,10 @@ func showVersion() {
 	if description != "" {
 		gologger.Info().Msgf("Current vulnx version %s %s", Version, description)
 
-		// If there's a newer version available, provide helpful information
-		if latestVersion != Version {
+		// If there's a newer version available, provide helpful information.
+		// Use the same comparison as the latest/outdated label. A raw
+		// string compare treats v2.0.2 and 2.0.2 as different releases.
+		if shouldSuggestUpdate(Version, latestVersion) {
 			gologger.Info().Msg("To update vulnx, use:")
 			gologger.Info().Msg("vulnx --update  or  vulnx update")
 			gologger.Info().Msg("Or install via pdtm: pdtm -u vulnx")
@@ -70,6 +72,10 @@ func showVersion() {
 	} else {
 		gologger.Info().Msgf("Current vulnx version %s (latest)", Version)
 	}
+}
+
+func shouldSuggestUpdate(current, latest string) bool {
+	return updateutils.IsOutdated(current, latest)
 }
 
 func init() {
