@@ -4,7 +4,7 @@ This guide contains information for developers working on vulnx.
 
 ## Prerequisites
 
-- Go 1.22 or later
+- Go 1.26.10 or later
 - Git
 
 ## Building
